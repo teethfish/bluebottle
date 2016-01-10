@@ -1,0 +1,11 @@
+new changes:
+1, add the function of physical forcing(remember free the working array)
+2, it is not tested how the initial condition affects the results
+
+WAIT TO DO:
+1, verify it is HIT
+2, check how to coonect value A to dissipation rate/Reynold number
+3, how to intialize the domain
+
+4, add control parameters into the input files
+5, merge with the branch devel_updated_precurosr
