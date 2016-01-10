@@ -90,34 +90,22 @@ real *u_star;
 real *v_star;
 real *w_star;
 real *u_WE;
-real *u_SN_S;
-real *u_SN_N;
-real *u_BT_B;
-real *u_BT_T;
-real *v_WE_W;
-real *v_WE_E;
+real *u_SN;
+real *u_BT;
+real *v_WE;
 real *v_SN;
-real *v_BT_B;
-real *v_BT_T;
-real *w_WE_W;
-real *w_WE_E;
-real *w_SN_S;
-real *w_SN_N;
+real *v_BT;
+real *w_WE;
+real *w_SN;
 real *w_BT;
 real **_u_WE;
-real **_u_SN_S;
-real **_u_SN_N;
-real **_u_BT_B;
-real **_u_BT_T;
-real **_v_WE_W;
-real **_v_WE_E;
+real **_u_SN;
+real **_u_BT;
+real **_v_WE;
 real **_v_SN;
-real **_v_BT_B;
-real **_v_BT_T;
-real **_w_WE_W;
-real **_w_WE_E;
-real **_w_SN_S;
-real **_w_SN_N;
+real **_v_BT;
+real **_w_WE;
+real **_w_SN;
 real **_w_BT;
 real **_rhs_p;
 real duration;
@@ -380,7 +368,8 @@ int main(int argc, char *argv[]) {
       // initialize the domain
       printf("Initializing domain variables...");
       fflush(stdout);
-      int domain_init_flag = domain_init();
+      turbA = 3.;
+      int domain_init_flag = domain_init_turb();
       printf("done.\n");
       fflush(stdout);
       if(domain_init_flag == EXIT_FAILURE) {
@@ -524,12 +513,13 @@ int main(int argc, char *argv[]) {
 
         // get initial dt; this is an extra check for the SHEAR initialization
         dt = cuda_find_dt();
-	printf("cuda_find_dt\n");
+
         // share this with the precursor domain
         expd_compare_dt(np, status);
-	printf("expd_compare_dt\n");
+
         // update the boundary condition config info to share with precursor
         expd_update_BC(np, status);
+
         // apply boundary conditions to field variables
         if(nparts > 0) {
           cuda_part_BC();
@@ -540,7 +530,10 @@ int main(int argc, char *argv[]) {
         cuda_parts_internal();
         cuda_dom_BC();
 
-        // write initial fields
+	// set the frocing term A and calculate the forcing before push data to device
+	real A = 10000;
+	srand(time(NULL));        
+	// write initial fields
         if(runrestart != 1) {
           cuda_dom_pull();
           cuda_part_pull();
@@ -584,7 +577,6 @@ int main(int argc, char *argv[]) {
 
         #endif
         }
-
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -597,11 +589,13 @@ int main(int argc, char *argv[]) {
           stepnum++;
           printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
-
-          cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+		//Before each step, calculate forcing in host and copy to device
+		cuda_compute_phys_forcing(A);   
+	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
+
           // TODO: save work by rebuilding only the cages that need to be rebuilt
           cuda_build_cages();
 
