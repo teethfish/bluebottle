@@ -1,6 +1,7 @@
 new changes:
 1, add the function of physical forcing(remember free the working array)
 2, it is not tested how the initial condition affects the results
+3, change the update_p function
 
 WAIT TO DO:
 1, verify it is HIT
