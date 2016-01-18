@@ -1,4 +1,5 @@
 new changes:
+0, build remote repository on both lucan and MARCC
 1, add the function of physical forcing(remember free the working array)
 2, it is not tested how the initial condition affects the results
 3, change the update_p function
