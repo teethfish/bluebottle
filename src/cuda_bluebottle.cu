@@ -3734,6 +3734,7 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 extern "C"
 void cuda_compute_phys_forcing(real A)
 {
+	srand(34);
 	real phi_xx = rand() / (real)RAND_MAX - 0.5;
 	real phi_xy = rand() / (real)RAND_MAX - 0.5;
 	real phi_xz = rand() / (real)RAND_MAX - 0.5;

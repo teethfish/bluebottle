@@ -532,7 +532,6 @@ int main(int argc, char *argv[]) {
 
 	// set the frocing term A and calculate the forcing before push data to device
 	real A = 10000;
-	srand(time(NULL));        
 	// write initial fields
         if(runrestart != 1) {
           cuda_dom_pull();
