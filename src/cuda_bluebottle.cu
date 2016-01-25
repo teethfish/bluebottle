@@ -3734,18 +3734,18 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 extern "C"
 void cuda_compute_phys_forcing(real A)
 {
-	srand(34);
-	real phi_xx = rand() / (real)RAND_MAX - 0.5;
-	real phi_xy = rand() / (real)RAND_MAX - 0.5;
-	real phi_xz = rand() / (real)RAND_MAX - 0.5;
+	rng_init(100);
+	real phi_xx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_xy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_xz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
 	
-	real phi_yx = rand() / (real)RAND_MAX - 0.5;	
-	real phi_yy = rand() / (real)RAND_MAX - 0.5;
-	real phi_yz = rand() / (real)RAND_MAX - 0.5;
+	real phi_yx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;	
+	real phi_yy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_yz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
 
-	real phi_zx = rand() / (real)RAND_MAX - 0.5;
-	real phi_zy = rand() / (real)RAND_MAX - 0.5;
-	real phi_zz = rand() / (real)RAND_MAX - 0.5; 	
+	real phi_zx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_zy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_zz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5; 	
 	
 	//printf("random shift is = %f %f %f %f %f %f %f %f %f\n", phi_xx, phi_xy, phi_xz, phi_yx, phi_yy, phi_yz, phi_zx, phi_zy, phi_zz);
 	real xx = 0;

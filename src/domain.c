@@ -24,7 +24,7 @@
 
 #include "bluebottle.h"
 #include "domain.h"
-
+#include "rng.c"
 int nsubdom;
 
 void domain_read_input(void)
@@ -2826,7 +2826,7 @@ int domain_init_turb(void)
 
   // set up the random number generator
   //srand(time(NULL));
-  srand(34);
+  rng_init(100);
   for(i = 0; i < Dom.Gcc.s3b; i++) {
     p0[i] = 0.;
     p[i] = 0.;
@@ -2878,17 +2878,17 @@ int domain_init_turb(void)
   // randomly initialize velocity components
   
   for(i = 0; i < Dom.Gfx.s3b; i++) {
-    tmp = (rand() / (real)RAND_MAX - 0.5) * urms;
+    tmp = (rng_dbl() - 0.5) * urms; //(rand() / (real)RAND_MAX - 0.5) * urms;
     u[i] = tmp;
     u0[i] = tmp;
   }
   for(i = 0; i < Dom.Gfy.s3b; i++) {
-    tmp = (rand() / (real)RAND_MAX - 0.5) * urms;
+    tmp = (rng_dbl() - 0.5) * urms; //(rand() / (real)RAND_MAX - 0.5) * urms;
     v[i] = tmp;
     v0[i] = tmp;
   }
   for(i = 0; i < Dom.Gfz.s3b; i++) {
-    tmp = (rand() / (real)RAND_MAX - 0.5) * urms;
+    tmp = (rng_dbl() - 0.5) * urms; //(rand() / (real)RAND_MAX - 0.5) * urms;
     w[i] = tmp;
     w0[i] = tmp;
   }

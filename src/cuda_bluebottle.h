@@ -35,6 +35,7 @@ extern "C"
 {
 #include "bluebottle.h"
 #include "particle.h"
+#include "rng.h"
 }
 
 /****f* cuda_bluebottle_kernel/BC_p_W_P<<<>>>()
