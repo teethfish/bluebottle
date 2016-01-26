@@ -24,7 +24,7 @@
 
 #include "bluebottle.h"
 #include "domain.h"
-#include "rng.c"
+#include "rng.h"
 int nsubdom;
 
 void domain_read_input(void)
