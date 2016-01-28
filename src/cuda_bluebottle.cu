@@ -3735,17 +3735,17 @@ extern "C"
 void cuda_compute_phys_forcing(real A)
 {
 	rng_init(100);
-	real phi_xx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
-	real phi_xy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
-	real phi_xz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_xx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	real phi_xy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	real phi_xz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	
-	real phi_yx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;	
-	real phi_yy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
-	real phi_yz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
+	real phi_yx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;	
+	real phi_yy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	real phi_yz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 
-	real phi_zx = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
-	real phi_zy = rng_dbl(); //rand() / (real)RAND_MAX - 0.5;
-	real phi_zz = rng_dbl(); //rand() / (real)RAND_MAX - 0.5; 	
+	real phi_zx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	real phi_zy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	real phi_zz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5; 	
 	
 	//printf("random shift is = %f %f %f %f %f %f %f %f %f\n", phi_xx, phi_xy, phi_xz, phi_yx, phi_yy, phi_yz, phi_zx, phi_zy, phi_zz);
 	real xx = 0;
