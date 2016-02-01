@@ -1799,6 +1799,24 @@ __global__ void forcing_add_z_const(real val, real *fz, dom_struct *dom);
  *  forcing_add_x_field<<<>>>()
  * USAGE
  */
+
+__global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, dom_struct *dom);
+/*
+ * FUNCTION
+ * Add the experimental forcing(only six modes)
+ * ARGUMENTS
+ * * A -- the forcing magnitude
+ * * phi_xy --random number 
+ * * phi_xz --random number
+ * * fx -- the forcing array to be reset
+ * * dom -- the current subdomain
+ ******
+ */
+
+__global__ void forcing_turb_phys_y(real A, real phi_yx, real phi_yz, real *fy, dom_struct *dom);
+
+__global__ void forcing_turb_phys_z(real A, real phi_zx, real phi_zy, real *fz, dom_struct *dom);
+
 __global__ void forcing_add_x_field(real scale, real *val, real *fx,
   dom_struct *dom, int *phase);
 /*

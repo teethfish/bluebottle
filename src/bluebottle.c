@@ -530,8 +530,6 @@ int main(int argc, char *argv[]) {
         cuda_parts_internal();
         cuda_dom_BC();
 
-	// set the frocing term A and calculate the forcing before push data to device
-	real A = 10000;
 	// write initial fields
         if(runrestart != 1) {
           cuda_dom_pull();
@@ -576,6 +574,11 @@ int main(int argc, char *argv[]) {
 
         #endif
         }
+
+	// set the initial frocing term A which should calculated from sigma2 and tf
+	real tf = 4.437e-5;
+	real sigma2 = 3.38066e6;
+        real A = sqrt(2*sigma2*dt/tf);
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -588,9 +591,10 @@ int main(int argc, char *argv[]) {
           stepnum++;
           printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
-		//Before each step, calculate forcing in host and copy to device
-		cuda_compute_phys_forcing(A);   
+	
+	//Before each step, calculate forcing in host and copy to device
 	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+	  A = cuda_compute_phys_forcing(A, tf, sigma2);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);

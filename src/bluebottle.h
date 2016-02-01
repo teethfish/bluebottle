@@ -2773,7 +2773,16 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
  ******
  */
 
-void cuda_compute_phys_forcing(real A);
+real cuda_compute_phys_forcing(real A0, real tf, real sigma2);
+/*
+ * FUNCTION
+ * Add in the experimental domain forcing.
+ *
+ * A0 is the forcing in the previous time step
+ * tf is the forcing time scale, which should be smaller than eddy turnover time but larger than time step
+ * sigma2 is the value that controls the dissipation rate
+ *******
+ */
 
 /****f* bluebottle/cuda_compute_turb_forcing()
  * NAME

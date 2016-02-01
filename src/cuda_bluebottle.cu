@@ -3657,9 +3657,9 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
     dim3 numBlocks_z(blocks_x, blocks_y);
 
     // reset forcing arrays
-    //forcing_reset_x<<<numBlocks_x, dimBlocks_x>>>(_f_x[dev], _dom[dev]);
-    //forcing_reset_y<<<numBlocks_y, dimBlocks_y>>>(_f_y[dev], _dom[dev]);
-    //forcing_reset_z<<<numBlocks_z, dimBlocks_z>>>(_f_z[dev], _dom[dev]);
+    forcing_reset_x<<<numBlocks_x, dimBlocks_x>>>(_f_x[dev], _dom[dev]);
+    forcing_reset_y<<<numBlocks_y, dimBlocks_y>>>(_f_y[dev], _dom[dev]);
+    forcing_reset_z<<<numBlocks_z, dimBlocks_z>>>(_f_z[dev], _dom[dev]);
 
     // linearly accelerate pressure gradient from zero
     real delta = ttime - p_tDelay;
@@ -3732,41 +3732,30 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 }
 
 extern "C"
-void cuda_compute_phys_forcing(real A)
+real cuda_compute_phys_forcing(real A0, real tf, real sigma2)
 {
+
 	rng_init(100);
-	real phi_xx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	//real phi_xx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	real phi_xy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	real phi_xz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	
 	real phi_yx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;	
-	real phi_yy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	//real phi_yy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	real phi_yz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 
 	real phi_zx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	real phi_zy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	real phi_zz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5; 	
-	
-	//printf("random shift is = %f %f %f %f %f %f %f %f %f\n", phi_xx, phi_xy, phi_xz, phi_yx, phi_yy, phi_yz, phi_zx, phi_zy, phi_zz);
-	real xx = 0;
-	real yy = 0;
-	real zz = 0;
+	//real phi_zz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5; 	
 
-	int i,j,k;
-	int C;
+
+	real A = A0*(1 - dt/tf) + (2*rng_dbl()-1.0) * sqrt(2.0*sigma2*dt/tf);
+		
+	//printf("random shift is = %f %f %f %f %f %f %f %f %f\n", phi_xx, phi_xy, phi_xz, phi_yx, phi_yy, phi_yz, phi_zx, phi_zy, phi_zz);
 	
-	for(i = 0; i < Dom.Gfx.s3b; i++) {
-		f_x[i] = 0.0;
-	}
-	for(i = 0; i < Dom.Gfy.s3b; i++) {
-		f_y[i] = 0.0;
-	}
-	for(i = 0; i < Dom.Gfz.s3b; i++){
-		f_z[i] = 0.0;
-	}
 	// applying the linearing forcing term
 	/* LEAVE THE FORCING ON GHOST POINT EQUATL TO ZERO*/
-	for(k = Dom.Gfx.ks; k < Dom.Gfx.ke; k++) {
+	/*for(k = Dom.Gfx.ks; k < Dom.Gfx.ke; k++) {
     		for(j = Dom.Gfx.js; j < Dom.Gfx.je; j++) {
       			for(i = Dom.Gfx.is; i < Dom.Gfx.ie; i++) {
 				C = i + j*Dom.Gfx.s1b + k*Dom.Gfx.s2b;
@@ -3799,11 +3788,9 @@ void cuda_compute_phys_forcing(real A)
 				//printf("i %d, j %d, k %d,f_x %f\n",i,j,k,f_z[C]);
 			}
 		}
-	}
+	}*/
 	
 	//Copy the value in host to device in each step
-	int ii, jj, kk; 
-	int CC;
 	#pragma omp parallel num_threads(nsubdom)
 	{
 		int dev = omp_get_thread_num();
@@ -3815,85 +3802,44 @@ void cuda_compute_phys_forcing(real A)
 		int blocks_x = 0;
 		int blocks_y = 0;
 		int blocks_z = 0;
-	
-		//reate host working arrays for subdomain copy from host to device
-		real *ff_x = (real*) malloc(dom[dev].Gfz.s3b * sizeof(real));
-		real *ff_y = (real*) malloc(dom[dev].Gfy.s3b * sizeof(real));
-		real *ff_z = (real*) malloc(dom[dev].Gfz.s3b * sizeof(real));
 		
-		for(k = dom[dev].Gfx.ksb; k < dom[dev].Gfx.keb; k++) {
-			for(j = dom[dev].Gfx.jsb; j < dom[dev].Gfx.jeb; j++) {
-				for(i = dom[dev].Gfx.isb; i < dom[dev].Gfx.ieb; i++) {
-					ii = i - dom[dev].Gfx.isb;
-					jj = j - dom[dev].Gfx.jsb;
-					kk = k - dom[dev].Gfx.ksb;
-					C = i + j * Dom.Gfx.s1b + k * Dom.Gfx.s2b;
-					CC = ii + jj * dom[dev].Gfx.s1b + kk * dom[dev].Gfx.s2b;
-					ff_x[CC] = f_x[C];
-				}
-			}
-		}
-		for(k = dom[dev].Gfy.ksb; k < dom[dev].Gfy.keb; k++) {
-			for(j = dom[dev].Gfy.jsb; j < dom[dev].Gfy.jeb; j++) {
-				for(i = dom[dev].Gfy.isb; i < dom[dev].Gfy.ieb; i++) {
-					ii = i - dom[dev].Gfy.isb;
-					jj = j - dom[dev].Gfy.jsb;
-					kk = k - dom[dev].Gfy.ksb;
-					C = i + j * Dom.Gfy.s1b + k * Dom.Gfy.s2b;
-					CC = ii + jj * dom[dev].Gfy.s1b + kk * dom[dev].Gfy.s2b;
-					ff_y[CC] = f_y[C];
-				}
-			}
-		}
-		for(k = dom[dev].Gfz.ksb; k < dom[dev].Gfz.keb; k++) {
-			for(j = dom[dev].Gfz.jsb; j < dom[dev].Gfz.jeb; j++) {
-				for(i = dom[dev].Gfz.isb; i < dom[dev].Gfz.ieb; i++) {
-					ii = i - dom[dev].Gfz.isb;
-					jj = j - dom[dev].Gfz.jsb;
-					kk = k - dom[dev].Gfz.ksb;
-					C = i + j * Dom.Gfz.s1b + k * Dom.Gfz.s2b;
-					CC = ii + jj * dom[dev].Gfz.s1b + kk * dom[dev].Gfz.s2b;
-					ff_z[CC] = f_z[C];
-				}
-			}
-		}
-		// before copy from host to device, reset forcing to be zero
 		// x-component
 		if(dom[dev].Gfx._jnb < MAX_THREADS_DIM)
 			threads_y = dom[dev].Gfx._jnb;
 		else
 			threads_y = MAX_THREADS_DIM;
-		
+
 		if(dom[dev].Gfx._knb < MAX_THREADS_DIM)
 			threads_z = dom[dev].Gfx._knb;
 		else
 			threads_z = MAX_THREADS_DIM;
-		
+
 		blocks_y = (int)ceil((real) dom[dev].Gfx._jnb / (real) threads_y);
 		blocks_z = (int)ceil((real) dom[dev].Gfx._knb / (real) threads_z);
-		
+
 		dim3 dimBlocks_x(threads_y, threads_z);
 		dim3 numBlocks_x(blocks_y, blocks_z);
-		
+
 		// y-component
 		if(dom[dev].Gfy._knb < MAX_THREADS_DIM)
 			threads_z = dom[dev].Gfy._knb;
 		else
 			threads_z = MAX_THREADS_DIM;
-		
+
 		if(dom[dev].Gfy._inb < MAX_THREADS_DIM)
 			threads_x = dom[dev].Gfy._inb;
 		else
 			threads_x = MAX_THREADS_DIM;
+	
 		
 		blocks_z = (int)ceil((real) dom[dev].Gfy._knb / (real) threads_z);
 		blocks_x = (int)ceil((real) dom[dev].Gfy._inb / (real) threads_x);
-		
+
 		dim3 dimBlocks_y(threads_z, threads_x);
 		dim3 numBlocks_y(blocks_z, blocks_x);
 
 		// z-component
-		if(dom[dev].Gfz._inb < MAX_THREADS_DIM)		
+		if(dom[dev].Gfz._inb < MAX_THREADS_DIM)
 			threads_x = dom[dev].Gfz._inb;
 		else
 			threads_x = MAX_THREADS_DIM;
@@ -3902,28 +3848,20 @@ void cuda_compute_phys_forcing(real A)
 			threads_y = dom[dev].Gfz._jnb;
 		else
 			threads_y = MAX_THREADS_DIM;
-		
+	
 		blocks_x = (int)ceil((real) dom[dev].Gfz._inb / (real) threads_x);
 		blocks_y = (int)ceil((real) dom[dev].Gfz._jnb / (real) threads_y);
-		
+
 		dim3 dimBlocks_z(threads_x, threads_y);
 		dim3 numBlocks_z(blocks_x, blocks_y);
 
-		// reset forcing arrays
-		forcing_reset_x<<<numBlocks_x, dimBlocks_x>>>(_f_x[dev], _dom[dev]);
-		forcing_reset_y<<<numBlocks_y, dimBlocks_y>>>(_f_y[dev], _dom[dev]);
-		forcing_reset_z<<<numBlocks_z, dimBlocks_z>>>(_f_z[dev], _dom[dev]);
-		
-		// copy from host to device
-		(cudaMemcpy(_f_x[dev], ff_x, sizeof(real) * dom[dev].Gfx.s3b,cudaMemcpyHostToDevice));
-		(cudaMemcpy(_f_y[dev], ff_y, sizeof(real) * dom[dev].Gfy.s3b,cudaMemcpyHostToDevice));	
-		(cudaMemcpy(_f_z[dev], ff_z, sizeof(real) * dom[dev].Gfz.s3b,cudaMemcpyHostToDevice));	
 
-		(cudaFree(ff_x));
-		(cudaFree(ff_y));
-		(cudaFree(ff_z));
+		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(A, phi_xy, phi_xz, _f_x[dev], _dom[dev]);
+		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(A, phi_yx, phi_yz, _f_y[dev], _dom[dev]);
+		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(A, phi_zx, phi_zy, _f_z[dev], _dom[dev]);
 	}
 
+	return A;
 }
 		
 

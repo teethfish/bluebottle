@@ -2081,6 +2081,56 @@ __global__ void forcing_add_z_const(real val, real *fz, dom_struct *dom)
   }
 }
 
+__global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, dom_struct *dom)
+{
+  int tj = blockIdx.x * blockDim.x + threadIdx.x;
+  int tk = blockIdx.y * blockDim.y + threadIdx.y;
+  real yy, zz;
+
+  for(int i = dom->Gfx._isb; i < dom->Gfx._ieb; i++) {
+    if(tj < dom->Gfx._jnb && tk < dom->Gfx._knb) {
+      //xx = dom->_xs + (i - 1)*dom->_dx;
+      yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
+      zz = dom->zs + (tk - 1 + 0.5) * dom->dz;
+      fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]
+	+= 2*A*(cos(2*PI*(yy/dom->yl + phi_xy)) + cos(2*PI*(zz/dom->zl + phi_xz)));
+    }
+  }
+}
+
+__global__ void forcing_turb_phys_y(real A, real phi_yx, real phi_yz, real *fy, dom_struct *dom)
+{
+  int tk = blockIdx.x * blockDim.x + threadIdx.x;
+  int ti = blockIdx.y * blockDim.y + threadIdx.y;
+  real xx, zz;
+
+  for(int j = dom->Gfy._jsb; j < dom->Gfy._jeb; j++) {
+    if(tk < dom->Gfy._knb && ti < dom->Gfy._inb) {
+      //C = ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b;
+      xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
+      zz = dom->zs + (tk - 1 + 0.5)*dom->dz;
+      fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b]
+	+= 2*A*(cos(2*PI*(xx/dom->xl + phi_yx)) + cos(2*PI*(zz/dom->zl + phi_yz)));
+    }
+  }
+}	
+
+__global__ void forcing_turb_phys_z(real A, real phi_zx, real phi_zy, real *fz, dom_struct *dom)
+{
+  int ti = blockIdx.x * blockDim.x + threadIdx.x;
+  int tj = blockIdx.y * blockDim.y + threadIdx.y;
+  real xx, yy;
+
+  for(int k = dom->Gfz._ksb; k < dom->Gfz._keb; k++) {
+    if(ti < dom->Gfz._inb && tj < dom->Gfz._jnb) {
+      //C = ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b;
+      xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
+      yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
+      fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]
+	+= 2*A*(cos(2*PI*(xx/dom->xl + phi_zx)) + cos(2*PI*(yy/dom->yl + phi_zy)));
+    }
+  }
+}
 
 __global__ void forcing_add_x_field(real scale, real *val, real *fx,
   dom_struct *dom, int *phase)
