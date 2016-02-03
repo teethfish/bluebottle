@@ -3732,12 +3732,16 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 }
 
 extern "C"
-real cuda_compute_phys_forcing(real A0, real tf, real sigma2)
+void cuda_compute_phys_forcing(real* A, real tf, real sigma2)
 {
 
 	rng_init(100);
+	for(int i = 0; i < 12; i++){
+		A[i] = A[i]*(1 - dt/tf) + gaussrand() * sqrt(2.0*sigma2*dt/tf);
+		//printf("A[%d] is %.12f\n", i, A[i]);
+	}
 	//real phi_xx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	real phi_xy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
+	/*real phi_xy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	real phi_xz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	
 	real phi_yx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;	
@@ -3748,48 +3752,8 @@ real cuda_compute_phys_forcing(real A0, real tf, real sigma2)
 	real phi_zy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
 	//real phi_zz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5; 	
 
-
 	real A = A0*(1 - dt/tf) + (2*rng_dbl()-1.0) * sqrt(2.0*sigma2*dt/tf);
-		
-	//printf("random shift is = %f %f %f %f %f %f %f %f %f\n", phi_xx, phi_xy, phi_xz, phi_yx, phi_yy, phi_yz, phi_zx, phi_zy, phi_zz);
-	
-	// applying the linearing forcing term
-	/* LEAVE THE FORCING ON GHOST POINT EQUATL TO ZERO*/
-	/*for(k = Dom.Gfx.ks; k < Dom.Gfx.ke; k++) {
-    		for(j = Dom.Gfx.js; j < Dom.Gfx.je; j++) {
-      			for(i = Dom.Gfx.is; i < Dom.Gfx.ie; i++) {
-				C = i + j*Dom.Gfx.s1b + k*Dom.Gfx.s2b;
-				xx = Dom.xs + (i - 1) * Dom.dx;
-				yy = Dom.ys + (j - 1 + 0.5) * Dom.dy;
-				zz = Dom.zs + (k - 1 + 0.5) * Dom.dz;
-				f_x[C] = 2 * A * (cos(2 * PI * (xx/Dom.xl + phi_xx)) + cos(2 * PI * (yy/Dom.yl + phi_xy)) + cos(2 * PI * (zz/Dom.zl + phi_xz)));
-			}
-		}
-	}
-	for(k = Dom.Gfy.ks; k < Dom.Gfy.ke; k++) {
-    		for(j = Dom.Gfy.js; j < Dom.Gfy.je; j++) {
-      			for(i = Dom.Gfy.is; i < Dom.Gfy.ie; i++) {
-        			C = i + j*Dom.Gfy.s1b + k*Dom.Gfy.s2b;
-				xx = Dom.xs + (i - 1 + 0.5) * Dom.dx;
-                        	yy = Dom.ys + (j - 1) * Dom.dy;
-                        	zz = Dom.zs + (k - 1 + 0.5) * Dom.dz;
-				f_y[C] = 2 * A * (cos(2 * PI * (xx/Dom.xl + phi_yx)) + cos(2 * PI * (yy/Dom.yl + phi_yy)) + cos(2 * PI * (zz/Dom.zl + phi_yz)));
-			}
-		}
-	}
-	for(k = Dom.Gfz.ks; k < Dom.Gfz.ke; k++) {
-		for(j = Dom.Gfz.js; j < Dom.Gfz.je; j++) {
-			for(i = Dom.Gfz.is; i < Dom.Gfz.ie; i++) {
-				C = i + j*Dom.Gfz.s1b + k*Dom.Gfz.s2b;
-				xx = Dom.xs + (i - 1 + 0.5) * Dom.dx;
-                                yy = Dom.ys + (j - 1 + 0.5) * Dom.dy;
-                                zz = Dom.zs + (k - 1) * Dom.dz;
-				f_z[C] = 2 * A * (cos(2 * PI * (xx/Dom.xl + phi_zx)) + cos(2 * PI * (yy/Dom.yl + phi_zy)) + cos(2 * PI * (zz/Dom.zl + phi_zz)));
-				//printf("i %d, j %d, k %d,f_x %f\n",i,j,k,f_z[C]);
-			}
-		}
-	}*/
-	
+	*/
 	//Copy the value in host to device in each step
 	#pragma omp parallel num_threads(nsubdom)
 	{
@@ -3856,12 +3820,10 @@ real cuda_compute_phys_forcing(real A0, real tf, real sigma2)
 		dim3 numBlocks_z(blocks_x, blocks_y);
 
 
-		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(A, phi_xy, phi_xz, _f_x[dev], _dom[dev]);
-		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(A, phi_yx, phi_yz, _f_y[dev], _dom[dev]);
-		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(A, phi_zx, phi_zy, _f_z[dev], _dom[dev]);
+		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(A[0], A[1], A[2], A[3], _f_x[dev], _dom[dev]);
+		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(A[4], A[5], A[6], A[7], _f_y[dev], _dom[dev]);
+		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(A[8], A[9],A[10],A[11], _f_z[dev], _dom[dev]);
 	}
-
-	return A;
 }
 		
 

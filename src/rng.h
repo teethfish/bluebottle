@@ -8,6 +8,7 @@
 #define _RNG_H
 
 #include <stdlib.h>
+#include <math.h>
 
 extern unsigned long long int rng_j; // seed value
 extern unsigned long long int rng_v; // random number sequence
@@ -32,5 +33,8 @@ float rng_flt(void);
 
 // random double between 0 and 1
 double rng_dbl(void);
+
+// generate double numbers follows Gaussian distribution with mean 0 and standard deviation 1
+double gaussrand(void);
 
 #endif

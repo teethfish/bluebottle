@@ -2081,7 +2081,7 @@ __global__ void forcing_add_z_const(real val, real *fz, dom_struct *dom)
   }
 }
 
-__global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, dom_struct *dom)
+__global__ void forcing_turb_phys_x(real r_yx, real i_yx, real r_zx, real i_zx, real *fx, dom_struct *dom)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x;
   int tk = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2093,12 +2093,12 @@ __global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, 
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       zz = dom->zs + (tk - 1 + 0.5) * dom->dz;
       fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]
-	+= 2*A*(cos(2*PI*(yy/dom->yl + phi_xy)) + cos(2*PI*(zz/dom->zl + phi_xz)));
+	+= 2*(r_yx*cos(2*PI*yy/dom->yl) - i_yx*sin(2*PI*yy/dom->yl) + r_zx*cos(2*PI*zz/dom->zl) - i_zx*sin(2*PI*zz/dom->zl));
     }
   }
 }
 
-__global__ void forcing_turb_phys_y(real A, real phi_yx, real phi_yz, real *fy, dom_struct *dom)
+__global__ void forcing_turb_phys_y(real r_xy, real i_xy, real r_zy, real i_zy, real *fy, dom_struct *dom)
 {
   int tk = blockIdx.x * blockDim.x + threadIdx.x;
   int ti = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2110,12 +2110,12 @@ __global__ void forcing_turb_phys_y(real A, real phi_yx, real phi_yz, real *fy, 
       xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
       zz = dom->zs + (tk - 1 + 0.5)*dom->dz;
       fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b]
-	+= 2*A*(cos(2*PI*(xx/dom->xl + phi_yx)) + cos(2*PI*(zz/dom->zl + phi_yz)));
+	+= 2*(r_xy*cos(2*PI*xx/dom->xl) - i_xy*sin(2*PI*xx/dom->xl) + r_zy*cos(2*PI*zz/dom->zl) - i_zy*sin(2*PI*zz/dom->zl));
     }
   }
 }	
 
-__global__ void forcing_turb_phys_z(real A, real phi_zx, real phi_zy, real *fz, dom_struct *dom)
+__global__ void forcing_turb_phys_z(real r_xz, real i_xz, real r_yz, real i_yz, real *fz, dom_struct *dom)
 {
   int ti = blockIdx.x * blockDim.x + threadIdx.x;
   int tj = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2127,7 +2127,7 @@ __global__ void forcing_turb_phys_z(real A, real phi_zx, real phi_zy, real *fz, 
       xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]
-	+= 2*A*(cos(2*PI*(xx/dom->xl + phi_zx)) + cos(2*PI*(yy/dom->yl + phi_zy)));
+	+= 2*(r_xz*cos(2*PI*xx/dom->xl) - i_xz*sin(2*PI*xx/dom->xl) + r_yz*cos(2*PI*yy/dom->yl) - i_yz*sin(2*PI*yy/dom->yl));
     }
   }
 }

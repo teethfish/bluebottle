@@ -1800,7 +1800,7 @@ __global__ void forcing_add_z_const(real val, real *fz, dom_struct *dom);
  * USAGE
  */
 
-__global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, dom_struct *dom);
+__global__ void forcing_turb_phys_x(real r_yx, real i_yx, real r_zx, real i_zx, real *fx, dom_struct *dom);
 /*
  * FUNCTION
  * Add the experimental forcing(only six modes)
@@ -1813,9 +1813,9 @@ __global__ void forcing_turb_phys_x(real A, real phi_xy, real phi_xz, real *fx, 
  ******
  */
 
-__global__ void forcing_turb_phys_y(real A, real phi_yx, real phi_yz, real *fy, dom_struct *dom);
+__global__ void forcing_turb_phys_y(real r_xy, real i_xy, real r_zy, real i_zy, real *fy, dom_struct *dom);
 
-__global__ void forcing_turb_phys_z(real A, real phi_zx, real phi_zy, real *fz, dom_struct *dom);
+__global__ void forcing_turb_phys_z(real r_xz, real i_xz, real r_yz, real i_yz, real *fz, dom_struct *dom);
 
 __global__ void forcing_add_x_field(real scale, real *val, real *fx,
   dom_struct *dom, int *phase);

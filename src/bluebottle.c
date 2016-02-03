@@ -368,8 +368,8 @@ int main(int argc, char *argv[]) {
       // initialize the domain
       printf("Initializing domain variables...");
       fflush(stdout);
-      turbA = 3.;
-      int domain_init_flag = domain_init_turb();
+      //turbA = 3.;
+      int domain_init_flag = domain_init();
       printf("done.\n");
       fflush(stdout);
       if(domain_init_flag == EXIT_FAILURE) {
@@ -576,9 +576,10 @@ int main(int argc, char *argv[]) {
         }
 
 	// set the initial frocing term A which should calculated from sigma2 and tf
-	real tf = 4.437e-5;
-	real sigma2 = 3.38066e6;
-        real A = sqrt(2*sigma2*dt/tf);
+	real tf = 8.89e-4;
+	real sigma2 = 1.60157e6;
+	real tmp = sqrt(2*sigma2*dt/tf);
+        real A[12] = {tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp};
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -589,12 +590,12 @@ int main(int argc, char *argv[]) {
           rec_particle_ttime_out += dt;
           rec_restart_ttime_out += dt;
           stepnum++;
-          printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
+          //printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
 	
 	//Before each step, calculate forcing in host and copy to device
 	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
-	  A = cuda_compute_phys_forcing(A, tf, sigma2);
+	  cuda_compute_phys_forcing(A, tf, sigma2);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
@@ -675,8 +676,8 @@ int main(int argc, char *argv[]) {
             }
           }
 
-          printf("  The Lamb's coefficients converged in");
-          printf(" %d iterations.\n", iter);
+          //printf("  The Lamb's coefficients converged in");
+          //printf(" %d iterations.\n", iter);
 
           if(!lambflag) {
             // update particle position
