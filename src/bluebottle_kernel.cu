@@ -2081,7 +2081,7 @@ __global__ void forcing_add_z_const(real val, real *fz, dom_struct *dom)
   }
 }
 
-__global__ void forcing_turb_phys_x(real r_yx, real i_yx, real r_zx, real i_zx, real *fx, dom_struct *dom)
+__global__ void forcing_turb_phys_x(real *A, real *fx, dom_struct *dom)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x;
   int tk = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2093,12 +2093,12 @@ __global__ void forcing_turb_phys_x(real r_yx, real i_yx, real r_zx, real i_zx, 
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       zz = dom->zs + (tk - 1 + 0.5) * dom->dz;
       fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]
-	+= 2*(r_yx*cos(2*PI*yy/dom->yl) - i_yx*sin(2*PI*yy/dom->yl) + r_zx*cos(2*PI*zz/dom->zl) - i_zx*sin(2*PI*zz/dom->zl));
+	+= 2*(A[0]*cos(2*PI*yy/dom->yl) - A[1]*sin(2*PI*yy/dom->yl) + A[2]*cos(2*PI*zz/dom->zl) - A[3]*sin(2*PI*zz/dom->zl));
     }
   }
 }
 
-__global__ void forcing_turb_phys_y(real r_xy, real i_xy, real r_zy, real i_zy, real *fy, dom_struct *dom)
+__global__ void forcing_turb_phys_y(real *A, real *fy, dom_struct *dom)
 {
   int tk = blockIdx.x * blockDim.x + threadIdx.x;
   int ti = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2110,12 +2110,12 @@ __global__ void forcing_turb_phys_y(real r_xy, real i_xy, real r_zy, real i_zy, 
       xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
       zz = dom->zs + (tk - 1 + 0.5)*dom->dz;
       fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b]
-	+= 2*(r_xy*cos(2*PI*xx/dom->xl) - i_xy*sin(2*PI*xx/dom->xl) + r_zy*cos(2*PI*zz/dom->zl) - i_zy*sin(2*PI*zz/dom->zl));
+	+= 2*(A[4]*cos(2*PI*xx/dom->xl) - A[5]*sin(2*PI*xx/dom->xl) + A[6]*cos(2*PI*zz/dom->zl) - A[7]*sin(2*PI*zz/dom->zl));
     }
   }
 }	
 
-__global__ void forcing_turb_phys_z(real r_xz, real i_xz, real r_yz, real i_yz, real *fz, dom_struct *dom)
+__global__ void forcing_turb_phys_z(real *A, real *fz, dom_struct *dom)
 {
   int ti = blockIdx.x * blockDim.x + threadIdx.x;
   int tj = blockIdx.y * blockDim.y + threadIdx.y;
@@ -2127,7 +2127,7 @@ __global__ void forcing_turb_phys_z(real r_xz, real i_xz, real r_yz, real i_yz, 
       xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]
-	+= 2*(r_xz*cos(2*PI*xx/dom->xl) - i_xz*sin(2*PI*xx/dom->xl) + r_yz*cos(2*PI*yy/dom->yl) - i_yz*sin(2*PI*yy/dom->yl));
+	+= 2*(A[8]*cos(2*PI*xx/dom->xl) - A[9]*sin(2*PI*xx/dom->xl) + A[10]*cos(2*PI*yy/dom->yl) - A[11]*sin(2*PI*yy/dom->yl));
     }
   }
 }
@@ -2289,23 +2289,28 @@ __global__ void plane_eps_z_T(real eps, real *w_star, dom_struct *dom)
 }
 
 __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
-
+  real fx = 0.0;
+  real fy = 0.0;
+  real fz = 0.0;
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
+      fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
+      fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
+      fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x) / m
+        + parts[pp].aFx - vol*gradP.x - vol*fx) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y) / m
+        + parts[pp].aFy - vol*gradP.y - vol*fy) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z) / m
+        + parts[pp].aFz - vol*gradP.z - vol*fz) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities
@@ -2331,23 +2336,29 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
 }
 
 __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
-
+  real fx = 0.;
+  real fy = 0.;
+  real fz = 0.; 
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
+      // for multi-GPU, it needs to know the total length of coputational domain
+      fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
+      fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
+      fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x) / m
+        + parts[pp].aFx - vol*gradP.x - vol*fx) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y) / m
+        + parts[pp].aFy - vol*gradP.y - vol*fy) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-          + parts[pp].aFz - vol*gradP.z) / m
+          + parts[pp].aFz - vol*gradP.z - vol*fz) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities
