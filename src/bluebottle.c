@@ -168,11 +168,15 @@ long int gpumem;
 int bc_flow_configs[18];
 real bc_flow_vels[18];
 real bc_plane_pos[9];
+real *A;
+real *_A;
 real pid_int;
 real pid_back;
 real Kp;
 real Ki;
 real Kd;
+real Re_g;
+real tf_g;
 
 int main(int argc, char *argv[]) {
 
@@ -576,10 +580,15 @@ int main(int argc, char *argv[]) {
         }
 
 	// set the initial frocing term A which should calculated from sigma2 and tf
-	real tf = 8.89e-4;
-	real sigma2 = 1.60157e6;
-	real tmp = sqrt(2*sigma2*dt/tf);
-        real A[12] = {tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp};
+        real disp = nu*nu*nu/pow(pow(8.5/(Re_g*pow(6.,2./9.)),1.2),4)*(1.+tf_g*1.25*pow(6.0, 1./3.))/24.;
+        tf_g = tf_g/pow(disp, 1.0/3.0);
+        real sigma2 = disp/tf_g;
+        printf("tf and sigma2 is %f %f\n", tf_g, sigma2);
+        real tmp = sqrt(2*sigma2*dt/tf_g);
+        for(int i = 0; i < 12; i++){
+		A[i] = tmp;
+	}
+        //A[12] = {tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp};
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -590,12 +599,12 @@ int main(int argc, char *argv[]) {
           rec_particle_ttime_out += dt;
           rec_restart_ttime_out += dt;
           stepnum++;
-          //printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
+          printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
 	
 	//Before each step, calculate forcing in host and copy to device
 	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
-	  cuda_compute_phys_forcing(A, tf, sigma2);
+	  cuda_compute_phys_forcing(tf_g, sigma2);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
@@ -676,8 +685,8 @@ int main(int argc, char *argv[]) {
             }
           }
 
-          //printf("  The Lamb's coefficients converged in");
-          //printf(" %d iterations.\n", iter);
+          printf("  The Lamb's coefficients converged in");
+          printf(" %d iterations.\n", iter);
 
           if(!lambflag) {
             // update particle position
@@ -706,7 +715,8 @@ int main(int argc, char *argv[]) {
           } else {
             return EXIT_FAILURE;
           }
-
+	  cuda_part_pull();
+	  record_phys_forcing("forcing_hydro.dat", A);
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields

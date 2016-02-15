@@ -83,6 +83,5 @@ double gaussrand(void)
 
 	phase = 1 - phase;
 	
-	printf("X %f\n", X);
 	return X;
 }

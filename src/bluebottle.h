@@ -1297,7 +1297,7 @@ extern real **_v_BT;
  */
 
 /****v* bluebottle/_w_WE
- * NAME
+ * NAME/
  *  _w_WE
  * TYPE
  */
@@ -2256,6 +2256,8 @@ extern real turbA;
  ******
  */
 
+extern real *A;
+extern real *_A;
 /****v* bluebottle/turbl
  * NAME
  *  turbl
@@ -2773,7 +2775,7 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
  ******
  */
 
-void cuda_compute_phys_forcing(real* A, real tf, real sigma2);
+void cuda_compute_phys_forcing(real tf, real sigma2);
 /*
  * FUNCTION
  * Add in the experimental domain forcing.
@@ -2801,7 +2803,7 @@ void cuda_compute_turb_forcing(void);
  *  cuda_move_parts_sub()
  * USAGE
  */
-void cuda_move_parts_sub(void);
+void cuda_move_parts_sub();
 /*
  * FUNCTION
  *  Calculate new particle velocities and positions for sub-timestep implicit
@@ -2814,7 +2816,7 @@ void cuda_move_parts_sub(void);
  *  cuda_move_parts()
  * USAGE
  */
-void cuda_move_parts(void);
+void cuda_move_parts();
 /*
  * FUNCTION
  *  Calculate new particle velocities and positions.
@@ -3185,7 +3187,8 @@ extern real bc_plane_pos[9];
  *  [WEx SNx BTx WEy SNy BTy WEz SNz BTz]
  ******
  */
-
+extern real *_A;
+extern real *A;
 /****v* bluebottle/pid_int
  * NAME
  *  pid_int
@@ -3246,7 +3249,8 @@ extern real Kd;
  *  PID controller derivative gain.
  ******
  */
-
+extern real Re_g;
+extern real tf_g;
 /****f* bluebottle/cuda_compute_energy()
  * NAME
  *  cuda_compute_energy()

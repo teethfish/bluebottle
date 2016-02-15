@@ -37,6 +37,14 @@ sbatch submit-restart.sh
 extern "C"
 void cuda_dom_malloc(void)
 {
+  // allocate input vectors in host memory
+  A = (real*) malloc(12*sizeof(real));
+  cpumem += 12 * sizeof(real);
+  //allocate vectors in device memory
+ (cudaMalloc(&(_A), sizeof(real) * 12));
+  cpumem += 12 * sizeof(real);
+  (cudaMemcpy(_A, &A, sizeof(real) * 12,cudaMemcpyHostToDevice));
+  
   // allocate device memory on host
   _dom = (dom_struct**) malloc(nsubdom * sizeof(dom_struct*));
   cpumem += nsubdom * sizeof(dom_struct*);
@@ -1375,7 +1383,7 @@ void cuda_dom_free(void)
   {
     int dev = omp_get_thread_num();
     (cudaSetDevice(dev + dev_start));
-
+    (cudaFree(_A));
     (cudaFree(_dom[dev]));
     (cudaFree(_p0[dev]));
     (cudaFree(_p[dev]));
@@ -3732,31 +3740,16 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 }
 
 extern "C"
-void cuda_compute_phys_forcing(real* A, real tf, real sigma2)
+void cuda_compute_phys_forcing(real tf, real sigma2)
 {
-
 	rng_init(100);
 	for(int i = 0; i < 12; i++){
 		A[i] = A[i]*(1 - dt/tf) + gaussrand() * sqrt(2.0*sigma2*dt/tf);
-		//printf("A[%d] is %.12f\n", i, A[i]);
 	}
-	//real phi_xx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	/*real phi_xy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	real phi_xz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	
-	real phi_yx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;	
-	//real phi_yy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	real phi_yz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-
-	real phi_zx = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	real phi_zy = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5;
-	//real phi_zz = rng_dbl() - 0.5; //rand() / (real)RAND_MAX - 0.5; 	
-
-	real A = A0*(1 - dt/tf) + (2*rng_dbl()-1.0) * sqrt(2.0*sigma2*dt/tf);
-	*/
-	//Copy the value in host to device in each step
 	#pragma omp parallel num_threads(nsubdom)
 	{
+		//copy host value of A to device
+    		(cudaMemcpy(_A, A, sizeof(real) * 12,cudaMemcpyHostToDevice));
 		int dev = omp_get_thread_num();
 		(cudaSetDevice(dev + dev_start));
 	
@@ -3819,10 +3812,9 @@ void cuda_compute_phys_forcing(real* A, real tf, real sigma2)
 		dim3 dimBlocks_z(threads_x, threads_y);
 		dim3 numBlocks_z(blocks_x, blocks_y);
 
-
-		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(A[0], A[1], A[2], A[3], _f_x[dev], _dom[dev]);
-		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(A[4], A[5], A[6], A[7], _f_y[dev], _dom[dev]);
-		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(A[8], A[9],A[10],A[11], _f_z[dev], _dom[dev]);
+		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(_A, _f_x[dev], _dom[dev]);
+		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(_A, _f_y[dev], _dom[dev]);
+		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(_A, _f_z[dev], _dom[dev]);
 	}
 }
 		
@@ -4333,6 +4325,7 @@ void cuda_move_parts_sub()
    // parallelize over CPU threads
   #pragma omp parallel num_threads(nsubdom)
   {
+    
     int dev = omp_get_thread_num();
     (cudaSetDevice(dev + dev_start));
 
@@ -4354,8 +4347,9 @@ void cuda_move_parts_sub()
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+        
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, _A, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4423,7 +4417,7 @@ void cuda_move_parts_sub()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, _A, gradP, rho_f, ttime);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4451,6 +4445,7 @@ void cuda_move_parts()
    // parallelize over CPU threads
   #pragma omp parallel num_threads(nsubdom)
   {
+
     int dev = omp_get_thread_num();
     (cudaSetDevice(dev + dev_start));
 
@@ -4473,7 +4468,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, _A, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4541,7 +4536,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, _A, gradP, rho_f, ttime);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4562,7 +4557,7 @@ void cuda_move_parts()
       }
 
       move_parts_b<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-        dt, dt0, g, gradP, rho_f, ttime);
+        dt, dt0, g, _A, gradP, rho_f, ttime);
     }
   }
 }

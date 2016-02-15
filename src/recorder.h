@@ -133,6 +133,8 @@ void recorder_bicgstab_init(char *name);
  *  recorder_lamb_init()
  * TYPE
  */
+void recorder_phys_init(char *name);
+
 void recorder_lamb_init(char *name);
 /*
  * FUNCTION
@@ -157,6 +159,8 @@ void recorder_bicgstab(char *name, int niter, real resid);
  *  * resid -- the residual at convergence
  ******
  */
+
+void record_phys_forcing(char *name, real *A);
 
 /****f* recorder/recorder_lamb()
  * NAME

@@ -1909,6 +1909,29 @@ void recorder_bicgstab_init(char *name)
   fclose(rec);
 }
 
+void recorder_phys_init(char *name)
+{
+  // create the file
+  char path[FILE_NAME_SIZE] = "";
+  sprintf(path, "%s/record/%s", ROOT_DIR, name);
+  FILE *rec = fopen(path, "w");
+  if(rec == NULL) {
+    fprintf(stderr, "Could not open file %s\n", name);
+    exit(EXIT_FAILURE);
+  }
+
+ fprintf(rec, "%-15s", "time"); 
+ fprintf(rec, "%-15s", "phys_x");
+ fprintf(rec, "%-15s", "phys_y");
+ fprintf(rec, "%-15s", "phys_z");
+ fprintf(rec, "%-15s", "hfx");
+ fprintf(rec, "%-15s", "hfy");
+ fprintf(rec, "%-15s", "hfz");
+
+
+  // close the file
+  fclose(rec);
+}
 void recorder_lamb_init(char *name)
 {
   // create the file
@@ -1950,6 +1973,39 @@ void recorder_bicgstab(char *name, int niter, real resid)
 
   // close the file
   fclose(rec);
+}
+
+void record_phys_forcing(char *name, real *A)
+{
+  // open the file
+  char path[FILE_NAME_SIZE] = "";
+  sprintf(path, "%s/record/%s", ROOT_DIR, name);
+  FILE *rec = fopen(path, "r+");
+  if(rec == NULL) {
+    recorder_phys_init(name);
+    rec = fopen(path, "r+");
+  }
+
+  // move to the end of the file
+  fseek(rec, 0, SEEK_END);
+  
+  real fx = 2*(A[0]*cos(2*PI*parts[0].y/Dom.yl) - A[1]*sin(2*PI*parts[0].y/Dom.yl) + A[2]*cos(2*PI*parts[0].z/Dom.zl) - A[3]*sin(2*PI*parts[0].z/Dom.zl));
+  real fy = 2*(A[4]*cos(2*PI*parts[0].x/Dom.xl) - A[5]*sin(2*PI*parts[0].x/Dom.xl) + A[6]*cos(2*PI*parts[0].z/Dom.zl) - A[7]*sin(2*PI*parts[0].z/Dom.zl));  
+  real fz = 2*(A[8]*cos(2*PI*parts[0].x/Dom.xl) - A[9]*sin(2*PI*parts[0].y/Dom.yl) + A[10]*cos(2*PI*parts[0].y/Dom.yl) - A[11]*sin(2*PI*parts[0].y/Dom.yl));
+  fprintf(rec, "\n");
+  fprintf(rec, "%-15f", ttime);
+  fprintf(rec, "%-15f", fx);
+  fprintf(rec, "%-15f", fy);
+  fprintf(rec, "%-15f", fz);
+  // only one particle
+  fprintf(rec, "%-15f", parts[0].Fx);
+  fprintf(rec, "%-15f", parts[0].Fy);
+  fprintf(rec, "%-15f", parts[0].Fz);
+
+  // close the file
+  fclose(rec);
+
+  
 }
 
 void recorder_lamb(char *name, int iter)

@@ -21,16 +21,16 @@
 ################################################################################
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT: DEPENDENCIES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-MPI_DIR =
-HDF5_DIR =
-CGNS_DIR =
-CUSP_DIR =
-CUDA_DIR =
+MPI_DIR = /usr/lib/openmpi
+HDF5_DIR = /opt/hdf5
+CGNS_DIR = /opt/cgns
+CUSP_DIR = /opt/cusplibrary
+CUDA_DIR = /opt/cuda
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT: COMPILERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-MPICC =
-NVCC =
+MPICC = mpicc.openmpi
+NVCC = nvcc
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 PREC = DOUBLE
@@ -42,7 +42,7 @@ COPT = -std=c99 -pedantic -Wall -Wextra -fopenmp -D$(PREC)
 LDINCS = -I $(MPI_DIR)/include -I $(CGNS_DIR)/include -I $(CUSP_DIR)
 LDLIBS = -lm -L $(HDF5_DIR)/lib -L $(CGNS_DIR)/lib -lcgns -lhdf5 
 
-CUDAOPT = -arch=sm_35 -Xcompiler -fopenmp -m64 -D$(PREC)
+CUDAOPT = -arch=sm_30 -Xcompiler -fopenmp -m64 -D$(PREC)
 
 CUDALIBS = -L $(CUDA_DIR)/lib64 -lcudart
 
@@ -52,7 +52,8 @@ SRCC =	bluebottle.c	\
 	precursor.c	\
 	recorder.c	\
 	seeder.c	\
-	vtk.c
+	vtk.c		\
+	rng.c
 
 SRCCUDA = cuda_bluebottle.cu	\
 	cuda_bicgstab.cu	\
@@ -78,7 +79,8 @@ EXTRA = Makefile		\
 	particle.h		\
 	precursor.h		\
 	recorder.h		\
-	vtk.h
+	vtk.h			\
+	rng.c
 
 # compile normally
 all: COPT += -O2

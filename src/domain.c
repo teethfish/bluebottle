@@ -715,8 +715,6 @@ void domain_read_input(void)
 #endif
   fret = fscanf(infile, "\n");
 
-  fret = fscanf(infile, "\n");
-
   fret = fscanf(infile, "PID CONTROLLER GAINS\n");
 #ifdef DOUBLE
   fret = fscanf(infile, "Kp %lf\n", &Kp);
@@ -728,7 +726,17 @@ void domain_read_input(void)
   fret = fscanf(infile, "Kd %f\n", &Kd);
 #endif
 
+  fret = fscanf(infile, "\n");
+  fret = fscanf(infile, "TURB PARAMETERS\n");
+#ifdef DOUBLE
+  fret = fscanf(infile, "Re %lf\n", &Re_g);
+  fret = fscanf(infile, "tf %lf\n", &tf_g);
+#else
+  fret = fscanf(infile, "Re %f\n", &Re_g);
+  fret = fscanf(infile, "tf %f\n", &tf_g);
+#endif
   fclose(infile);
+  printf("Re and tf is %f %f\n", Re_g, tf_g);
 }
 
 void turb_read_input(void)
@@ -3115,6 +3123,7 @@ int domain_init_turb(void)
 
 void domain_clean(void)
 {
+  free(A);
   free(dom);
   free(p0);
   free(p);
