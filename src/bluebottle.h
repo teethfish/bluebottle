@@ -48,7 +48,7 @@
 #include "domain.h"
 #include "recorder.h"
 #include "vtk.h"
-
+#include "rng.h"
 /****d* bluebottle/PI
  * NAME
  *  PI
@@ -2774,8 +2774,9 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
  *  * Kd - the derivative gain
  ******
  */
+real cuda_phys_forcing_init(void);
 
-void cuda_compute_phys_forcing(real tf, real sigma2);
+void cuda_compute_phys_forcing(real sigma2);
 /*
  * FUNCTION
  * Add in the experimental domain forcing.

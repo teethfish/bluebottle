@@ -3740,12 +3740,40 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
 }
 
 extern "C"
-void cuda_compute_phys_forcing(real tf, real sigma2)
+real cuda_phys_forcing_init(void)
+{
+	//sigma2 is the forcing variance
+	real tmp;
+	real sigma2;
+	if(tf_g == 0){
+		tmp = 0.0;
+		tf_g = 1.e7;
+		sigma2 = 0.0;
+	}
+	else{
+		real disp = nu*nu*nu/pow(pow(8.5/(Re_g*pow(6.,2./9.)),1.2),4)*(1.+tf_g*1.25*pow(6.0, 1./3.))/24.;
+		tf_g = tf_g/pow(disp, 1.0/3.0);
+		sigma2 = disp/tf_g;
+		tmp = sqrt(2*sigma2*dt/tf_g);
+	}
+	for(int i = 0; i < 12; i++){
+		A[i] = tmp;
+	}
+	return sigma2;
+}
+
+extern "C"
+void cuda_compute_phys_forcing(real sigma2)
 {
 	rng_init(100);
+	real tmp;
+	printf("random number is\n");
 	for(int i = 0; i < 12; i++){
-		A[i] = A[i]*(1 - dt/tf) + gaussrand() * sqrt(2.0*sigma2*dt/tf);
+		tmp = gaussrand();	
+		A[i] = A[i]*(1 - dt/tf_g) + tmp * sqrt(2.0*sigma2*dt/tf_g);
+		printf(" %f ", tmp);	
 	}
+	printf("\n");
 	#pragma omp parallel num_threads(nsubdom)
 	{
 		//copy host value of A to device

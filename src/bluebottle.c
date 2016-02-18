@@ -206,18 +206,26 @@ int main(int argc, char *argv[]) {
     int argin;
     int runseeder = 0;
     int runrestart = 0;
+    int seeder = 0;
     while(--argc > 0 && (*++argv)[0] == '-') {
       while((argin = *++argv[0])) {
         switch(argin) {
           case 's':
             runseeder = 1;
+	    printf("seeder!\n");
             break;
+	  case 'n':
+	    seeder = atoi(argv[argc-1]);
+	    printf("seeder is %d\n", seeder);
+	    argc = argc - 1;
+	    break;
           case 'r':
             runrestart = 1;
-            break;
+	    break;
           default:
             runseeder = 2;
             runrestart = 2;
+	    seeder = 1;
             printf("bluebottle: illegal option %c\n", argin);
             argc = 0;
             break;
@@ -304,7 +312,7 @@ int main(int argc, char *argv[]) {
       }
     } else if(runrestart == 1 && argc > 0) {
       printf("Usage restart simulation: bluebottle -r\n");
-      return EXIT_FAILURE;
+      //return EXIT_FAILURE;
     } else if(runseeder == 2) {
       return EXIT_FAILURE;
     } else if(runrestart == 2) {
@@ -580,15 +588,9 @@ int main(int argc, char *argv[]) {
         }
 
 	// set the initial frocing term A which should calculated from sigma2 and tf
-        real disp = nu*nu*nu/pow(pow(8.5/(Re_g*pow(6.,2./9.)),1.2),4)*(1.+tf_g*1.25*pow(6.0, 1./3.))/24.;
-        tf_g = tf_g/pow(disp, 1.0/3.0);
-        real sigma2 = disp/tf_g;
-        printf("tf and sigma2 is %f %f\n", tf_g, sigma2);
-        real tmp = sqrt(2*sigma2*dt/tf_g);
-        for(int i = 0; i < 12; i++){
-		A[i] = tmp;
-	}
-        //A[12] = {tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp};
+	real forcing_var;
+	forcing_var = cuda_phys_forcing_init();
+	rng_init(seeder);
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -604,7 +606,7 @@ int main(int argc, char *argv[]) {
 	
 	//Before each step, calculate forcing in host and copy to device
 	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
-	  cuda_compute_phys_forcing(tf_g, sigma2);
+	  cuda_compute_phys_forcing(forcing_var);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
