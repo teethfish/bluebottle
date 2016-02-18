@@ -206,7 +206,8 @@ int main(int argc, char *argv[]) {
     int argin;
     int runseeder = 0;
     int runrestart = 0;
-    int seeder = 0;
+    srand(time(NULL));
+    int seeder = rand();
     while(--argc > 0 && (*++argv)[0] == '-') {
       while((argin = *++argv[0])) {
         switch(argin) {
@@ -216,7 +217,7 @@ int main(int argc, char *argv[]) {
             break;
 	  case 'n':
 	    seeder = atoi(argv[argc-1]);
-	    printf("seeder is %d\n", seeder);
+	    //printf("seeder is %d\n", seeder);
 	    argc = argc - 1;
 	    break;
           case 'r':
@@ -232,7 +233,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    
+    printf("seeder is %d\n", seeder); 
     if(runseeder == 1) {
       int fret = 0;
       fret = fret;  // prevent compiler warning

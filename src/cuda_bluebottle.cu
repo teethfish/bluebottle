@@ -3765,15 +3765,9 @@ real cuda_phys_forcing_init(void)
 extern "C"
 void cuda_compute_phys_forcing(real sigma2)
 {
-	rng_init(100);
-	real tmp;
-	printf("random number is\n");
 	for(int i = 0; i < 12; i++){
-		tmp = gaussrand();	
-		A[i] = A[i]*(1 - dt/tf_g) + tmp * sqrt(2.0*sigma2*dt/tf_g);
-		printf(" %f ", tmp);	
+		A[i] = A[i]*(1 - dt/tf_g) + gaussrand() * sqrt(2.0*sigma2*dt/tf_g);
 	}
-	printf("\n");
 	#pragma omp parallel num_threads(nsubdom)
 	{
 		//copy host value of A to device

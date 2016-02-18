@@ -2304,13 +2304,16 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
       fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
       fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x + parts[pp].rho*vol*fx/rho_f) / m
-        + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
+      //  + parts[pp].aFx - vol*gradP.x + parts[pp].rho*vol*fx/rho_f) / m
+       + parts[pp].aFx - vol*gradP.x) / m 
+       + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y + vol*fy*parts[pp].rho/rho_f) / m
+      // + parts[pp].aFy - vol*gradP.y + vol*fy*parts[pp].rho/rho_f) / m
+	+ parts[pp].aFy - vol*gradP.y) / m 
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z + vol*fz*parts[pp].rho/rho_f) / m
+      //  + parts[pp].aFz - vol*gradP.z + vol*fz*parts[pp].rho/rho_f) / m
+	+ parts[pp].aFz - vol*gradP.z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities
@@ -2352,13 +2355,16 @@ __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
       fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
       fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x + vol*fx*parts[pp].rho) / m
+       // + parts[pp].aFx - vol*gradP.x + vol*fx*parts[pp].rho) / m
+	+ parts[pp].aFx - vol*gradP.x) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y + vol*fy*parts[pp].rho) / m
+       // + parts[pp].aFy - vol*gradP.y + vol*fy*parts[pp].rho) / m
+	+ parts[pp].aFy - vol*gradP.y) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z + vol*fz*parts[pp].rho) / m
+      //  + parts[pp].aFz - vol*gradP.z + vol*fz*parts[pp].rho) / m
+	+ parts[pp].aFz - vol*gradP.z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities

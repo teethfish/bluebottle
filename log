@@ -1,0 +1,7 @@
+this version of code can:
+
+1, do pope's forcing in low wvenumber shell
+2, also subtract the forcing the particle feels due to the random forcing(add the vol*forcing in particle center)
+3, output the random forcing and the hydrodynamic force 
+4, pass seeder value from command line
+5, generate seeder in a sequence and read the value automatically
