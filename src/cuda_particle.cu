@@ -1011,7 +1011,7 @@ void cuda_part_BC_p(int dev)
     _pnm_re00[dev], _pnm_im00[dev],
     _phinm_re00[dev], _phinm_im00[dev], _chinm_re00[dev], _chinm_im00[dev],
     _pnm_re[dev], _pnm_im[dev],
-    _phinm_re[dev], _phinm_im[dev], _chinm_re[dev], _chinm_im[dev]);
+    _phinm_re[dev], _phinm_im[dev], _chinm_re[dev], _chinm_im[dev],_f_x[dev], _f_y[dev],_f_z[dev]);
 }
 
 
@@ -1037,7 +1037,7 @@ void cuda_part_p_fill(void)
     part_BC_p_fill<<<numblocks_c, dimblocks_c>>>(_p[dev], _phase[dev],
       _parts[dev], _dom[dev],
       mu, nu, rho_f, gradP, coeff_stride,
-      _pnm_re[dev], _pnm_im[dev]);
+      _pnm_re[dev], _pnm_im[dev], _f_x[dev], _f_y[dev], _f_z[dev]);
   }
 }
 

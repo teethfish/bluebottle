@@ -95,7 +95,7 @@ __global__ void check_nodes(int nparts, part_struct *parts, dom_struct *dom,
 __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real rho_f, real nu, gradP_struct gradP,
   part_struct *parts, dom_struct *dom, real *theta, real *phi, int nnodes,
-  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc)
+  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, real *fx, real *fy, real *fz)
 {
   int node = threadIdx.x;
   int part = blockIdx.x;
@@ -172,9 +172,10 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real ocrossr2 = (oy*zp - oz*yp) * (oy*zp - oz*yp);
   ocrossr2 += (ox*zp - oz*xp) * (ox*zp - oz*xp);
   ocrossr2 += (ox*yp - oy*xp) * (ox*yp - oy*xp);
-  real rhoV = rho_f;
-  real accdotr = (-gradP.x/rhoV - udot)*xp + (-gradP.y/rhoV - vdot)*yp
-    + (-gradP.z/rhoV - wdot)*zp;
+  //real rhoV = rho_f;
+  real accdotr = (fx[C] - udot)*x + (fy[C] - vdot)*y + (fz[C] - wdot)*z;
+  //real accdotr = (-gradP.x/rhoV - udot)*xp + (-gradP.y/rhoV - vdot)*yp
+  //  + (-gradP.z/rhoV - wdot)*zp;
   pp[node+nnodes*part] -= 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
   // zero if this node intersects wall
   pp[node+nnodes*part] = (parts[part].nodes[node]==-1)*pp[node+part*nnodes];
@@ -547,7 +548,7 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
   real rho_f, real mu, real nu, int stride,
   real *pnm_re, real *pnm_im,
   real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, real *A)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
 
@@ -555,14 +556,23 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
     real vol = 4./3. * PI *  parts[pp].r*parts[pp].r*parts[pp].r;
     real N10 = sqrt(3./4./PI);
     real N11 = sqrt(3./8./PI);
+   
+    // For now, only consider if the externel forcing field is a constant. For general situation, interpolate fx,fy,fz depends on the particle's position. 
+    real fx = - gradP.x/rho_f + 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
+    real fy = -gradP.y/rho_f + 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
+    real fz = -gradP.z/rho_f + 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));    
 
-    parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x)
+    //To find the forcing at the particle center, we need to do interpolation
+    parts[pp].Fx = rho_f * vol * (parts[pp].udot - fx)
+    //parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x)
       - PI * mu * nu * 2.*N11 * (pnm_re[stride*pp + 2]
       + 6.*phinm_re[stride*pp + 2]);
-    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y)
+    parts[pp].Fy = rho_f * vol * (parts[pp].vdot - fy)
+    //parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y)
       + PI * mu * nu * 2.*N11 * (pnm_im[stride*pp + 2]
       + 6.*phinm_im[stride*pp + 2]);
-    parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z)
+    parts[pp].Fz = rho_f * vol * (parts[pp].wdot - fz)
+    //parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z)
       + PI * mu * nu * N10 * (pnm_re[stride*pp + 1]
       + 6.*phinm_re[stride*pp + 1]);
 
