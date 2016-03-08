@@ -536,7 +536,7 @@ __global__ void part_BC_u(real *u, int *phase, int *flag_u,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, real *A)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gfx._jsb;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gfx._ksb;
@@ -621,11 +621,22 @@ __global__ void part_BC_u(real *u, int *phase, int *flag_u,
         chinm_re, chinm_im,
         P, stride, &Ux, &Uy, &Uz);
 
-
+      
       real ocrossr_x = oy*z - oz*y;
       real odotcrossr_x = oydot*z - ozdot*y;
       Ux += uu + ocrossr_x;
       Ux += 0.1/nu *(r*r*r*r*r-a*a*a*a*a)/(r*r*r) * odotcrossr_x;
+      /*real ky = 2*PI/dom->yl;
+      real kz = 2*PI/dom->zl;
+      real yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
+      real zz = dom->zs + (tk - 1 + 0.5) * dom->dz;
+      
+      if (PP > -1){
+      real Ax_center = 2*(A[0]*cos(ky*parts[PP].y)/ky/ky - A[1]*sin(ky*parts[PP].y)/ky/ky + A[2]*cos(kz*parts[PP].z)/kz/kz - A[3]*sin(kz*parts[PP].z)/kz/kz)/nu;
+      real fx = 2*(A[0]*cos(ky*yy)/ky/ky - A[1]*sin(ky*yy)/ky/ky + A[2]*cos(kz*zz)/kz/kz - A[3]*sin(kz*zz)/kz/kz)/nu - Ax_center;
+      Ux += fx;
+      }*/
+
       // boolean check if this is an analytically-posed node
       int check = (flag_u[C] < 1) && (PP > -1);
       u[C] = check * Ux + (1 - check) * u[C];
@@ -638,7 +649,7 @@ __global__ void part_BC_v(real *v, int *phase, int *flag_v,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, real *A)
 {
   int tk = blockDim.x*blockIdx.x + threadIdx.x + dom->Gfy._ksb;
   int ti = blockDim.y*blockIdx.y + threadIdx.y + dom->Gfy._isb;
@@ -728,6 +739,16 @@ __global__ void part_BC_v(real *v, int *phase, int *flag_v,
       real odotcrossr_y = -(oxdot*z - ozdot*x);
       Uy += vv + ocrossr_y;
       Uy += 0.1/nu *(r*r*r*r*r-a*a*a*a*a)/(r*r*r) * odotcrossr_y;
+      /*real kx = 2*PI/dom->xl;
+      real kz = 2*PI/dom->zl;
+      real xx = dom->xs + (ti - 1 + 0.5)*dom->dx;
+      real zz = dom->zs + (tk - 1 + 0.5)*dom->dz;
+
+      if(PP > -1){
+      real Ay_center = 2*(A[4]*cos(kx*parts[PP].x)/kx/kx - A[5]*sin(kx*parts[PP].x)/kx/kx + A[6]*cos(kz*parts[PP].z)/kz/kz - A[7]*sin(kz*parts[PP].z)/kz/kz)/nu;
+      real fy = 2*(A[4]*cos(kx*xx)/kx/kx - A[5]*sin(kx*xx)/kx/kx + A[6]*cos(kz*zz)/kz/kz - A[7]*sin(kz*zz)/kz/kz)/nu - Ay_center;
+      Uy += fy;
+      }*/
       // boolean check if this is an analytically-posed node
       int check = (flag_v[C] < 1) && (PP > -1);
       v[C] = check * Uy + (1 - check) * v[C];
@@ -740,7 +761,7 @@ __global__ void part_BC_w(real *w, int *phase, int *flag_w,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, real *A)
 {
   int ti = blockDim.x*blockIdx.x + threadIdx.x + dom->Gfz._isb;
   int tj = blockDim.y*blockIdx.y + threadIdx.y + dom->Gfz._jsb;
@@ -830,6 +851,16 @@ __global__ void part_BC_w(real *w, int *phase, int *flag_w,
       real odotcrossr_z = oxdot*y - oydot*x;
       Uz += ww + ocrossr_z;
       Uz += 0.1/nu *(r*r*r*r*r-a*a*a*a*a)/(r*r*r) * odotcrossr_z;
+      /*real kx = 2*PI/dom->xl;
+      real ky = 2*PI/dom->yl;
+      real xx = dom->xs + (ti - 1 + 0.5) * dom->dx;
+      real yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
+
+      if(PP>-1){
+      real Az_center = 2*(A[8]*cos(kx*parts[PP].x)/kx/kx - A[9]*sin(kx*parts[PP].x)/kx/kx + A[10]*cos(ky*parts[PP].y)/ky/ky - A[11]*sin(ky*parts[PP].y)/ky/ky)/nu;
+      real fz = 2*(A[8]*cos(kx*xx)/kx/kx - A[9]*sin(kx*xx)/kx/kx + A[10]*cos(ky*yy)/ky/ky - A[11]*sin(ky*yy)/ky/ky)/nu - Az_center;      
+      Uz += fz;
+      }*/
       // boolean check if this is an analytically-posed node
       int check = (flag_w[C] < 1) && (PP > -1);
       w[C] = check * Uz + (1 - check) * w[C];
@@ -844,7 +875,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
   real *pnm_re00, real *pnm_im00, real *phinm_re00, real *phinm_im00,
   real *chinm_re00, real *chinm_im00,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im, real *fx, real *fy, real *fz)
+  real *chinm_re, real *chinm_im, real *A)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gcc._js;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gcc._ks;
@@ -925,9 +956,13 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
       real ocrossr2 = (oy*z - oz*y) * (oy*z - oz*y);
       ocrossr2 += (ox*z - oz*x) * (ox*z - oz*x);
       ocrossr2 += (ox*y - oy*x) * (ox*y - oy*x);
-      //real rhoV = rho_f;
-      real accdotr = (fx[CC] - udot)*x + (fy[CC] - vdot)*y + (fz[CC] - wdot)*z;
-      //real accdotr = (-gradP.x/rhoV - udot)*x + (-gradP.y/rhoV - vdot)*y + (-gradP.z/rhoV - wdot)*z;
+      real rhoV = rho_f;
+
+      real fx = 2*(A[0]*cos(2*PI*parts[P].y/dom->yl) - A[1]*sin(2*PI*parts[P].y/dom->yl) + A[2]*cos(2*PI*parts[P].z/dom->zl) - A[3]*sin(2*PI*parts[P].z/dom->zl));
+      real fy = 2*(A[4]*cos(2*PI*parts[P].x/dom->xl) - A[5]*sin(2*PI*parts[P].x/dom->xl) + A[6]*cos(2*PI*parts[P].z/dom->zl) - A[7]*sin(2*PI*parts[P].z/dom->zl));
+      real fz = 2*(A[8]*cos(2*PI*parts[P].x/dom->xl) - A[9]*sin(2*PI*parts[P].x/dom->xl) + A[10]*cos(2*PI*parts[P].y/dom->yl) - A[11]*sin(2*PI*parts[P].y/dom->yl));
+
+      real accdotr = (-gradP.x/rhoV - udot + fx)*x + (-gradP.y/rhoV - vdot + fy)*y + (-gradP.z/rhoV - wdot + fz)*z;
       pp_tmp += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       //pp_tmp00 += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       // write BC if flagged, otherwise leave alone
@@ -943,7 +978,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
 __global__ void part_BC_p_fill(real *p, int *phase,
   part_struct *parts, dom_struct *dom,
   real mu, real nu, real rho_f, gradP_struct gradP, int stride,
-  real *pnm_re, real *pnm_im, real *fx, real *fy, real *fz)
+  real *pnm_re, real *pnm_im, real *A)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gcc._js;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gcc._ks;
@@ -1007,9 +1042,12 @@ __global__ void part_BC_p_fill(real *p, int *phase,
       ocrossr2 += (ox*z - oz*x) * (ox*z - oz*x);
       ocrossr2 += (ox*y - oy*x) * (ox*y - oy*x);
       real rhoV = rho_f;
-      real accdotr = (fx[CC] - udot)*x + (fy[CC] - vdot)*y + (fz[CC] - wdot)*z;
-      //real accdotr = (-gradP.x/rhoV - udot)*x + (-gradP.y/rhoV - vdot)*y
-      //  + (-gradP.z/rhoV - wdot)*z;
+
+      real fx = 2*(A[0]*cos(2*PI*parts[P].y/dom->yl) - A[1]*sin(2*PI*parts[P].y/dom->yl) + A[2]*cos(2*PI*parts[P].z/dom->zl) - A[3]*sin(2*PI*parts[P].z/dom->zl));
+      real fy = 2*(A[4]*cos(2*PI*parts[P].x/dom->xl) - A[5]*sin(2*PI*parts[P].x/dom->xl) + A[6]*cos(2*PI*parts[P].z/dom->zl) - A[7]*sin(2*PI*parts[P].z/dom->zl));
+      real fz = 2*(A[8]*cos(2*PI*parts[P].x/dom->xl) - A[9]*sin(2*PI*parts[P].x/dom->xl) + A[10]*cos(2*PI*parts[P].y/dom->yl) - A[11]*sin(2*PI*parts[P].y/dom->yl));
+
+      real accdotr = (-gradP.x/rhoV - udot + fx)*x + (-gradP.y/rhoV - vdot + fy)*y  + (-gradP.z/rhoV - wdot + fz)*z;
       pp_tmp += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       // write BC if inside particle, otherwise leave alone
       p[CC] = (real) (phase[CC] > -1) * pp_tmp

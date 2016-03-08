@@ -3745,7 +3745,7 @@ real cuda_phys_forcing_init(void)
 	//sigma2 is the forcing variance
 	real tmp;
 	real sigma2;
-	if(tf_g == 0){
+	if(tf_g == 0 || Re_g == 0){
 		tmp = 0.0;
 		tf_g = 1.e7;
 		sigma2 = 0.0;
@@ -3765,79 +3765,80 @@ real cuda_phys_forcing_init(void)
 extern "C"
 void cuda_compute_phys_forcing(real sigma2)
 {
-	for(int i = 0; i < 12; i++){
-		A[i] = A[i]*(1 - dt/tf_g) + gaussrand() * sqrt(2.0*sigma2*dt/tf_g);
-	}
-	#pragma omp parallel num_threads(nsubdom)
-	{
-		//copy host value of A to device
-    		(cudaMemcpy(_A, A, sizeof(real) * 12,cudaMemcpyHostToDevice));
-		int dev = omp_get_thread_num();
-		(cudaSetDevice(dev + dev_start));
+  for(int i = 0; i < 12; i++){
+    A[i] = A[i]*(1 - dt/tf_g) + gaussrand() * sqrt(2.0*sigma2*dt/tf_g);
+  }
+
+  #pragma omp parallel num_threads(nsubdom)
+  {
+     //copy host value of A to device
+    (cudaMemcpy(_A, A, sizeof(real) * 12,cudaMemcpyHostToDevice));
+    int dev = omp_get_thread_num();
+    (cudaSetDevice(dev + dev_start));
 	
-		int threads_x = 0;
-		int threads_y = 0;
-		int threads_z = 0;
-		int blocks_x = 0;
-		int blocks_y = 0;
-		int blocks_z = 0;
+    int threads_x = 0;
+    int threads_y = 0;
+    int threads_z = 0;
+    int blocks_x = 0;
+    int blocks_y = 0;
+    int blocks_z = 0;
 		
-		// x-component
-		if(dom[dev].Gfx._jnb < MAX_THREADS_DIM)
-			threads_y = dom[dev].Gfx._jnb;
-		else
-			threads_y = MAX_THREADS_DIM;
+    // x-component
+    if(dom[dev].Gfx._jnb < MAX_THREADS_DIM)
+	threads_y = dom[dev].Gfx._jnb;
+    else
+	threads_y = MAX_THREADS_DIM;
 
-		if(dom[dev].Gfx._knb < MAX_THREADS_DIM)
-			threads_z = dom[dev].Gfx._knb;
-		else
-			threads_z = MAX_THREADS_DIM;
+    if(dom[dev].Gfx._knb < MAX_THREADS_DIM)
+	threads_z = dom[dev].Gfx._knb;
+    else
+	threads_z = MAX_THREADS_DIM;
 
-		blocks_y = (int)ceil((real) dom[dev].Gfx._jnb / (real) threads_y);
-		blocks_z = (int)ceil((real) dom[dev].Gfx._knb / (real) threads_z);
+    blocks_y = (int)ceil((real) dom[dev].Gfx._jnb / (real) threads_y);
+    blocks_z = (int)ceil((real) dom[dev].Gfx._knb / (real) threads_z);
 
-		dim3 dimBlocks_x(threads_y, threads_z);
-		dim3 numBlocks_x(blocks_y, blocks_z);
+    dim3 dimBlocks_x(threads_y, threads_z);
+    dim3 numBlocks_x(blocks_y, blocks_z);
 
-		// y-component
-		if(dom[dev].Gfy._knb < MAX_THREADS_DIM)
-			threads_z = dom[dev].Gfy._knb;
-		else
-			threads_z = MAX_THREADS_DIM;
+    // y-component
+    if(dom[dev].Gfy._knb < MAX_THREADS_DIM)
+	threads_z = dom[dev].Gfy._knb;
+    else
+	threads_z = MAX_THREADS_DIM;
 
-		if(dom[dev].Gfy._inb < MAX_THREADS_DIM)
-			threads_x = dom[dev].Gfy._inb;
-		else
-			threads_x = MAX_THREADS_DIM;
+    if(dom[dev].Gfy._inb < MAX_THREADS_DIM)
+	threads_x = dom[dev].Gfy._inb;
+    else
+	threads_x = MAX_THREADS_DIM;
 	
 		
-		blocks_z = (int)ceil((real) dom[dev].Gfy._knb / (real) threads_z);
-		blocks_x = (int)ceil((real) dom[dev].Gfy._inb / (real) threads_x);
+    blocks_z = (int)ceil((real) dom[dev].Gfy._knb / (real) threads_z);
+    blocks_x = (int)ceil((real) dom[dev].Gfy._inb / (real) threads_x);
 
-		dim3 dimBlocks_y(threads_z, threads_x);
-		dim3 numBlocks_y(blocks_z, blocks_x);
+    dim3 dimBlocks_y(threads_z, threads_x);
+    dim3 numBlocks_y(blocks_z, blocks_x);
 
-		// z-component
-		if(dom[dev].Gfz._inb < MAX_THREADS_DIM)
-			threads_x = dom[dev].Gfz._inb;
-		else
-			threads_x = MAX_THREADS_DIM;
+    // z-component
+    if(dom[dev].Gfz._inb < MAX_THREADS_DIM)
+	threads_x = dom[dev].Gfz._inb;
+    else
+	threads_x = MAX_THREADS_DIM;
 
-		if(dom[dev].Gfz._jnb < MAX_THREADS_DIM)
-			threads_y = dom[dev].Gfz._jnb;
-		else
-			threads_y = MAX_THREADS_DIM;
+    if(dom[dev].Gfz._jnb < MAX_THREADS_DIM)
+	threads_y = dom[dev].Gfz._jnb;
+    else
+	threads_y = MAX_THREADS_DIM;
 	
-		blocks_x = (int)ceil((real) dom[dev].Gfz._inb / (real) threads_x);
-		blocks_y = (int)ceil((real) dom[dev].Gfz._jnb / (real) threads_y);
+    blocks_x = (int)ceil((real) dom[dev].Gfz._inb / (real) threads_x);
+    blocks_y = (int)ceil((real) dom[dev].Gfz._jnb / (real) threads_y);
 
-		dim3 dimBlocks_z(threads_x, threads_y);
-		dim3 numBlocks_z(blocks_x, blocks_y);
+    dim3 dimBlocks_z(threads_x, threads_y);
+    dim3 numBlocks_z(blocks_x, blocks_y);
 
-		forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(_A, _f_x[dev], _dom[dev]);
-		forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(_A, _f_y[dev], _dom[dev]);
-		forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(_A, _f_z[dev], _dom[dev]);
-	}
+    forcing_turb_phys_x<<<numBlocks_x, dimBlocks_x>>>(_A, _f_x[dev], _dom[dev]);
+    forcing_turb_phys_y<<<numBlocks_y, dimBlocks_y>>>(_A, _f_y[dev], _dom[dev]);
+    forcing_turb_phys_z<<<numBlocks_z, dimBlocks_z>>>(_A, _f_z[dev], _dom[dev]); 
+   }
 }
 		
 
@@ -4371,7 +4372,7 @@ void cuda_move_parts_sub()
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, _A, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4439,7 +4440,7 @@ void cuda_move_parts_sub()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, _A, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4490,7 +4491,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, _A, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4558,7 +4559,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, _A, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4579,7 +4580,7 @@ void cuda_move_parts()
       }
 
       move_parts_b<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-        dt, dt0, g, _A, gradP, rho_f, ttime);
+        dt, dt0, g, gradP, rho_f, ttime);
     }
   }
 }

@@ -107,7 +107,7 @@ __global__ void check_nodes(int nparts, part_struct *parts, dom_struct *dom,
 __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real rho_f, real nu, gradP_struct gradP,
   part_struct *parts, dom_struct *dom, real *theta, real *phi, int nnodes,
-  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, real *fx, real *fy, real *fz);
+  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, real *A);
 /*
  * PURPOSE
  *  CUDA kernel to interpolate field variables to Lebedev quadrature nodes.
@@ -258,4 +258,25 @@ __global__ void compute_error(real lamb_cut, int stride, int nparts,
  ******
 */
 
+__device__ real inter_cos(real k, real yc, real a);
+/*
+ * PURPOSE
+ *  Compute cos(ky) integral within the particle volume
+ * ARGUMENTS
+ * * k -- wavenumber
+ * * yc -- particle center in a certain direction
+ * * a -- particle radius
+ *****
+*/
+
+__device__ real inter_sin(real k, real yc, real a);
+/*
+ * PURPOSE
+ *  Compute sin(ky) integral within the particle volume
+ * ARGUMENTS
+ * * k -- wavenumber
+ * * yc -- particle center in a certain direction
+ * * a -- particle radius
+ *****
+*/
 #endif

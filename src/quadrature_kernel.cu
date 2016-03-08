@@ -95,7 +95,7 @@ __global__ void check_nodes(int nparts, part_struct *parts, dom_struct *dom,
 __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real rho_f, real nu, gradP_struct gradP,
   part_struct *parts, dom_struct *dom, real *theta, real *phi, int nnodes,
-  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, real *fx, real *fy, real *fz)
+  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, real *A)
 {
   int node = threadIdx.x;
   int part = blockIdx.x;
@@ -172,10 +172,14 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real ocrossr2 = (oy*zp - oz*yp) * (oy*zp - oz*yp);
   ocrossr2 += (ox*zp - oz*xp) * (ox*zp - oz*xp);
   ocrossr2 += (ox*yp - oy*xp) * (ox*yp - oy*xp);
-  //real rhoV = rho_f;
-  real accdotr = (fx[C] - udot)*x + (fy[C] - vdot)*y + (fz[C] - wdot)*z;
-  //real accdotr = (-gradP.x/rhoV - udot)*xp + (-gradP.y/rhoV - vdot)*yp
-  //  + (-gradP.z/rhoV - wdot)*zp;
+  real rhoV = rho_f;
+
+  real fx = 2*(A[0]*cos(2*PI*parts[part].y/dom->yl) - A[1]*sin(2*PI*parts[part].y/dom->yl) + A[2]*cos(2*PI*parts[part].z/dom->zl) - A[3]*sin(2*PI*parts[part].z/dom->zl));
+  real fy = 2*(A[4]*cos(2*PI*parts[part].x/dom->xl) - A[5]*sin(2*PI*parts[part].x/dom->xl) + A[6]*cos(2*PI*parts[part].z/dom->zl) - A[7]*sin(2*PI*parts[part].z/dom->zl));
+  real fz = 2*(A[8]*cos(2*PI*parts[part].x/dom->xl) - A[9]*sin(2*PI*parts[part].x/dom->xl) + A[10]*cos(2*PI*parts[part].y/dom->yl) - A[11]*sin(2*PI*parts[part].y/dom->yl));
+
+  real accdotr = (-gradP.x/rhoV + fx - udot)*xp + (-gradP.y/rhoV + fy - vdot)*yp
+    + (-gradP.z/rhoV + fz - wdot)*zp;
   pp[node+nnodes*part] -= 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
   // zero if this node intersects wall
   pp[node+nnodes*part] = (parts[part].nodes[node]==-1)*pp[node+part*nnodes];
@@ -202,6 +206,10 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real dudy = 0.5*(u[C+dom->Gfx.s1b] - u[C-dom->Gfx.s1b]) * ddy;
   real dudz = 0.5*(u[C+dom->Gfx.s2b] - u[C-dom->Gfx.s2b]) * ddz;
   uu = u[C] + dudx * (x - xx) + dudy * (y - yy) + dudz * (z - zz);
+
+  //real Ax_center = 2*(A[0]*cos(ky*parts[part].y)/ky/ky - A[1]*sin(ky*parts[part].y)/ky/ky + A[2]*cos(kz*parts[part].z)/kz/kz - A[3]*sin(kz*parts[part].z)/kz/kz)/nu;
+  //uu -= 2*(A[0]*cos(ky*yy)/ky/ky - A[1]*sin(ky*yy)/ky/ky + A[2]*cos(kz*zz)/kz/kz - A[3]*sin(kz*zz)/kz/kz)/nu - Ax_center;
+
   // set uuwall equal to interfering wall u-velocity
   uuwall = (parts[part].nodes[node] == -10)*bc.uWD
             + (parts[part].nodes[node] == -11)*bc.uED
@@ -242,6 +250,10 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real dvdy = 0.5*(v[C+dom->Gfy.s1b] - v[C-dom->Gfy.s1b]) * ddy;
   real dvdz = 0.5*(v[C+dom->Gfy.s2b] - v[C-dom->Gfy.s2b]) * ddz;
   vv = v[C] + dvdx * (x - xx) + dvdy * (y - yy) + dvdz * (z - zz);
+
+  //real Ay_center = 2*(A[4]*cos(kx*parts[part].x)/kx/kx - A[5]*sin(kx*parts[part].x)/kx/kx + A[6]*cos(kz*parts[part].z)/kz/kz - A[7]*sin(kz*parts[part].z)/kz/kz)/nu;
+  //vv -= 2*(A[4]*cos(kx*xx)/kx/kx - A[5]*sin(kx*xx)/kx/kx + A[6]*cos(kz*zz)/kz/kz - A[7]*sin(kz*zz)/kz/kz)/nu - Ay_center;
+
   // set vvwall equal to interfering wall v-velocity
   vvwall = (parts[part].nodes[node] == -10)*bc.vWD
             + (parts[part].nodes[node] == -11)*bc.vED
@@ -278,6 +290,10 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real dwdy = 0.5*(w[C+dom->Gfz.s1b] - w[C-dom->Gfz.s1b]) * ddy;
   real dwdz = 0.5*(w[C+dom->Gfz.s2b] - w[C-dom->Gfz.s2b]) * ddz;
   ww = w[C] + dwdx * (x - xx) + dwdy * (y - yy) + dwdz * (z - zz);
+
+  //real Az_center = 2*(A[8]*cos(kx*parts[part].x)/kx/kx - A[9]*sin(kx*parts[part].x)/kx/kx + A[10]*cos(ky*parts[part].y)/ky/ky - A[11]*sin(ky*parts[part].y)/ky/ky)/nu;
+  //ww -= 2*(A[8]*cos(kx*xx)/kx/kx - A[9]*sin(kx*xx)/kx/kx + A[10]*cos(ky*yy)/ky/ky - A[11]*sin(ky*yy)/ky/ky)/nu - Az_center;
+
   // set uuwall equal to interfering wall u-velocity
   wwwall = (parts[part].nodes[node] == -10)*bc.wWD
             + (parts[part].nodes[node] == -11)*bc.wED
@@ -556,23 +572,45 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
     real vol = 4./3. * PI *  parts[pp].r*parts[pp].r*parts[pp].r;
     real N10 = sqrt(3./4./PI);
     real N11 = sqrt(3./8./PI);
+/*   
+    real kx = 2*PI/dom->xl;
+    real ky = 2*PI/dom->yl;
+    real kz = 2*PI/dom->zl;
+ 
+    // particle volume intergral of the random forcing
+    real tmp1 = inter_cos(ky, parts[pp].y, parts[pp].r);
+    real tmp2 = inter_sin(ky, parts[pp].y, parts[pp].r);
+    real tmp3 = inter_cos(kz, parts[pp].z, parts[pp].r);
+    real tmp4 = inter_sin(kz, parts[pp].z, parts[pp].r);
+    real tmp5 = inter_cos(kx, parts[pp].x, parts[pp].r);
+    real tmp6 = inter_sin(kx, parts[pp].x, parts[pp].r);
+    
    
-    // For now, only consider if the externel forcing field is a constant. For general situation, interpolate fx,fy,fz depends on the particle's position. 
-    real fx = - gradP.x/rho_f + 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
-    real fy = -gradP.y/rho_f + 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
-    real fz = -gradP.z/rho_f + 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));    
+    //printf("fx is %f\n", fx); 
+    real fx_int = 2*(A[0]*tmp1 - A[1]*tmp2 + A[2]*tmp3 - A[3]*tmp4);
+    real fy_int = 2*(A[4]*tmp5 - A[5]*tmp6 + A[6]*tmp3 - A[7]*tmp4);
+    real fz_int = 2*(A[8]*tmp5 - A[9]*tmp6 + A[10]*tmp1 - A[11]*tmp2);
+    */
 
-    //To find the forcing at the particle center, we need to do interpolation
-    parts[pp].Fx = rho_f * vol * (parts[pp].udot - fx)
-    //parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x)
+   real fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
+
+   real fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
+   real fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
+
+    parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x/rho_f - fx)
+      + parts[pp].rho * vol * fx
       - PI * mu * nu * 2.*N11 * (pnm_re[stride*pp + 2]
       + 6.*phinm_re[stride*pp + 2]);
-    parts[pp].Fy = rho_f * vol * (parts[pp].vdot - fy)
-    //parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y)
+
+    printf("viscous part is %f\n",- PI * mu * nu * 2.*N11 * (pnm_re[stride*pp + 2] + 6.*phinm_re[stride*pp + 2]));
+
+    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y/rho_f - fx)
+      + parts[pp].rho * vol * fy
       + PI * mu * nu * 2.*N11 * (pnm_im[stride*pp + 2]
       + 6.*phinm_im[stride*pp + 2]);
-    parts[pp].Fz = rho_f * vol * (parts[pp].wdot - fz)
-    //parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z)
+
+    parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z/rho_f - fz)
+      + parts[pp].rho * vol * fz
       + PI * mu * nu * N10 * (pnm_re[stride*pp + 1]
       + 6.*phinm_re[stride*pp + 1]);
 
@@ -661,4 +699,25 @@ __global__ void compute_error(real lamb_cut, int stride, int nparts,
 
   // write error to return for each particle
   part_errors[part] = tmp;
+}
+
+__device__ real inter_cos(real k, real yc, real a)
+{
+	real y1 = yc + a;
+	real y2 = yc - a;
+	real var = (a*a-yc*yc)*sin(k*y1)/k - y1*y1*sin(k*y1)/k - 2*y1*cos(k*y1)/k/k + 2*sin(k*y1)/k/k/k + 2*yc*(y1*sin(k*y1)/k + cos(k*y1)/k/k);
+	var = var - ((a*a-yc*yc)*sin(k*y2)/k - y2*y2*sin(k*y2)/k - 2*y2*cos(k*y2)/k/k + 2*sin(k*y2)/k/k/k + 2*yc*(y2*sin(k*y2)/k + cos(k*y2)/k/k));
+	var = var*PI;
+
+	return var;
+}
+
+__device__ real inter_sin(real k, real yc, real a)
+{
+	real y1 = yc + a;
+	real y2 = yc - a;
+	real var = -(a*a-yc*yc)*cos(k*y1)/k + y1*y1*cos(k*y1)/k - 2*y1*sin(k*y1)/k/k - 2*cos(k*y1)/k/k/k + 2*yc*(-y1*cos(k*y1)/k + sin(k*y1)/k/k);
+	var = var - (-(a*a-yc*yc)*cos(k*y2)/k + y2*y2*cos(k*y2)/k - 2*y2*sin(k*y2)/k/k - 2*cos(k*y2)/k/k/k + 2*yc*(-y2*cos(k*y2)/k + sin(k*y2)/k/k)); 
+	var = var*PI;
+	return var;
 }

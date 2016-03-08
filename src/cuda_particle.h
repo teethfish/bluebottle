@@ -515,7 +515,7 @@ __global__ void part_BC_u(real *u, int *phase, int *flag_u,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im);
+  real *chinm_re, real *chinm_im, real *A);
 /*
  * FUNCTION
  *  Apply u-velocity boundary condition to particle i. This routine uses the
@@ -548,7 +548,7 @@ __global__ void part_BC_v(real *v, int *phase, int *flag_v,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im);
+  real *chinm_re, real *chinm_im, real *A);
 /*
  * FUNCTION
  *  Apply v-velocity boundary condition to particle i. This routine uses the
@@ -581,7 +581,7 @@ __global__ void part_BC_w(real *w, int *phase, int *flag_w,
   part_struct *parts, dom_struct *dom,
   real nu, int stride,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im);
+  real *chinm_re, real *chinm_im, real *A);
 /*
  * FUNCTION
  *  Apply w-velocity boundary condition to particle i. This routine uses the
@@ -616,7 +616,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
   real *pnm_re00, real *pnm_im00, real *phinm_re00, real *phinm_im00,
   real *chinm_re00, real *chinm_im00,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im, real *fx, real *fy, real *fz);
+  real *chinm_re, real *chinm_im, real *A);
 /*
  * FUNCTION
  *  Apply pressure boundary condition to particle i. This routine uses the
@@ -663,7 +663,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
 __global__ void part_BC_p_fill(real *p, int *phase,
   part_struct *parts, dom_struct *dom,
   real mu, real nu, real rho_f, gradP_struct gradP,
-  int stride, real *pnm_re, real *pnm_im, real *fx, real *fy, real *fz);
+  int stride, real *pnm_re, real *pnm_im, real *A);
 /*
  * FUNCTION
  *  Apply pressure boundary condition to particle i. This routine uses the

@@ -719,7 +719,7 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
           }
 	  cuda_part_pull();
-	  record_phys_forcing("forcing_hydro.dat", A);
+	  //record_phys_forcing("forcing_hydro.dat", A);
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields

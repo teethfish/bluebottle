@@ -2089,7 +2089,6 @@ __global__ void forcing_turb_phys_x(real *A, real *fx, dom_struct *dom)
 
   for(int i = dom->Gfx._isb; i < dom->Gfx._ieb; i++) {
     if(tj < dom->Gfx._jnb && tk < dom->Gfx._knb) {
-      //xx = dom->_xs + (i - 1)*dom->_dx;
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       zz = dom->zs + (tk - 1 + 0.5) * dom->dz;
       fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]
@@ -2098,11 +2097,40 @@ __global__ void forcing_turb_phys_x(real *A, real *fx, dom_struct *dom)
   }
 }
 
+__global__ void forcing_turb_phys_x_modify(real *fx, dom_struct *dom, real *tmp_fx, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var)
+{
+  int tj = blockIdx.x * blockDim.x + threadIdx.x;
+  int tk = blockIdx.y * blockDim.y + threadIdx.y;
+
+  real x, y, z;
+  for(int i = dom->Gfx._isb; i < dom->Gfx._ieb; i++) {
+    if(tj < dom->Gfx._jnb && tk < dom->Gfx._knb) {
+	x = dom->xs + (i - 1) * dom->dx;
+	y = dom->ys + (tj - 1 + 0.5) * dom->dy; 
+	z = dom->zs + (tk - 1 + 0.5) * dom->dz;
+
+	int check_1 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+	int check_2 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_3 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_4 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_5 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_6 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_7 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_8 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - a*a > 0);	
+ 
+	int check = (check_1 + check_2 + check_3 + check_4 + check_5 + check_6 + check_7 + check_8)!= 0;
+        tmp_fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b] = 0.0 + fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]*check;
+        tmp_phase[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b] = 0.0 + 1.0*check;
+	fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b] = check * var;		
+    }
+  }
+}
+	
 __global__ void forcing_turb_phys_y(real *A, real *fy, dom_struct *dom)
 {
   int tk = blockIdx.x * blockDim.x + threadIdx.x;
   int ti = blockIdx.y * blockDim.y + threadIdx.y;
-  real xx, zz;
+  real xx,zz;
 
   for(int j = dom->Gfy._jsb; j < dom->Gfy._jeb; j++) {
     if(tk < dom->Gfy._knb && ti < dom->Gfy._inb) {
@@ -2113,7 +2141,37 @@ __global__ void forcing_turb_phys_y(real *A, real *fy, dom_struct *dom)
 	+= 2*(A[4]*cos(2*PI*xx/dom->xl) - A[5]*sin(2*PI*xx/dom->xl) + A[6]*cos(2*PI*zz/dom->zl) - A[7]*sin(2*PI*zz/dom->zl));
     }
   }
-}	
+}
+	
+__global__ void forcing_turb_phys_y_modify(real *fy, dom_struct *dom, real *tmp_fy, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var)
+{
+  int tk = blockIdx.x * blockDim.x + threadIdx.x;
+  int ti = blockIdx.y * blockDim.y + threadIdx.y;
+
+  real x, y, z;
+  for(int j = dom->Gfy._jsb; j < dom->Gfy._jeb; j++) {
+    if(tk < dom->Gfy._knb && ti < dom->Gfy._inb) {
+        x = dom->xs + (ti - 1 + 0.5) * dom->dx;
+        y = dom->ys + (j - 1) * dom->dy;
+        z = dom->zs + (tk - 1 + 0.5) * dom->dz;
+
+        int check_1 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_2 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_3 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_4 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_5 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_6 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_7 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_8 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - a*a > 0);
+
+        int check = (check_1 + check_2 + check_3 + check_4 + check_5 + check_6 + check_7 + check_8)!= 0;
+
+        tmp_fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b] = 0.0 + fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b]*check;
+        tmp_phase[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b] = 0.0 + 1.0*check;
+        fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b] = check * var;
+    }
+  }
+}
 
 __global__ void forcing_turb_phys_z(real *A, real *fz, dom_struct *dom)
 {
@@ -2128,6 +2186,37 @@ __global__ void forcing_turb_phys_z(real *A, real *fz, dom_struct *dom)
       yy = dom->ys + (tj - 1 + 0.5) * dom->dy;
       fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]
 	+= 2*(A[8]*cos(2*PI*xx/dom->xl) - A[9]*sin(2*PI*xx/dom->xl) + A[10]*cos(2*PI*yy/dom->yl) - A[11]*sin(2*PI*yy/dom->yl));
+    }
+  }
+}
+
+__global__ void forcing_turb_phys_z_modify(real *fz, dom_struct *dom, real *tmp_fz, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var)
+{
+  int ti = blockIdx.x * blockDim.x + threadIdx.x;
+  int tj = blockIdx.y * blockDim.y + threadIdx.y;
+  
+  real x, y, z;
+  for(int k = dom->Gfz._ksb; k < dom->Gfz._keb; k++) {
+    if(ti < dom->Gfz._inb && tj < dom->Gfz._jnb) {
+        x = dom->xs + (ti - 1 + 0.5)*dom->dx;
+        y = dom->ys + (tj - 1 + 0.5) * dom->dy;
+        z = dom->zs + (k - 1) * dom->dz;
+      
+        int check_1 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_2 = ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_3 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_4 = ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx1)*(x-cx1) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_5 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_6 = ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy1)*(y-cy1) + (z - cz2)*(z-cz2) - a*a > 0);
+        int check_7 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz1)*(z-cz1) - a*a > 0);
+        int check_8 = ((x - cx2)*(x-cx2) + (y - cy2)*(y-cy2) + (z - cz2)*(z-cz2) - d*d < 0) && ((x - cx2)*(x-cx2) + (y - cy2)*(y-
+cy2) + (z - cz2)*(z-cz2) - a*a > 0);
+
+        int check = (check_1 + check_2 + check_3 + check_4 + check_5 + check_6 + check_7 + check_8)!= 0;
+        
+        tmp_fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b] = 0.0 + fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]*check;
+        tmp_phase[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b] = 0.0 + 1.0*check;
+        fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b] = check * var;
     }
   }
 }
@@ -2289,29 +2378,22 @@ __global__ void plane_eps_z_T(real eps, real *w_star, dom_struct *dom)
 }
 
 __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
-  real fx = 0.0;
-  real fy = 0.0;
-  real fz = 0.0;
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
-      fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
-      fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
-      fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
-      // notice the external forcing should apply to both fluid and particle, parts[pp].Fx only accounts for the fluid part, fx*pho_f*vol is the corresponding forcing on particle part
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-       + parts[pp].aFx - vol*gradP.x + vol*fx*rho_f) / m
+       + parts[pp].aFx) / m
        + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-       + parts[pp].aFy - vol*gradP.y + vol*fy*rho_f) / m
+       + parts[pp].aFy) / m
        + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-       + parts[pp].aFz - vol*gradP.z + vol*fz*rho_f) / m
+       + parts[pp].aFz) / m
        + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities
@@ -2337,29 +2419,22 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
 }
 
 __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
-  real fx = 0.;
-  real fy = 0.;
-  real fz = 0.; 
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
-      // for multi-GPU, it needs to know the total length of coputational domain
-      fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
-      fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
-      fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x + vol*fx*rho_f) / m
+        + parts[pp].aFx) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y + vol*fy*rho_f) / m
+        + parts[pp].aFy) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z + vol*fz*rho_f) / m
+        + parts[pp].aFz) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
 
       // update linear velocities

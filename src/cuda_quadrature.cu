@@ -57,7 +57,7 @@ void cuda_quad_interp(int dev,
   if(nparts > 0)
     interpolate_nodes<<<numBlocks, dimBlocks>>>(_p0[dev], _p[dev],
       _u[dev], _v[dev], _w[dev], rho_f, nu, gradP,
-      _parts[dev], _dom[dev], node_t, node_p, nnodes, pp, ur, ut, up, dt0, dt, bc, _f_x[dev], _f_y[dev],_f_z[dev]);
+      _parts[dev], _dom[dev], node_t, node_p, nnodes, pp, ur, ut, up, dt0, dt, bc, _A);
 }
 
 extern "C"

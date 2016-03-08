@@ -1815,6 +1815,12 @@ __global__ void forcing_turb_phys_y(real *A, real *fy, dom_struct *dom);
 
 __global__ void forcing_turb_phys_z(real *A, real *fz, dom_struct *dom);
 
+__global__ void forcing_turb_phys_x_modify(real *fx, dom_struct *dom, real *tmp_fx, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var);
+
+__global__ void forcing_turb_phys_y_modify(real *fy, dom_struct *dom, real *tmp_fy, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var);
+
+__global__ void forcing_turb_phys_z_modify(real *fz, dom_struct *dom, real *tmp_fz, real *tmp_phase, real cx1, real cx2, real cy1, real cy2, real cz1, real cz2, real d, real a, real var);
+
 __global__ void forcing_add_x_field(real scale, real *val, real *fx,
   dom_struct *dom, int *phase);
 /*
@@ -2026,7 +2032,7 @@ __global__ void plane_eps_z_T(real eps, real *w_star, dom_struct *dom);
  * USAGE
  */
 __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime);
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime);
 /*
  * FUNCTION
  *  Update the particle velocities and move the particles. Part A: does
@@ -2049,7 +2055,7 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
  * USAGE
  */
 __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, real *A, gradP_struct gradP, real rho_f, real ttime);
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime);
 /*
  * FUNCTION
  *  Update the particle velocities and move the particles. Part B: does
