@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-/* Written by Adam Sierakowski 2015
- * for JHU HEART: The Computer Laboratory
- *
- * Compile with: 'make'
- */
-=======
 /*******************************************************************************
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
@@ -26,7 +19,6 @@
  *  Please contact the Johns Hopkins University to use Bluebottle for
  *  commercial and/or for-profit applications.
  ******************************************************************************/
->>>>>>> master
 
 #ifndef _RNG_H
 #define _RNG_H
@@ -58,11 +50,7 @@ float rng_flt(void);
 // random double between 0 and 1
 double rng_dbl(void);
 
-<<<<<<< HEAD
 // generate double numbers follows Gaussian distribution with mean 0 and standard deviation 1
-=======
-// random double gaussian disbribution
->>>>>>> master
 double gaussrand(void);
 
 #endif
