@@ -4,7 +4,7 @@ sbatch submit-restart.sh
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2012 - 2015 Adam Sierakowski, The Johns Hopkins University
+ *  Copyright 2012 - 2016 Adam Sierakowski, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -108,19 +108,33 @@ void cuda_dom_malloc(void)
   cpumem += nsubdom * sizeof(real*);
   _u_WE = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _u_SN = (real**) malloc(nsubdom * sizeof(real*));
+  _u_SN_S = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _u_BT = (real**) malloc(nsubdom * sizeof(real*));
+  _u_SN_N = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _v_WE = (real**) malloc(nsubdom * sizeof(real*));
+  _u_BT_B = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom * sizeof(real*);
+  _u_BT_T = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom *  sizeof(real*);
+  
+  _v_WE_W = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom * sizeof(real*);
+  _v_WE_E = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
   _v_SN = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _v_BT = (real**) malloc(nsubdom * sizeof(real*));
+  _v_BT_B = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _w_WE = (real**) malloc(nsubdom * sizeof(real*));
+  _v_BT_T = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
-  _w_SN = (real**) malloc(nsubdom * sizeof(real*));
+  
+  _w_WE_W = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom * sizeof(real*);
+  _w_WE_E = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom * sizeof(real*);
+  _w_SN_S = (real**) malloc(nsubdom * sizeof(real*));
+  cpumem += nsubdom * sizeof(real*);
+  _w_SN_N = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
   _w_BT = (real**) malloc(nsubdom * sizeof(real*));
   cpumem += nsubdom * sizeof(real*);
@@ -235,25 +249,46 @@ void cuda_dom_malloc(void)
     (cudaMalloc((void**) &(_u_WE[dev]),
       sizeof(real) * dom[dev].Gfx.jnb*dom[dev].Gfx.knb));
     gpumem += dom[dev].Gfx.jnb*dom[dev].Gfx.knb * sizeof(real);
-    (cudaMalloc((void**) &(_u_SN[dev]),
+    (cudaMalloc((void**) &(_u_SN_S[dev]),
       sizeof(real) * dom[dev].Gfx.inb*dom[dev].Gfx.knb));
     gpumem += dom[dev].Gfx.inb*dom[dev].Gfx.knb * sizeof(real);
-    (cudaMalloc((void**) &(_u_BT[dev]),
+    (cudaMalloc((void**) &(_u_SN_N[dev]),
+      sizeof(real) * dom[dev].Gfx.inb*dom[dev].Gfx.knb));
+    gpumem += dom[dev].Gfx.inb*dom[dev].Gfx.knb * sizeof(real);
+    (cudaMalloc((void**) &(_u_BT_B[dev]),
       sizeof(real) * dom[dev].Gfx.inb*dom[dev].Gfx.jnb));
     gpumem += dom[dev].Gfx.inb*dom[dev].Gfx.jnb * sizeof(real);
-    (cudaMalloc((void**) &(_v_WE[dev]),
+    (cudaMalloc((void**) &(_u_BT_T[dev]),
+      sizeof(real) * dom[dev].Gfx.inb*dom[dev].Gfx.jnb));
+    gpumem += dom[dev].Gfx.inb*dom[dev].Gfx.jnb * sizeof(real);
+
+
+    (cudaMalloc((void**) &(_v_WE_W[dev]),
       sizeof(real) * dom[dev].Gfy.jnb*dom[dev].Gfy.knb));
     gpumem += dom[dev].Gfy.jnb*dom[dev].Gfy.knb * sizeof(real);
+    (cudaMalloc((void**) &(_v_WE_E[dev]),
+      sizeof(real) * dom[dev].Gfy.jnb*dom[dev].Gfy.knb));
+    gpumem += dom[dev].Gfy.jnb*dom[dev].Gfy.knb * sizeof(real);  
     (cudaMalloc((void**) &(_v_SN[dev]),
       sizeof(real) * dom[dev].Gfy.inb*dom[dev].Gfy.knb));
     gpumem += dom[dev].Gfy.inb*dom[dev].Gfy.knb * sizeof(real);
-    (cudaMalloc((void**) &(_v_BT[dev]),
+    (cudaMalloc((void**) &(_v_BT_B[dev]),
       sizeof(real) * dom[dev].Gfy.inb*dom[dev].Gfy.jnb));
     gpumem += dom[dev].Gfy.inb*dom[dev].Gfy.jnb * sizeof(real);
-    (cudaMalloc((void**) &(_w_WE[dev]),
+    (cudaMalloc((void**) &(_v_BT_T[dev]),
+      sizeof(real) * dom[dev].Gfy.inb*dom[dev].Gfy.jnb));
+    gpumem += dom[dev].Gfy.inb*dom[dev].Gfy.jnb * sizeof(real);
+
+    (cudaMalloc((void**) &(_w_WE_W[dev]),
       sizeof(real) * dom[dev].Gfz.jnb*dom[dev].Gfz.knb));
     gpumem += dom[dev].Gfz.jnb*dom[dev].Gfz.knb * sizeof(real);
-    (cudaMalloc((void**) &(_w_SN[dev]),
+    (cudaMalloc((void**) &(_w_WE_E[dev]),
+      sizeof(real) * dom[dev].Gfz.jnb*dom[dev].Gfz.knb));
+    gpumem += dom[dev].Gfz.jnb*dom[dev].Gfz.knb * sizeof(real);
+    (cudaMalloc((void**) &(_w_SN_S[dev]),
+      sizeof(real) * dom[dev].Gfz.inb*dom[dev].Gfz.knb));
+    gpumem += dom[dev].Gfz.inb*dom[dev].Gfz.knb * sizeof(real);
+    (cudaMalloc((void**) &(_w_SN_N[dev]),
       sizeof(real) * dom[dev].Gfz.inb*dom[dev].Gfz.knb));
     gpumem += dom[dev].Gfz.inb*dom[dev].Gfz.knb * sizeof(real);
     (cudaMalloc((void**) &(_w_BT[dev]),
@@ -541,7 +576,9 @@ void cuda_dom_turb_planes_push(int *bc_configs)
     }
     if(bc_configs[ 2] == PRECURSOR || bc_configs[ 3] == PRECURSOR) {
       // working array
-      real *uu_SN = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.knb
+      real *uu_SN_S = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.knb
+        * sizeof(real));
+      real *uu_SN_N = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.knb
         * sizeof(real));
 
       // select appropriate subdomain
@@ -552,22 +589,26 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           kk = k - dom[dev].Gfx.ksb;
           C = i + k * Dom.Gfx.inb;
           CC = ii + kk * dom[dev].Gfx.inb;
-          uu_SN[CC] = u_SN[C];
+          uu_SN_S[CC] = u_SN_S[C];
+          uu_SN_N[CC] = u_SN_N[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_u_SN[dev], uu_SN, sizeof(real)
+      (cudaMemcpy(_u_SN_S[dev], uu_SN_S, sizeof(real)
         * dom[dev].Gfx.inb*dom[dev].Gfx.knb, cudaMemcpyHostToDevice));
-
+      (cudaMemcpy(_u_SN_N[dev], uu_SN_N, sizeof(real)
+        * dom[dev].Gfx.inb*dom[dev].Gfx.knb, cudaMemcpyHostToDevice));
       // clean up
-      free(uu_SN);
+      free(uu_SN_S);
+      free(uu_SN_N);
     }
     if(bc_configs[ 4] == PRECURSOR || bc_configs[ 5] == PRECURSOR) {
       // working array
-      real *uu_BT = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
+      real *uu_BT_B = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
+        * sizeof(real)); 
+      real *uu_BT_T = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
         * sizeof(real));
-
       // select appropriate subdomain
       // set position
       for(j = dom[dev].Gfx.jsb; j < dom[dev].Gfx.jeb; j++) {
@@ -576,23 +617,29 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           jj = j - dom[dev].Gfx.jsb;
           C = i + j * Dom.Gfx.inb;
           CC = ii + jj * dom[dev].Gfx.inb;
-          uu_BT[CC] = u_BT[C];
+          uu_BT_B[CC] = u_BT_B[C];
+	  uu_BT_T[CC] = u_BT_T[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_u_BT[dev], uu_BT, sizeof(real)
+      (cudaMemcpy(_u_BT_B[dev], uu_BT_B, sizeof(real)
+        * dom[dev].Gfx.inb*dom[dev].Gfx.jnb, cudaMemcpyHostToDevice));
+
+      (cudaMemcpy(_u_BT_T[dev], uu_BT_T, sizeof(real)
         * dom[dev].Gfx.inb*dom[dev].Gfx.jnb, cudaMemcpyHostToDevice));
 
       // clean up
-      free(uu_BT);
+      free(uu_BT_B);
+      free(uu_BT_T);
     }
 
     if(bc_configs[ 6] == PRECURSOR || bc_configs[ 7] == PRECURSOR) {
       // working array
-      real *vv_WE = (real*) malloc(dom[dev].Gfy.jnb*dom[dev].Gfy.knb
+      real *vv_WE_W = (real*) malloc(dom[dev].Gfy.jnb*dom[dev].Gfy.knb
         * sizeof(real));
-
+      real *vv_WE_E = (real*) malloc(dom[dev].Gfy.jnb*dom[dev].Gfy.knb
+        * sizeof(real));
       // select appropriate subdomain
       // set position
       for(k = dom[dev].Gfy.ksb; k < dom[dev].Gfy.keb; k++) {
@@ -601,16 +648,20 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           kk = k - dom[dev].Gfy.ksb;
           C = j + k * Dom.Gfy.jnb;
           CC = jj + kk * dom[dev].Gfy.jnb;
-          vv_WE[CC] = v_WE[C];
+          vv_WE_W[CC] = v_WE_W[C];
+          vv_WE_E[CC] = v_WE_E[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_v_WE[dev], vv_WE, sizeof(real)
+      (cudaMemcpy(_v_WE_W[dev], vv_WE_W, sizeof(real)
+        * dom[dev].Gfy.jnb*dom[dev].Gfy.knb, cudaMemcpyHostToDevice));
+      (cudaMemcpy(_v_WE_E[dev], vv_WE_E, sizeof(real)
         * dom[dev].Gfy.jnb*dom[dev].Gfy.knb, cudaMemcpyHostToDevice));
 
       // clean up
-      free(vv_WE);
+      free(vv_WE_W);
+      free(vv_WE_E);
     }
     if(bc_configs[ 8] == PRECURSOR || bc_configs[ 9] == PRECURSOR) {
       // working array
@@ -638,9 +689,10 @@ void cuda_dom_turb_planes_push(int *bc_configs)
     }
     if(bc_configs[10] == PRECURSOR || bc_configs[11] == PRECURSOR) {
       // working array
-      real *vv_BT = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
+      real *vv_BT_B = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
         * sizeof(real));
-
+      real *vv_BT_T = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
+        * sizeof(real));
       // select appropriate subdomain
       // set position
       for(j = dom[dev].Gfy.jsb; j < dom[dev].Gfy.jeb; j++) {
@@ -649,23 +701,27 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           jj = j - dom[dev].Gfy.jsb;
           C = i + j * Dom.Gfy.inb;
           CC = ii + jj * dom[dev].Gfy.inb;
-          vv_BT[CC] = v_BT[C];
+          vv_BT_B[CC] = v_BT_B[C];
+          vv_BT_T[CC] = v_BT_T[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_v_BT[dev], vv_BT, sizeof(real)
+      (cudaMemcpy(_v_BT_B[dev], vv_BT_B, sizeof(real)
         * dom[dev].Gfy.inb*dom[dev].Gfy.jnb, cudaMemcpyHostToDevice));
-
+      (cudaMemcpy(_v_BT_T[dev], vv_BT_T, sizeof(real)
+        * dom[dev].Gfy.inb*dom[dev].Gfy.jnb, cudaMemcpyHostToDevice));
       // clean up
-      free(vv_BT);
+      free(vv_BT_B);
+      free(vv_BT_T);
     }
 
     if(bc_configs[12] == PRECURSOR || bc_configs[13] == PRECURSOR) {
       // working array
-      real *ww_WE = (real*) malloc(dom[dev].Gfz.jnb*dom[dev].Gfz.knb
+      real *ww_WE_W = (real*) malloc(dom[dev].Gfz.jnb*dom[dev].Gfz.knb
         * sizeof(real));
-
+      real *ww_WE_E = (real*) malloc(dom[dev].Gfz.jnb*dom[dev].Gfz.knb
+        * sizeof(real));
       // select appropriate subdomain
       // set position
       for(k = dom[dev].Gfz.ksb; k < dom[dev].Gfz.keb; k++) {
@@ -674,22 +730,26 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           kk = k - dom[dev].Gfz.ksb;
           C = j + k * Dom.Gfz.jnb;
           CC = jj + kk * dom[dev].Gfz.jnb;
-          ww_WE[CC] = w_WE[C];
+          ww_WE_W[CC] = w_WE_W[C];
+          ww_WE_E[CC] = w_WE_E[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_w_WE[dev], ww_WE, sizeof(real)
+      (cudaMemcpy(_w_WE_W[dev], ww_WE_W, sizeof(real)
         * dom[dev].Gfz.jnb*dom[dev].Gfz.knb, cudaMemcpyHostToDevice));
-
+      (cudaMemcpy(_w_WE_E[dev], ww_WE_E, sizeof(real)
+        * dom[dev].Gfz.jnb*dom[dev].Gfz.knb, cudaMemcpyHostToDevice));
       // clean up
-      free(ww_WE);
+      free(ww_WE_W);
+      free(ww_WE_E);
     }
     if(bc_configs[14] == PRECURSOR || bc_configs[15] == PRECURSOR) {
       // working array
-      real *ww_SN = (real*) malloc(dom[dev].Gfz.inb*dom[dev].Gfz.knb
+      real *ww_SN_S = (real*) malloc(dom[dev].Gfz.inb*dom[dev].Gfz.knb
         * sizeof(real));
-
+      real *ww_SN_N = (real*) malloc(dom[dev].Gfz.inb*dom[dev].Gfz.knb
+        * sizeof(real));
       // select appropriate subdomain
       // set position
       for(k = dom[dev].Gfz.ksb; k < dom[dev].Gfz.keb; k++) {
@@ -698,16 +758,19 @@ void cuda_dom_turb_planes_push(int *bc_configs)
           kk = k - dom[dev].Gfz.ksb;
           C = i + k * Dom.Gfz.inb;
           CC = ii + kk * dom[dev].Gfz.inb;
-          ww_SN[CC] = w_SN[C];
+          ww_SN_S[CC] = w_SN_S[C];
+          ww_SN_N[CC] = w_SN_N[C];
         }
       }
 
       // copy from host to device
-      (cudaMemcpy(_w_SN[dev], ww_SN, sizeof(real)
+      (cudaMemcpy(_w_SN_S[dev], ww_SN_S, sizeof(real)
         * dom[dev].Gfz.inb*dom[dev].Gfz.knb, cudaMemcpyHostToDevice));
-
+      (cudaMemcpy(_w_SN_N[dev], ww_SN_N, sizeof(real)
+        * dom[dev].Gfz.inb*dom[dev].Gfz.knb, cudaMemcpyHostToDevice));
       // clean up
-      free(ww_SN);
+      free(ww_SN_S);
+      free(ww_SN_N);
     }
     if(bc_configs[16] == PRECURSOR || bc_configs[17] == PRECURSOR) {
       // working array
@@ -1180,11 +1243,11 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
     }
     if(bc_configs[ 2] == PRECURSOR || bc_configs[ 3] == PRECURSOR) {
       // working array
-      real *uu_SN = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.knb
+      real *uu_SN_N = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.knb
         * sizeof(real));
 
       // copy from host to device
-      (cudaMemcpy(uu_SN, _u_SN[dev], sizeof(real)
+      (cudaMemcpy(uu_SN_N, _u_SN_N[dev], sizeof(real)
         * dom[dev].Gfx.inb*dom[dev].Gfx.knb, cudaMemcpyDeviceToHost));
 
       // select appropriate subdomain
@@ -1195,22 +1258,24 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           kk = k - dom[dev].Gfx.ksb;
           C = i + k * Dom.Gfx.inb;
           CC = ii + kk * dom[dev].Gfx.inb;
-          u_SN[C] = uu_SN[CC];
+          u_SN_N[C] = uu_SN_N[CC];
         }
       }
 
       // clean up
-      free(uu_SN);
+      free(uu_SN_N);
     }
     if(bc_configs[ 4] == PRECURSOR || bc_configs[ 5] == PRECURSOR) {
       // working array
-      real *uu_BT = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
+      real *uu_BT_B = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
         * sizeof(real));
-
-      // copy from host to device
-      (cudaMemcpy(uu_BT, _u_BT[dev], sizeof(real)
+      real *uu_BT_T = (real*) malloc(dom[dev].Gfx.inb*dom[dev].Gfx.jnb
+        * sizeof(real));
+      // copy from device to host
+      (cudaMemcpy(uu_BT_B, _u_BT_B[dev], sizeof(real)
         * dom[dev].Gfx.inb*dom[dev].Gfx.jnb, cudaMemcpyDeviceToHost));
-
+      (cudaMemcpy(uu_BT_T, _u_BT_T[dev], sizeof(real)
+        * dom[dev].Gfx.inb*dom[dev].Gfx.jnb, cudaMemcpyDeviceToHost));
       // select appropriate subdomain
       // set position
       for(j = dom[dev].Gfx.jsb; j < dom[dev].Gfx.jeb; j++) {
@@ -1219,21 +1284,23 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           jj = j - dom[dev].Gfx.jsb;
           C = i + j * Dom.Gfx.inb;
           CC = ii + jj * dom[dev].Gfx.inb;
-          u_BT[C] = uu_BT[CC];
+          u_BT_B[C] = uu_BT_B[CC];
+          u_BT_T[C] = uu_BT_T[CC];
         }
       }
 
       // clean up
-      free(uu_BT);
+      free(uu_BT_B);
+      free(uu_BT_T);
     }
 
     if(bc_configs[ 6] == PRECURSOR || bc_configs[ 7] == PRECURSOR) {
       // working array
-      real *vv_WE = (real*) malloc(dom[dev].Gfy.jnb*dom[dev].Gfy.knb
+      real *vv_WE_W = (real*) malloc(dom[dev].Gfy.jnb*dom[dev].Gfy.knb
         * sizeof(real));
 
       // copy from host to device
-      (cudaMemcpy(vv_WE, _v_WE[dev], sizeof(real)
+      (cudaMemcpy(vv_WE_W, _v_WE_W[dev], sizeof(real)
         * dom[dev].Gfy.jnb*dom[dev].Gfy.knb, cudaMemcpyDeviceToHost));
 
       // select appropriate subdomain
@@ -1244,12 +1311,12 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           kk = k - dom[dev].Gfy.ksb;
           C = j + k * Dom.Gfy.jnb;
           CC = jj + kk * dom[dev].Gfy.jnb;
-          v_WE[C] = vv_WE[CC];
+          v_WE_W[C] = vv_WE_W[CC];
         }
       }
 
       // clean up
-      free(vv_WE);
+      free(vv_WE_W);
     }
     if(bc_configs[ 8] == PRECURSOR || bc_configs[ 9] == PRECURSOR) {
       // working array
@@ -1277,13 +1344,16 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
     }
     if(bc_configs[10] == PRECURSOR || bc_configs[11] == PRECURSOR) {
       // working array
-      real *vv_BT = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
+      real *vv_BT_B = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
+        * sizeof(real));
+      real *vv_BT_T = (real*) malloc(dom[dev].Gfy.inb*dom[dev].Gfy.jnb
         * sizeof(real));
 
-      // copy from host to device
-      (cudaMemcpy(vv_BT, _v_BT[dev], sizeof(real)
+     // copy from device to host
+      (cudaMemcpy(vv_BT_B, _v_BT_B[dev], sizeof(real)
         * dom[dev].Gfy.inb*dom[dev].Gfy.jnb, cudaMemcpyDeviceToHost));
-
+      (cudaMemcpy(vv_BT_T, _v_BT_T[dev], sizeof(real)
+        * dom[dev].Gfy.inb*dom[dev].Gfy.jnb, cudaMemcpyDeviceToHost));
       // select appropriate subdomain
       // set position
       for(j = dom[dev].Gfy.jsb; j < dom[dev].Gfy.jeb; j++) {
@@ -1292,21 +1362,23 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           jj = j - dom[dev].Gfy.jsb;
           C = i + j * Dom.Gfy.inb;
           CC = ii + jj * dom[dev].Gfy.inb;
-          v_BT[C] = vv_BT[CC];
+          v_BT_B[C] = vv_BT_B[CC];
+          v_BT_T[C] = vv_BT_T[CC];
         }
       }
 
       // clean up
-      free(vv_BT);
+      free(vv_BT_B);
+      free(vv_BT_T);
     }
 
     if(bc_configs[12] == PRECURSOR || bc_configs[13] == PRECURSOR) {
       // working array
-      real *ww_WE = (real*) malloc(dom[dev].Gfz.jnb*dom[dev].Gfz.knb
+      real *ww_WE_W = (real*) malloc(dom[dev].Gfz.jnb*dom[dev].Gfz.knb
         * sizeof(real));
 
       // copy from host to device
-      (cudaMemcpy(ww_WE, _w_WE[dev], sizeof(real)
+      (cudaMemcpy(ww_WE_W, _w_WE_W[dev], sizeof(real)
         * dom[dev].Gfz.jnb*dom[dev].Gfz.knb, cudaMemcpyDeviceToHost));
 
       // select appropriate subdomain
@@ -1317,20 +1389,20 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           kk = k - dom[dev].Gfz.ksb;
           C = j + k * Dom.Gfz.jnb;
           CC = jj + kk * dom[dev].Gfz.jnb;
-          w_WE[C] = ww_WE[CC];
+          w_WE_W[C] = ww_WE_W[CC];
         }
       }
 
       // clean up
-      free(ww_WE);
+      free(ww_WE_W);
     }
     if(bc_configs[14] == PRECURSOR || bc_configs[15] == PRECURSOR) {
       // working array
-      real *ww_SN = (real*) malloc(dom[dev].Gfz.inb*dom[dev].Gfz.knb
+      real *ww_SN_S = (real*) malloc(dom[dev].Gfz.inb*dom[dev].Gfz.knb
         * sizeof(real));
 
       // copy from host to device
-      (cudaMemcpy(ww_SN, _w_SN[dev], sizeof(real)
+      (cudaMemcpy(ww_SN_S, _w_SN_S[dev], sizeof(real)
         * dom[dev].Gfz.inb*dom[dev].Gfz.knb, cudaMemcpyDeviceToHost));
 
       // select appropriate subdomain
@@ -1341,12 +1413,12 @@ void cuda_dom_turb_planes_pull(int *bc_configs)
           kk = k - dom[dev].Gfz.ksb;
           C = i + k * Dom.Gfz.inb;
           CC = ii + kk * dom[dev].Gfz.inb;
-          w_SN[C] = ww_SN[CC];
+          w_SN_S[C] = ww_SN_S[CC];
         }
       }
 
       // clean up
-      free(ww_SN);
+      free(ww_SN_S);
     }
     if(bc_configs[16] == PRECURSOR || bc_configs[17] == PRECURSOR) {
       // working array
@@ -1416,13 +1488,19 @@ void cuda_dom_free(void)
     (cudaFree(_v_star[dev]));
     (cudaFree(_w_star[dev]));
     (cudaFree(_u_WE[dev]));
-    (cudaFree(_u_SN[dev]));
-    (cudaFree(_u_BT[dev]));
-    (cudaFree(_v_WE[dev]));
+    (cudaFree(_u_SN_S[dev]));
+    (cudaFree(_u_SN_N[dev]));
+    (cudaFree(_u_BT_B[dev]));
+    (cudaFree(_u_BT_T[dev]));
+    (cudaFree(_v_WE_W[dev]));
+    (cudaFree(_v_WE_E[dev]));
     (cudaFree(_v_SN[dev]));
-    (cudaFree(_v_BT[dev]));
-    (cudaFree(_w_WE[dev]));
-    (cudaFree(_w_SN[dev]));
+    (cudaFree(_v_BT_B[dev]));
+    (cudaFree(_v_BT_T[dev]));
+    (cudaFree(_w_WE_W[dev]));
+    (cudaFree(_w_WE_E[dev]));
+    (cudaFree(_w_SN_S[dev]));
+    (cudaFree(_w_SN_N[dev]));
     (cudaFree(_w_BT[dev]));
     (cudaFree(_rhs_p[dev]));
   }
@@ -1460,13 +1538,19 @@ void cuda_dom_free(void)
   free(_v_star);
   free(_w_star);
   free(_u_WE);
-  free(_u_SN);
-  free(_u_BT);
-  free(_v_WE);
+  free(_u_SN_S);
+  free(_u_SN_N);
+  free(_u_BT_B);
+  free(_u_BT_T);
+  free(_v_WE_W);
+  free(_v_WE_E);
   free(_v_SN);
-  free(_v_BT);
-  free(_w_WE);
-  free(_w_SN);
+  free(_v_BT_B);
+  free(_v_BT_T);
+  free(_w_WE_W);
+  free(_w_WE_E);
+  free(_w_SN_S);
+  free(_w_SN_N);
   free(_w_BT);
   free(_rhs_p);
 }
@@ -1593,7 +1677,7 @@ void cuda_dom_BC(void)
           BC_v_W_N<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_v_W_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE[dev]);
+          BC_v_W_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE_W[dev], _v_WE_W[dev]);
           break;
       }
       switch(bc.wW) {
@@ -1607,7 +1691,7 @@ void cuda_dom_BC(void)
           BC_w_W_N<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_w_W_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE[dev]);
+          BC_w_W_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE_W[dev], _w_WE_E[dev]);
           break;
       }
     }
@@ -1715,7 +1799,7 @@ void cuda_dom_BC(void)
           BC_v_E_N<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_v_E_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE[dev]);
+          BC_v_E_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE_W[dev], _v_WE_E[dev]);
           break;
       }
       switch(bc.wE) {
@@ -1729,7 +1813,7 @@ void cuda_dom_BC(void)
           BC_w_E_N<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_w_E_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE[dev]);
+          BC_w_E_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE_W[dev],_w_WE_E[dev]);
           break;
       }
     }
@@ -1823,7 +1907,7 @@ void cuda_dom_BC(void)
           BC_u_S_N<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_u_S_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN[dev]);
+          BC_u_S_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN_S[dev], _u_SN_N[dev]);
           break;
       }
       switch(bc.vS) {
@@ -1851,7 +1935,7 @@ void cuda_dom_BC(void)
           BC_w_S_N<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_w_S_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN[dev]);
+          BC_w_S_T<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN_S[dev], _w_SN_N[dev]);
           break;
       }
     }
@@ -1945,7 +2029,7 @@ void cuda_dom_BC(void)
           BC_u_N_N<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_u_N_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN[dev]);
+          BC_u_N_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN_S[dev], _u_SN_N[dev]);
           break;
       }
       switch(bc.vN) {
@@ -1973,7 +2057,7 @@ void cuda_dom_BC(void)
           BC_w_N_N<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_w_N_T<<<numBlocks_w, dimBlocks_w>>>(_u[dev], _dom[dev], _w_SN[dev]);
+          BC_w_N_T<<<numBlocks_w, dimBlocks_w>>>(_u[dev], _dom[dev], _w_SN_S[dev], _w_SN_N[dev]);
           break;
       }
     }
@@ -2067,7 +2151,7 @@ void cuda_dom_BC(void)
           BC_u_B_N<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_u_B_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT[dev]);
+          BC_u_B_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT_B[dev], _u_BT_T[dev]);
           break;
       }
       switch(bc.vB) {
@@ -2081,7 +2165,7 @@ void cuda_dom_BC(void)
           BC_v_B_N<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_v_B_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT[dev]);
+          BC_v_B_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT_B[dev], _v_BT_T[dev]);
           break;
       }
       switch(bc.wB) {
@@ -2189,7 +2273,7 @@ void cuda_dom_BC(void)
           BC_u_T_N<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_u_T_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT[dev]);
+          BC_u_T_T<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT_B[dev],_u_BT_T[dev]);
           break;
       }
       switch(bc.vT) {
@@ -2203,7 +2287,7 @@ void cuda_dom_BC(void)
           BC_v_T_N<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev]);
           break;
         case PRECURSOR:
-          BC_v_T_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT[dev]);
+          BC_v_T_T<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT_B[dev], _v_BT_T[dev]);
           break;
       }
       switch(bc.wT) {
@@ -2324,7 +2408,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_v_W_T<<<numBlocks_v, dimBlocks_v>>>(_v_star[dev], _dom[dev],
-            _v_WE[dev]);
+            _v_WE_W[dev], _v_WE_E[dev]);
           break;
       }
       switch(bc.wW) {
@@ -2339,7 +2423,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_w_W_T<<<numBlocks_w, dimBlocks_w>>>(_w_star[dev], _dom[dev],
-            _w_WE[dev]);
+            _w_WE_W[dev], _w_WE_E[dev]);
           break;
       }
     }
@@ -2425,7 +2509,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_v_E_T<<<numBlocks_v, dimBlocks_v>>>(_v_star[dev], _dom[dev],
-            _v_WE[dev]);
+            _v_WE_W[dev], _v_WE_E[dev]);
           break;
       }
       switch(bc.wE) {
@@ -2440,7 +2524,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_w_E_T<<<numBlocks_w, dimBlocks_w>>>(_w_star[dev], _dom[dev], 
-            _w_WE[dev]);
+            _w_WE_W[dev], _w_WE_E[dev]);
           break;
       }
     }
@@ -2511,7 +2595,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_u_S_T<<<numBlocks_u, dimBlocks_u>>>(_u_star[dev], _dom[dev],
-            _u_SN[dev]);
+            _u_SN_S[dev], _u_SN_N[dev]);
           break;
       }
       switch(bc.vS) {
@@ -2541,7 +2625,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_w_S_T<<<numBlocks_w, dimBlocks_w>>>(_w_star[dev], _dom[dev],
-            _w_SN[dev]);
+            _w_SN_S[dev], _w_SN_N[dev]);
           break;
       }
     }
@@ -2612,7 +2696,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_u_N_T<<<numBlocks_u, dimBlocks_u>>>(_u_star[dev], _dom[dev], 
-            _u_SN[dev]);
+            _u_SN_S[dev], _u_SN_N[dev]);
           break;
       }
       switch(bc.vN) {
@@ -2642,7 +2726,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_w_N_T<<<numBlocks_w, dimBlocks_w>>>(_w_star[dev], _dom[dev],
-            _w_SN[dev]);
+            _w_SN_S[dev], _w_SN_N[dev]);
           break;
       }
     }
@@ -2713,7 +2797,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_u_B_T<<<numBlocks_u, dimBlocks_u>>>(_u_star[dev], _dom[dev],
-            _u_BT[dev]);
+            _u_BT_B[dev], _u_BT_T[dev]);
           break;
       }
       switch(bc.vB) {
@@ -2728,7 +2812,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_v_B_T<<<numBlocks_v, dimBlocks_v>>>(_v_star[dev], _dom[dev],
-            _v_BT[dev]);
+            _v_BT_B[dev], _v_BT_T[dev]);
           break;
       }
       switch(bc.wB) {
@@ -2814,7 +2898,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_u_T_T<<<numBlocks_u, dimBlocks_u>>>(_u_star[dev], _dom[dev],
-            _u_BT[dev]);
+            _u_BT_B[dev], _u_BT_T[dev]);
           break;
       }
       switch(bc.vT) {
@@ -2829,7 +2913,7 @@ void cuda_dom_BC_star(void)
           break;
         case PRECURSOR:
           BC_v_T_T<<<numBlocks_v, dimBlocks_v>>>(_v_star[dev], _dom[dev],
-            _v_BT[dev]);
+            _v_BT_B[dev], _v_BT_T[dev]);
           break;
       }
       switch(bc.wT) {
@@ -4253,7 +4337,7 @@ void cuda_solvability(void)
       w_star_red, _dom[dev]);
     //eps_z = sum_entries(2 * Nz, w_star_red);
     thrust::device_ptr<real> t_w_star_red(w_star_red);
-    eps_z = thrust::reduce(t_w_star_red, t_w_star_red + 2 * Ny, (real) 0.,
+    eps_z = thrust::reduce(t_w_star_red, t_w_star_red + 2 * Nz, (real) 0.,
       thrust::plus<real>());
     eps_z = eps_z * dom[dev].dx*dom[dev].dy;
 
@@ -4363,20 +4447,19 @@ void cuda_move_parts_sub()
     dim3 numBlocks(blocks);
 
     if(nparts > 0) {
-      real eps = 0.001;
+      real eps = 0.01;
 
       if(nparts == 1) {
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
-        
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
           dt, dt0, g, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
       } else if(nparts > 1) {
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
 
@@ -4434,11 +4517,11 @@ void cuda_move_parts_sub()
         // launch a thread per particle to calc collision
         collision_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts,
          _dom[dev], eps, mu, rho_f, nu, bc, _binStart, _binEnd, _partBin,
-          _partInd, _binDom, interactionLength, dt);
+          _partInd, _binDom, interactionLengthRatio, dt);
 
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
           dt, dt0, g, gradP, rho_f, ttime);
 
@@ -4446,11 +4529,11 @@ void cuda_move_parts_sub()
         
         collision_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts,
          _dom[dev], eps, mu, rho_f, nu, bc, _binStart, _binEnd, _partBin,
-          _partInd, _binDom, interactionLength, dt);
+          _partInd, _binDom, interactionLengthRatio, dt);
 
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
 
         // free variables
         (cudaFree(_partInd));
@@ -4483,19 +4566,19 @@ void cuda_move_parts()
     dim3 numBlocks(blocks);
 
     if(nparts > 0) {
-      real eps = 0.001;
+      real eps = 0.01;
 
       if(nparts == 1) {
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
           dt, dt0, g, gradP, rho_f, ttime);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
       } else if(nparts > 1) {
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
 
@@ -4553,11 +4636,11 @@ void cuda_move_parts()
         // launch a thread per particle to calc collision
         collision_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts,
          _dom[dev], eps, mu, rho_f, nu, bc, _binStart, _binEnd, _partBin,
-          _partInd, _binDom, interactionLength, dt);
+          _partInd, _binDom, interactionLengthRatio, dt);
 
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
           dt, dt0, g, gradP, rho_f, ttime);
 
@@ -4565,11 +4648,11 @@ void cuda_move_parts()
         
         collision_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts,
          _dom[dev], eps, mu, rho_f, nu, bc, _binStart, _binEnd, _partBin,
-          _partInd, _binDom, interactionLength, dt);
+          _partInd, _binDom, interactionLengthRatio, dt);
 
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
-          nparts, bc, eps, mu, rho_f, nu, interactionLength, dt);
+          nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
 
         // free variables
         (cudaFree(_partInd));
@@ -4647,10 +4730,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[ 6] == PRECURSOR)
-      yank_v_WE<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE[dev],
+      yank_v_WE<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE_W[dev],_v_WE_E[dev],
         pos[ 0], vel[ 0]);
     if(bc_flow_configs[ 7] == PRECURSOR)
-      yank_v_WE<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE[dev],
+      yank_v_WE<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_WE_W[dev],_v_WE_E[dev],
         pos[ 0], vel[ 1]);
 
     // set up kernel call
@@ -4673,10 +4756,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[12] == PRECURSOR)
-      yank_w_WE<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE[dev],
+      yank_w_WE<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE_W[dev],_w_WE_E[dev],
         pos[ 0], vel[ 0]);
     if(bc_flow_configs[13] == PRECURSOR)
-      yank_w_WE<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE[dev],
+      yank_w_WE<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_WE_W[dev],_w_WE_E[dev],
         pos[ 0], vel[ 1]);
 
     /** Y-direction flow: SN-plane **/
@@ -4702,10 +4785,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[ 2] == PRECURSOR)
-      yank_u_SN<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN[dev],
+      yank_u_SN<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN_S[dev],_u_SN_N[dev],
         pos[ 4], vel[ 8]);
     else if(bc_flow_configs[ 3] == PRECURSOR)
-      yank_u_SN<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN[dev],
+      yank_u_SN<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_SN_S[dev],_u_SN_N[dev],
         pos[ 4], vel[ 9]);
 
     // set up kernel call
@@ -4758,10 +4841,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[14] == PRECURSOR)
-      yank_w_SN<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN[dev],
+      yank_w_SN<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN_S[dev],_w_SN_N[dev],
         pos[ 4], vel[ 8]);
     if(bc_flow_configs[15] == PRECURSOR)
-      yank_w_SN<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN[dev],
+      yank_w_SN<<<numBlocks_w, dimBlocks_w>>>(_w[dev], _dom[dev], _w_SN_N[dev],_w_SN_N[dev],
         pos[ 4], vel[ 9]);
 
     /** Z-direction flow: BT-plane **/
@@ -4787,10 +4870,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[ 4] == PRECURSOR)
-      yank_u_BT<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT[dev],
+      yank_u_BT<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT_B[dev], _u_BT_T[dev],
         pos[ 8], vel[16]);
     else if(bc_flow_configs[ 5] == PRECURSOR)
-      yank_u_BT<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT[dev],
+      yank_u_BT<<<numBlocks_u, dimBlocks_u>>>(_u[dev], _dom[dev], _u_BT_B[dev], _u_BT_T[dev],
         pos[ 8], vel[17]);
 
     // set up kernel call
@@ -4815,10 +4898,10 @@ void cuda_yank_turb_planes(int *bc_flow_configs, real *pos, real *vel)
 
     // yank plane from precursor domain
     if(bc_flow_configs[10] == PRECURSOR)
-      yank_v_BT<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT[dev],
+      yank_v_BT<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT_B[dev], _v_BT_T[dev],
         pos[ 8], vel[16]);
     if(bc_flow_configs[11] == PRECURSOR)
-      yank_v_BT<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT[dev],
+      yank_v_BT<<<numBlocks_v, dimBlocks_v>>>(_v[dev], _dom[dev], _v_BT_B[dev], _v_BT_T[dev],
         pos[ 8], vel[17]);
 
     // set up kernel call

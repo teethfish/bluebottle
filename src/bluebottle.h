@@ -2,7 +2,7 @@
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2012 - 2015 Adam Sierakowski, The Johns Hopkins University
+ *  Copyright 2012 - 2016 Adam Sierakowski, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1127,22 +1127,53 @@ extern real *u_WE;
  *  u_SN
  * TYPE
  */
-extern real *u_SN;
+extern real *u_SN_S;
 /*
  * PURPOSE
- *  Hold the turbulence precursor plane for the u-velocity S or N face.
+ *  Hold the turbulence precursor plane for the u-velocity S or N face, southern plane
  ******
  */
 
-/****v* bluebottle/u_BT
+/****v* bluebottle/u_SN
  * NAME
- *  u_BT
+ *  u_SN
  * TYPE
  */
-extern real *u_BT;
+extern real *u_SN_N;
 /*
  * PURPOSE
- *  Hold the turbulence precursor plane for the u-velocity B or T face.
+ *  Hold the turbulence precursor plane for the u-velocity S or N face, northern plane
+ ******
+ */
+
+/****v* bluebottle/u_BT_B
+ * NAME
+ *  u_BT_B
+ * TYPE
+ */
+extern real *u_BT_B;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the u-velocity B or T face on bottom plane.
+ ******
+ */
+
+/****v* bluebottle/u_BT_T
+ * NAME
+ *  u_BT_T
+ * TYPE
+ */
+extern real *u_BT_T;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the u-velocity B or T face on top plane.
+ ******
+ */
+
+extern real *v_WE_W;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the v-velocity W or E face.
  ******
  */
 
@@ -1151,7 +1182,7 @@ extern real *u_BT;
  *  v_WE
  * TYPE
  */
-extern real *v_WE;
+extern real *v_WE_E;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the v-velocity W or E face.
@@ -1170,15 +1201,40 @@ extern real *v_SN;
  ******
  */
 
-/****v* bluebottle/v_BT
+/****v* bluebottle/v_BT_B
  * NAME
- *  v_BT
+ *  v_BT_B
  * TYPE
  */
-extern real *v_BT;
+extern real *v_BT_B;
 /*
  * PURPOSE
- *  Hold the turbulence precursor plane for the v-velocity B or T face.
+ *  Hold the turbulence precursor plane for the v-velocity B or T face on bottom cell.
+ ******
+ */
+
+/****v* bluebottle/v_BT_T
+ * NAME
+ *  v_BT_T
+ * TYPE
+ */
+extern real *v_BT_T;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the v-velocity B or T face on the top layer.
+ ******
+ */
+
+
+/****v* bluebottle/w_WE
+ * NAME
+ *  w_WE
+ * TYPE
+ */
+extern real *w_WE_W;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the w-velocity W or E face.
  ******
  */
 
@@ -1187,30 +1243,27 @@ extern real *v_BT;
  *  w_WE
  * TYPE
  */
-extern real *w_WE;
+extern real *w_WE_E;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the w-velocity W or E face.
  ******
  */
 
-/****v* bluebottle/w_SN
- * NAME
- *  w_SN
- * TYPE
- */
-extern real *w_SN;
+extern real *w_SN_S;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the w-velocity S or N face.
  ******
  */
 
-/****v* bluebottle/w_BT
- * NAME
- *  w_BT
- * TYPE
+extern real *w_SN_N;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the w-velocity S or N face.
+ ******
  */
+
 extern real *w_BT;
 /*
  * PURPOSE
@@ -1231,12 +1284,7 @@ extern real **_u_WE;
  ******
  */
 
-/****v* bluebottle/_u_SN
- * NAME
- *  _u_SN
- * TYPE
- */
-extern real **_u_SN;
+extern real **_u_SN_S;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the u-velocity S or N face.
@@ -1244,25 +1292,49 @@ extern real **_u_SN;
  ******
  */
 
-/****v* bluebottle/_u_BT
- * NAME
- *  _u_BT
- * TYPE
- */
-extern real **_u_BT;
+extern real **_u_SN_N;
 /*
  * PURPOSE
- *  Hold the turbulence precursor plane for the u-velocity B or T face.
+ *  Hold the turbulence precursor plane for the u-velocity S or N face.
  *  Device version.
  ******
  */
 
-/****v* bluebottle/_v_WE
+/****v* bluebottle/_u_BT_B
  * NAME
- *  _v_WE
+ *  _u_BT_B
  * TYPE
  */
-extern real **_v_WE;
+extern real **_u_BT_B;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the u-velocity B or T face on bottom cell.
+ *  Device version.
+ ******
+ */
+
+/****v* bluebottle/_u_BT_T
+ * NAME
+ *  _u_BT_T
+ * TYPE
+ */
+extern real **_u_BT_T;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the u-velocity B or T face on the top layer.
+ *  Device version.
+ ******
+ */
+
+extern real **_v_WE_W;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the v-velocity W or E face.
+ *  Device version.
+ ******
+ */
+
+extern real **_v_WE_E;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the v-velocity W or E face.
@@ -1283,25 +1355,34 @@ extern real **_v_SN;
  ******
  */
 
-/****v* bluebottle/_v_BT
+/****v* bluebottle/_v_BT_B
  * NAME
- *  _v_BT
+ *  _v_BT_B
  * TYPE
  */
-extern real **_v_BT;
+extern real **_v_BT_B;
 /*
  * PURPOSE
- *  Hold the turbulence precursor plane for the v-velocity B or T face.
+ *  Hold the turbulence precursor plane for the v-velocity B or T face on bottom cell.
  *  Device version.
  ******
  */
 
-/****v* bluebottle/_w_WE
- * NAME/
- *  _w_WE
+/****v* bluebottle/_v_BT_T
+ * NAME
+ *  _v_BT_T
+>>>>>>> master
  * TYPE
  */
-extern real **_w_WE;
+extern real **_v_BT_T;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the v-velocity B or T face on the top cell.
+ *  Device version.
+ ******
+ */
+
+extern real **_w_WE_W;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the w-velocity W or E face.
@@ -1309,12 +1390,28 @@ extern real **_w_WE;
  ******
  */
 
-/****v* bluebottle/_w_SN
+/****v* bluebottle/_w_WE
  * NAME
- *  _w_SN
+ *  _w_WE
  * TYPE
  */
-extern real **_w_SN;
+extern real **_w_WE_E;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the w-velocity W or E face.
+ *  Device version.
+ ******
+ */
+
+extern real **_w_SN_S;
+/*
+ * PURPOSE
+ *  Hold the turbulence precursor plane for the w-velocity S or N face.
+ *  Device version.
+ ******
+ */
+
+extern real **_w_SN_N;
 /*
  * PURPOSE
  *  Hold the turbulence precursor plane for the w-velocity S or N face.
@@ -2870,8 +2967,8 @@ void cuda_collisions(void);
  *  seeder_read_input()
  * USAGE
  */
-void seeder_read_input(int Nx, int Ny, int Nz, double ddz, double bias, 
-  int nperturb);
+void seeder_read_input(int Nx, int Ny, int Nz);//, double ddz, double bias, 
+  //int nperturb);
 /*
   * FUNCTION
   *   Read parts.config for seeder initialization
@@ -2892,7 +2989,7 @@ void seeder_read_input(int Nx, int Ny, int Nz, double ddz, double bias,
  */
 void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz, 
   real aLx, real aLy, real aLz, real rho, real E, real sigma, real e_dry,
-  int o, real rs_r, real spring_k, real spring_x, real spring_y,
+  real coeff_fric, int o, real rs_r, real spring_k, real spring_x, real spring_y,
   real spring_z, real spring_l, int t, int r);
 /*
  * FUNCTION
@@ -2903,7 +3000,7 @@ void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz,
  *  change its name to part.config and run bluebottle normally.
  * ARGUMENTS
  *  * nparts -- the number of particles
- *  * loa -- particle interaction compact support length
+ *  * loa -- particle interaction compact support length ratio
  *  * a -- the radius of the particles
  *  * aFx -- particle x forcing
  *  * aFy -- particle y forcing
@@ -2915,6 +3012,7 @@ void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz,
  *  * E -- the particle Young's modulus
  *  * s -- the particle Poisson ratio (-1 < s <= 0.5)
  *  * e_dry -- dry coefficient of restitution
+ *  * coeff_fric -- coefficient of friction
  *  * o -- the order of truncation of the Lamb's solution
  *  * rs_r -- cage extent ratio
  *  * spring_k -- particle spring constant
@@ -2946,7 +3044,7 @@ void seeder_array(int Nx, int Ny, int Nz, real loa, real a, real aFx, real aFy,
  *  * Nx -- particle number in x direction
  *  * Ny -- particle number in y direction
  *  * Nz -- particle number is z direction
- *  * loa -- particle interaction compact support length
+ *  * loa -- particle interaction compact support length ratio
  *  * a -- the radius of the particles
  *  * aFx -- particle x forcing
  *  * aFy -- particle y forcing
@@ -2990,7 +3088,7 @@ void seeder_hex(int Nx, int Ny, int Nz, double ddz, real loa, real a, real aFx,
  * 	Ny -- particle number in y direction
  *  Nz -- particle number is z direction
  *	ddz -- distance from top of one layer to center of next layer
- *  * loa -- particle interaction compact support length
+ *  * loa -- particle interaction compact support length ratio
  *  * a -- the radius of the particles
  *  * aFx -- particle x forcing
  *  * aFy -- particle y forcing
@@ -3036,7 +3134,7 @@ void seeder_high_vol_random(int Nx, int Ny, int Nz, double bias, int nperturb,
  *  Nz - particle number is z direction
  *	bias -- magnitude of pertubation
  *	nperturb -- number of pertubation times
- *  * loa -- particle interaction compact support length
+ *  * loa -- particle interaction compact support length ratio
  *  * a -- the radius of the particles
  *  * aFx -- particle x forcing
  *  * aFy -- particle y forcing

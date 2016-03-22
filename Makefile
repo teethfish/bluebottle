@@ -80,7 +80,11 @@ EXTRA = Makefile		\
 	precursor.h		\
 	recorder.h		\
 	vtk.h			\
+<<<<<<< HEAD
 	rng.c
+=======
+	rng.h
+>>>>>>> master
 
 # compile normally
 all: COPT += -O2

@@ -2,7 +2,7 @@
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2012 - 2015 Adam Sierakowski, The Johns Hopkins University
+ *  Copyright 2012 - 2016 Adam Sierakowski, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@
  *  MAX_NEIGHBORS
  * TYPE
  */
-#define MAX_NEIGHBORS 14
+#define MAX_NEIGHBORS 12
 /*
  * PURPOSE
  *  Define the maximum number of neighbors a particle can have (close packed).
@@ -415,15 +415,15 @@ extern int nparts;
  ******
  */
 
-/****v* particle/interactionLength
+/****v* particle/interactionLengthRatio
  * NAME
- *  interactionLength
+ *  interactionLengthRatio
  * TYPE
  */
-extern real interactionLength;
+extern real interactionLengthRatio;
 /*
  * PURPOSE
- *  Defines the particle-particle interaction length
+ *  Defines the particle-particle interaction length ratio
  ******
  */
 

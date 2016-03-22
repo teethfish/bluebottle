@@ -2,7 +2,7 @@
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2012 - 2015 Adam Sierakowski, The Johns Hopkins University
+ *  Copyright 2012 - 2016 Adam Sierakowski, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,22 +90,34 @@ real *u_star;
 real *v_star;
 real *w_star;
 real *u_WE;
-real *u_SN;
-real *u_BT;
-real *v_WE;
+real *u_SN_S;
+real *u_SN_N;
+real *u_BT_B;
+real *u_BT_T;
+real *v_WE_W;
+real *v_WE_E;
 real *v_SN;
-real *v_BT;
-real *w_WE;
-real *w_SN;
+real *v_BT_B;
+real *v_BT_T;
+real *w_WE_W;
+real *w_WE_E;
+real *w_SN_S;
+real *w_SN_N;
 real *w_BT;
 real **_u_WE;
-real **_u_SN;
-real **_u_BT;
-real **_v_WE;
+real **_u_SN_S;
+real **_u_SN_N;
+real **_u_BT_B;
+real **_u_BT_T;
+real **_v_WE_W;
+real **_v_WE_E;
 real **_v_SN;
-real **_v_BT;
-real **_w_WE;
-real **_w_SN;
+real **_v_BT_B;
+real **_v_BT_T;
+real **_w_WE_W;
+real **_w_WE_E;
+real **_w_SN_S;
+real **_w_SN_N;
 real **_w_BT;
 real **_rhs_p;
 real duration;
@@ -236,24 +248,25 @@ int main(int argc, char *argv[]) {
     printf("seeder is %d\n", seeder); 
     if(runseeder == 1) {
       int fret = 0;
-      fret = fret;  // prevent compiler warning
+      fret = fret;
       printf("Seed particles according to parameters specified in");
       printf(" parts.config? (y/N)\n");
       fflush(stdout);
       int c = getchar();
       int tmp = getchar();
-      tmp = tmp;  // prevent compiler warning
+      tmp = tmp;
       if (c == 'Y' || c == 'y') {
         printf("Seed particles for which kind of");
-        printf(" array? (r)andom / (a)rray / (h)ex / (p)erturbed?\n");
+        printf(" array? (r)andom\n");// / (a)rray / (h)ex / (p)erturbed?\n");
         fflush(stdout);
         int type = getchar();
         tmp = getchar();
         int Nx = 0; int Ny = 0; int Nz = 0; 
-        double ddz = 0.0; double bias = 0.0; int nperturb = 0;
+        //double ddz = 0.0; double bias = 0.0; int nperturb = 0;
         if(type == 'r'){
-          seeder_read_input(Nx, Ny, Nz, ddz, bias, nperturb);
+          seeder_read_input(Nx, Ny, Nz);//, ddz, bias, nperturb);
         }
+        /*
         if(type == 'a'){
           printf("Please input the number of particles in the x direction\n");
           fflush(stdout);
@@ -305,6 +318,7 @@ int main(int argc, char *argv[]) {
             nperturb);
           seeder_read_input(Nx, Ny, Nz, ddz, bias, nperturb);
         }
+        */
         return EXIT_SUCCESS;
       } else {
         printf("Please specify the desired parameters in parts.config\n\n");
@@ -323,7 +337,7 @@ int main(int argc, char *argv[]) {
       recorder_read_config();
 
       // read simulation input configuration file
-      printf("\nRunning bluebottle_0.1...\n\n");
+      printf("\nRunning Bluebottle...\n\n");
       printf("Reading the domain and particle input files...\n\n");
       domain_read_input();
       parts_read_input(turb);
@@ -532,7 +546,6 @@ int main(int argc, char *argv[]) {
 
         // update the boundary condition config info to share with precursor
         expd_update_BC(np, status);
-
         // apply boundary conditions to field variables
         if(nparts > 0) {
           cuda_part_BC();
@@ -611,7 +624,6 @@ int main(int argc, char *argv[]) {
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
-
           // TODO: save work by rebuilding only the cages that need to be rebuilt
           cuda_build_cages();
 
@@ -807,7 +819,7 @@ int main(int argc, char *argv[]) {
           }
 
           // check for blow-up condition
-          if(dt < 1e-20) {
+          if(dt < 1.e-10 || dt > 1.e10) {
             printf("The solution has diverged.  Ending simulation.              \n");
             return EXIT_FAILURE;
           }
@@ -854,7 +866,7 @@ int main(int argc, char *argv[]) {
       printf("done.\n");
       fflush(stdout);
 
-      printf("\n...bluebottle_0.1 done.\n\n");
+      printf("\n...Bluebottle done.\n\n");
     }
   } else {
     int turb = 1;   // boolean
@@ -939,6 +951,7 @@ int main(int argc, char *argv[]) {
 
     // initialize the domain
     int domain_init_flag = domain_init_turb();
+
     if(domain_init_flag == EXIT_FAILURE) {
       printf("\nThe number of devices in DEV RANGE is insufficient\n");
       printf("for the given turbulence domain decomposition.  Exiting now.\n");
@@ -1014,8 +1027,8 @@ int main(int argc, char *argv[]) {
 
     // begin simulation
     // apply boundary conditions to field variables
-    cuda_dom_BC();
-
+    cuda_dom_BC(); 
+   
     // write initial fields
     if(rec_prec_dt > 0 && runrestart != 1) {
       cuda_dom_pull();
@@ -1083,7 +1096,7 @@ int main(int argc, char *argv[]) {
       dt = cuda_find_dt();
      
       // check for blow-up condition
-      if(dt < 1e-20) {
+      if(dt < 1.e-10 || dt > 1.e10) {
         printf("The solution has diverged.  Ending simulation.              \n");
         return EXIT_FAILURE;
       }

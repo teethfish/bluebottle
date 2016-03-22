@@ -2,7 +2,7 @@
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2012 - 2015 Adam Sierakowski, The Johns Hopkins University
+ *  Copyright 2012 - 2016 Adam Sierakowski, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -2067,19 +2067,31 @@ int domain_init(void)
   cpumem += Dom.Gfz.s3b * sizeof(real);
   u_WE = (real*) malloc(Dom.Gfx.jnb*Dom.Gfx.knb * sizeof(real));
   cpumem += Dom.Gfx.jnb*Dom.Gfx.knb * sizeof(real);
-  u_SN = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
+  u_SN_S = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
   cpumem += Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real);
-  u_BT = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
+  u_SN_N = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
+  cpumem += Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real);
+  u_BT_B = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
   cpumem += Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real);
-  v_WE = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
+  u_BT_T = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
+  cpumem += Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real);
+  v_WE_W = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
+  cpumem += Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real);
+  v_WE_E = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
   cpumem += Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real);
   v_SN = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.knb * sizeof(real));
   cpumem += Dom.Gfy.inb*Dom.Gfy.knb * sizeof(real);
-  v_BT = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
+  v_BT_B = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
   cpumem += Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real);
-  w_WE = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
+  v_BT_T = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
+  cpumem += Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real);
+  w_WE_W = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
   cpumem += Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real);
-  w_SN = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
+  w_WE_E = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
+  cpumem += Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real);
+  w_SN_S = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
+  cpumem += Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real);
+  w_SN_N = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
   cpumem += Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real);
   w_BT = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.jnb * sizeof(real));
   cpumem += Dom.Gfz.inb*Dom.Gfz.jnb * sizeof(real);
@@ -2287,25 +2299,31 @@ int domain_init(void)
     u_WE[i] = 0.;
   }
   for(i = 0; i < Dom.Gfx.inb*Dom.Gfx.knb; i++) {
-    u_SN[i] = 0.;
+    u_SN_S[i] = 0.;
+    u_SN_N[i] = 0.;
   }
   for(i = 0; i < Dom.Gfx.inb*Dom.Gfx.jnb; i++) {
-    u_BT[i] = 0.;
+    u_BT_B[i] = 0.;
+    u_BT_T[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.jnb*Dom.Gfy.knb; i++) {
-    v_WE[i] = 0.;
+    v_WE_W[i] = 0.;
+    v_WE_E[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.inb*Dom.Gfy.knb; i++) {
     v_SN[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.inb*Dom.Gfy.jnb; i++) {
-    v_BT[i] = 0.;
+    v_BT_B[i] = 0.;
+    v_BT_T[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.jnb*Dom.Gfz.knb; i++) {
-    w_WE[i] = 0.;
+    w_WE_W[i] = 0.;
+    w_WE_E[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.inb*Dom.Gfz.knb; i++) {
-    w_SN[i] = 0.;
+    w_SN_S[i] = 0.;
+    w_SN_N[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.inb*Dom.Gfz.jnb; i++) {
     w_BT[i] = 0.;
@@ -2809,19 +2827,31 @@ int domain_init_turb(void)
   cpumem += Dom.Gfz.s3b * sizeof(real);
   u_WE = (real*) malloc(Dom.Gfx.jnb*Dom.Gfx.knb * sizeof(real));
   cpumem += Dom.Gfx.jnb*Dom.Gfx.knb * sizeof(real);
-  u_SN = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
+  u_SN_S = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
   cpumem += Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real);
-  u_BT = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
+  u_SN_N = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real));
+  cpumem += Dom.Gfx.inb*Dom.Gfx.knb * sizeof(real);
+  u_BT_B = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
   cpumem += Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real);
-  v_WE = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
+  u_BT_T = (real*) malloc(Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real));
+  cpumem += Dom.Gfx.inb*Dom.Gfx.jnb * sizeof(real);
+  v_WE_W = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
+  cpumem += Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real);
+  v_WE_E = (real*) malloc(Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real));
   cpumem += Dom.Gfy.jnb*Dom.Gfy.knb * sizeof(real);
   v_SN = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.knb * sizeof(real));
   cpumem += Dom.Gfy.inb*Dom.Gfy.knb * sizeof(real);
-  v_BT = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
+  v_BT_B = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
   cpumem += Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real);
-  w_WE = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
+  v_BT_T = (real*) malloc(Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real));
+  cpumem += Dom.Gfy.inb*Dom.Gfy.jnb * sizeof(real);
+  w_WE_W = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
   cpumem += Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real);
-  w_SN = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
+  w_WE_E = (real*) malloc(Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real));
+  cpumem += Dom.Gfz.jnb*Dom.Gfz.knb * sizeof(real);
+  w_SN_S = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
+  cpumem += Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real);
+  w_SN_N = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real));
   cpumem += Dom.Gfz.inb*Dom.Gfz.knb * sizeof(real);
   w_BT = (real*) malloc(Dom.Gfz.inb*Dom.Gfz.jnb * sizeof(real));
   cpumem += Dom.Gfz.inb*Dom.Gfz.jnb * sizeof(real);
@@ -2833,8 +2863,7 @@ int domain_init_turb(void)
   cpumem += Dom.Gfz.s3b * sizeof(real);
 
   // set up the random number generator
-  //srand(time(NULL));
-  rng_init(100);
+  rng_init(time(NULL));
   for(i = 0; i < Dom.Gcc.s3b; i++) {
     p0[i] = 0.;
     p[i] = 0.;
@@ -3073,25 +3102,31 @@ int domain_init_turb(void)
     u_WE[i] = 0.;
   }
   for(i = 0; i < Dom.Gfx.inb*Dom.Gfx.knb; i++) {
-    u_SN[i] = 0.;
+    u_SN_S[i] = 0.;
+    u_SN_N[i] = 0.;
   }
   for(i = 0; i < Dom.Gfx.inb*Dom.Gfx.jnb; i++) {
-    u_BT[i] = 0.;
+    u_BT_B[i] = 0.;
+    u_BT_T[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.jnb*Dom.Gfy.knb; i++) {
-    v_WE[i] = 0.;
+    v_WE_W[i] = 0.;
+    v_WE_E[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.inb*Dom.Gfy.knb; i++) {
     v_SN[i] = 0.;
   }
   for(i = 0; i < Dom.Gfy.inb*Dom.Gfy.jnb; i++) {
-    v_BT[i] = 0.;
+    v_BT_B[i] = 0.;
+    v_BT_T[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.jnb*Dom.Gfz.knb; i++) {
-    w_WE[i] = 0.;
+    w_WE_W[i] = 0.;
+    w_WE_E[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.inb*Dom.Gfz.knb; i++) {
-    w_SN[i] = 0.;
+    w_SN_S[i] = 0.;
+    w_SN_N[i] = 0.;
   }
   for(i = 0; i < Dom.Gfz.inb*Dom.Gfz.jnb; i++) {
     w_BT[i] = 0.;
@@ -3153,13 +3188,19 @@ void domain_clean(void)
   free(v_star);
   free(w_star);
   free(u_WE);
-  free(u_SN);
-  free(u_BT);
-  free(v_WE);
+  free(u_SN_S);
+  free(u_SN_N);
+  free(u_BT_B);
+  free(u_BT_T);
+  free(v_WE_W);
+  free(v_WE_E);
   free(v_SN);
-  free(v_BT);
-  free(w_WE);
-  free(w_SN);
+  free(v_BT_B);
+  free(v_BT_T);
+  free(w_WE_W);
+  free(w_WE_E);
+  free(w_SN_S);
+  free(w_SN_N);
   free(w_BT);
   free(f_x);
   free(f_y);
