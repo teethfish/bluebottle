@@ -380,6 +380,8 @@ int main(int argc, char *argv[]) {
       /********* End messy CUDA_VISIBLE_DEVICES hack. */
 
       if(runrestart != 1) {
+				// if it is not restart, set the seeder for random number
+				rng_init(seeder);
         // start BICGSTAB recorder
         recorder_bicgstab_init("solver_expd.rec");
         #ifdef IMPLICIT
@@ -601,10 +603,9 @@ int main(int argc, char *argv[]) {
         #endif
         }
 
-	// set the initial frocing term A which should calculated from sigma2 and tf
-	real forcing_var;
-	forcing_var = cuda_phys_forcing_init();
-	rng_init(seeder);
+				// set the initial frocing term A which should calculated from sigma2 and tf
+				real forcing_var;
+				forcing_var = cuda_phys_forcing_init();
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -617,10 +618,9 @@ int main(int argc, char *argv[]) {
           stepnum++;
           printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
-	
-	//Before each step, calculate forcing in host and copy to device
-	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
-	  cuda_compute_phys_forcing(forcing_var);
+					//Before each step, calculate forcing in host and copy to device
+          cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+          cuda_compute_phys_forcing(forcing_var);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
@@ -730,8 +730,8 @@ int main(int argc, char *argv[]) {
           } else {
             return EXIT_FAILURE;
           }
-	  cuda_part_pull();
-	  //record_phys_forcing("forcing_hydro.dat", A);
+					cuda_part_pull();
+	  			//record_phys_forcing("forcing_hydro.dat", A);
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields
