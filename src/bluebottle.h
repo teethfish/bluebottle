@@ -1711,6 +1711,19 @@ extern int rec_particle_stepnum_out;
  ******
  */
 
+/****v* bluebottle/rec_particle_stepnum_out
+ * NAME
+ *  rec_point_stepnum_out
+ * TYPE
+ */
+extern int rec_point_stepnum_out;
+/*
+ * PURPOSE
+ *  The output timestep number for the simulation.  The initial configuration
+ *  is given by stepnum = 0.
+ ******
+ */
+
 /****v* bluebottle/rec_flow_field_dt
  * NAME
  *  rec_flow_field_dt
@@ -1945,6 +1958,11 @@ extern real rec_particle_ttime_out;
  *  Recorder particle output time since last output.
  ******
  */
+
+extern real rec_point_dt;
+
+extern real rec_point_ttime_out;
+
 
 /****v* bluebottle/rec_particle_pos
  * NAME
@@ -2394,6 +2412,11 @@ void cuda_part_malloc(void);
  ******
  */
 
+void cuda_point_malloc(void);
+void cuda_point_push(void);
+void cuda_point_pull(void);
+void cuda_point_free(void);
+void cuda_move_points(void);
 /****f* bluebottle/cuda_dom_push()
  * NAME
  *  cuda_dom_push()

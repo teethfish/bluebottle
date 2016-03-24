@@ -48,6 +48,8 @@ void recorder_read_config(void)
   rec_particle_force = 0;
   rec_particle_moment = 0;
 
+	rec_point_dt = -1;
+
   rec_restart_dt = -1;
   rec_prec_dt = -1;
   rec_restart_stop = 0;
@@ -70,7 +72,7 @@ void recorder_read_config(void)
 
   /** list of recognized output configurations **/
   char ***configs;
-  int nconfigs = 7;
+  int nconfigs = 8;
   int *nconfigsn = (int*) malloc(nconfigs * sizeof(int));
   // cpumem += nconfigs * sizeof(int);
   configs = (char***) malloc(nconfigs * sizeof(char**));
@@ -109,8 +111,17 @@ void recorder_read_config(void)
   }
   sprintf(configs[N][0], "PARTICLE");
   sprintf(configs[N][1], "position");
+	// point particle info
+	N = 3;
+	nconfigsn[N] = 1;
+	configs[N] = (char**) malloc(nconfigsn[N] * sizeof(char*));
+	for(i = 0; i < nconfigsn[N]; i++) {
+    configs[N][i] = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+    // cpumem += CHAR_BUF_SIZE * sizeof(char);
+  }
+	sprintf(configs[N][0], "POINT");
   // restart info
-  N = 3;
+  N = 4;
   nconfigsn[N] = 1;
   configs[N] = (char**) malloc(nconfigsn[N] * sizeof(char*));
   // cpumem += nconfigs[N] * sizeof(char*);
@@ -120,7 +131,7 @@ void recorder_read_config(void)
   }
   sprintf(configs[N][0], "RESTART");
   // precursor info
-  N = 4;
+  N = 5;
   nconfigsn[N] = 1;
   configs[N] = (char**) malloc(nconfigsn[N] * sizeof(char*));
   for(i = 0; i < nconfigsn[N]; i++) {
@@ -128,7 +139,7 @@ void recorder_read_config(void)
   }
   sprintf(configs[N][0], "PRECURSOR_VTK");
   // restart_stop info
-  N = 5;
+  N = 6;
   nconfigsn[N] = 1;
   configs[N] = (char**) malloc(nconfigsn[N] * sizeof(char*));
   // cpumem += nconfigs[N] * sizeof(char*);
@@ -138,7 +149,7 @@ void recorder_read_config(void)
   }
   sprintf(configs[N][0], "RESTART_STOP");
   // turbulence flow field info
-  N = 6;
+  N = 7;
   nconfigsn[N] = 3;
   configs[N] = (char**) malloc(nconfigsn[N] * sizeof(char*));
   // cpumem += nconfigsn[N] * sizeof(char*);
@@ -159,6 +170,7 @@ void recorder_read_config(void)
       // remove newline character
       real dtout = 0;
       sscanf(buf, "%s %lf\n", bufconfig, &dtout);
+			printf("%s is %f\n",bufconfig, dtout);
       // check config list
       if(strcmp(configs[i][0], bufconfig) == 0) {
         // found: continue reading config
@@ -208,12 +220,14 @@ void recorder_read_config(void)
 
                 exit(EXIT_FAILURE);
               }
+							printf("case 0\n");
               // read next line
               fret = fgets(buf, CHAR_BUF_SIZE, infile);
             }
             break;
           case 1: // PARAVIEW
             rec_paraview_dt = dtout;
+						printf("case 1\n");
             // read next line
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             break;
@@ -270,26 +284,32 @@ void recorder_read_config(void)
 
                 exit(EXIT_FAILURE);
               }
+							printf("case 3\n");
               // read next line
               fret = fgets(buf, CHAR_BUF_SIZE, infile);
             }
             break;
-          case 3: // RESTART
+					case 3: //POINT
+						rec_point_dt = dtout;
+						printf("case 4\n");
+						fret = fgets(buf, CHAR_BUF_SIZE, infile);
+						break;
+          case 4: // RESTART
             rec_restart_dt = dtout;
             // read next line
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             break;
-          case 4: // PRECURSOR_VTK
+          case 5: // PRECURSOR_VTK
             rec_prec_dt = dtout;
             // read next line
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             break;
-          case 5: // RESTART_STOP
+          case 6: // RESTART_STOP
             rec_restart_stop = (int)dtout;
             // read next line
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             break;
-          case 6: // PRECURSOR
+          case 7: // PRECURSOR
             rec_prec_flow_field_dt = dtout;
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             /* while(strcmp("\n", buf) != 0) {
@@ -342,7 +362,7 @@ void recorder_read_config(void)
     // if we've parsed the entire list but don't find anything: error
     if(!foundi) {
       fprintf(stderr, "Unrecognized record.config type %s\n", bufconfig);
-
+		
       // clean up
       fclose(infile);
       for(i = 0; i < nconfigs; i++) {
@@ -368,6 +388,16 @@ void recorder_read_config(void)
   }
   free(configs);
   free(nconfigsn);
+
+  rec_flow_field_dt = 0.01;
+  rec_paraview_dt = -1.0;
+  rec_particle_dt = -1.0;
+  rec_point_dt = 0.01;
+  rec_restart_dt = 30;
+  rec_prec_dt = -1.0;
+  rec_restart_stop = 1;
+  rec_prec_flow_field_dt = -1.0;
+
 }
 
 void cgns_grid(void)
@@ -1887,6 +1917,145 @@ void cgns_particles(real dtout)
   //  }
   }
 }
+
+void cgns_points(real dtout)
+{
+  if(npoints > 0) {
+    // create the solution file
+    char fname[FILE_NAME_SIZE] = "";
+    char fname2[FILE_NAME_SIZE] = "";
+    char fnameall[FILE_NAME_SIZE] = "";
+    char fnameall2[FILE_NAME_SIZE] = "";
+    real tout = ttime; // = rec_particle_stepnum_out * dtout;
+    char format[CHAR_BUF_SIZE] = "";
+    int sigfigs = ceil(log10(1. / dtout));
+    if(sigfigs < 1) sigfigs = 1;
+    sprintf(format, "%%.%df", sigfigs);
+    sprintf(fname2, "point-%s.cgns", format);
+    sprintf(fnameall2, "%s/output/point-%s.cgns", ROOT_DIR, format);
+    sprintf(fname, fname2, tout);
+    sprintf(fnameall, fnameall2, tout);
+    int fn;
+    int bn;
+    int zn;
+    int en;
+    int sn;
+    int Xn;
+    int Yn;
+    int Zn;
+    int fnr;
+    cg_open(fnameall, CG_MODE_WRITE, &fn);
+    cg_base_write(fn, "Base", 3, 3, &bn);
+    cgsize_t size[3][1];
+    size[0][0] = nparts;
+    size[1][0] = 0;
+    size[2][0] = 0;
+    cg_zone_write(fn, bn, "Zone0", size[0], Unstructured, &zn);
+
+    // write particle locations
+    real *x = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *y = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *z = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+		cgsize_t *conn = malloc(npoints * sizeof(cgsize_t));
+    // cpumem += nparts * sizeof(int);
+    real *a = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *rho = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+
+    real *u = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *v = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *w = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+ 
+    real *ox = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *oy = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *oz = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+  
+    real *Fx = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *Fy = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+    real *Fz = malloc(npoints * sizeof(real));
+    // cpumem += nparts * sizeof(real);
+
+    for(int i = 0; i < npoints; i++) {
+			conn[i] = npoints-i;
+      x[i] = parts[i].x;
+      y[i] = parts[i].y;
+      z[i] = parts[i].z;
+      a[i] = parts[i].r;
+      rho[i] = parts[i].rho;
+
+      u[i] = parts[i].u;
+      v[i] = parts[i].v;
+      w[i] = parts[i].w;
+
+      Fx[i] = parts[i].Fx;
+      Fy[i] = parts[i].Fy;
+      Fz[i] = parts[i].Fz;
+   
+      ox[i] = parts[i].ox;
+      oy[i] = parts[i].oy;
+      oz[i] = parts[i].oz;
+	}
+	
+    cg_coord_write(fn, bn, zn, RealDouble, "CoordinateX", x, &Xn);
+    cg_coord_write(fn, bn, zn, RealDouble, "CoordinateY", y, &Yn);
+    cg_coord_write(fn, bn, zn, RealDouble, "CoordinateZ", z, &Zn);
+
+    cg_section_write(fn, bn, zn, "Elements", NODE, 0, npoints-1, 0, conn, &en);
+
+    cg_sol_write(fn, bn, zn, "Solution", Vertex, &sn);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Radius", a, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityX", u, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityY", v, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ", w, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ", rho, &fnr);
+
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AngularVelocityX", ox, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AngularVelocityY", oy, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AngularVelocityZ", oz, &fnr);
+    
+
+    cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceX", Fx, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceY", Fy, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceZ", Fz, &fnr);
+
+    cg_goto(fn, bn, "Zone_t", zn, "end");
+    cg_user_data_write("Etc");
+    cg_goto(fn, bn, "Zone_t", zn, "Etc", 0, "end");
+    cgsize_t *N = malloc(sizeof(cgsize_t));
+    N[0] = 1;
+    cg_array_write("Time", RealDouble, 1, N, &ttime);
+    free(N);
+
+    cg_close(fn);
+    free(x);
+    free(y);
+    free(z);
+    free(a);
+    free(rho);
+    free(u);
+    free(v);
+    free(w);
+    free(ox);
+    free(oy);
+    free(oz);
+    free(Fx);
+    free(Fy);
+    free(Fz);
+  }
+}
+
 
 void recorder_bicgstab_init(char *name)
 {

@@ -3303,6 +3303,9 @@ void out_restart(void)
   fwrite(&stepnum, sizeof(int), 1, rest);
   fwrite(&rec_paraview_stepnum_out, sizeof(int), 1, rest);
 
+	fwrite(&rng_j, sizeof(unsigned long long int), 1, rest);
+	fwrite(&rng_v, sizeof(unsigned long long int), 1, rest);
+
   fwrite(u, sizeof(real), Dom.Gfx.s3b, rest);
   fwrite(u0, sizeof(real), Dom.Gfx.s3b, rest);
 #ifndef IMPLICIT
@@ -3400,6 +3403,9 @@ void in_restart(void)
   fret = fread(&stepnum, sizeof(int), 1, infile);
   fret = fread(&rec_paraview_stepnum_out, sizeof(int), 1, infile);
 
+	fret = fread(&rng_j, sizeof(unsigned long long int), 1, infile);
+  fret = fread(&rng_v, sizeof(unsigned long long int), 1, infile);
+
   fret = fread(u, sizeof(real), Dom.Gfx.s3b, infile);
   fret = fread(u0, sizeof(real), Dom.Gfx.s3b, infile);
 #ifndef IMPLICIT
@@ -3495,6 +3501,9 @@ void out_restart_turb(void)
   fwrite(&stepnum, sizeof(int), 1, rest);
   fwrite(&rec_paraview_stepnum_out, sizeof(int), 1, rest);
 
+  fwrite(&rng_j, sizeof(unsigned long long int), 1, rest);
+  fwrite(&rng_v, sizeof(unsigned long long int), 1, rest);
+
   fwrite(u, sizeof(real), Dom.Gfx.s3b, rest);
   fwrite(u0, sizeof(real), Dom.Gfx.s3b, rest);
 #ifndef IMPLICIT
@@ -3561,6 +3570,9 @@ void in_restart_turb(void)
   fret = fread(&dt, sizeof(real), 1, infile);
   fret = fread(&stepnum, sizeof(int), 1, infile);
   fret = fread(&rec_paraview_stepnum_out, sizeof(int), 1, infile);
+
+  fret = fread(&rng_j, sizeof(unsigned long long int), 1, infile);
+  fret = fread(&rng_v, sizeof(unsigned long long int), 1, infile);
 
   fret = fread(u, sizeof(real), Dom.Gfx.s3b, infile);
   fret = fread(u0, sizeof(real), Dom.Gfx.s3b, infile);

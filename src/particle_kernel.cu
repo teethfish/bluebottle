@@ -623,7 +623,7 @@ __global__ void part_BC_u(real *u, int *phase, int *flag_u,
 
       real ocrossr_x = oy*z - oz*y;
       real odotcrossr_x = oydot*z - ozdot*y;
-      Ux += uu + ocrossr_x;
+			Ux += uu + ocrossr_x;
       Ux += 0.1/nu *(r*r*r*r*r-a*a*a*a*a)/(r*r*r) * odotcrossr_x;
       /*real ky = 2*PI/dom->yl;
       real kz = 2*PI/dom->zl;

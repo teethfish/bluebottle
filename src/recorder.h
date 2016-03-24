@@ -33,6 +33,7 @@
 
 #include "bluebottle.h"
 #include "particle.h"
+#include "point.h"
 #include <cgnslib.h>
 
 /****f* recorder/recorder_read_config()
@@ -105,6 +106,20 @@ void cgns_turb_flow_field(real dtout);
  * TYPE
  */
 void cgns_particles(real dtout);
+/*
+ * FUNCTION
+ *  Write the CGNS particles output file.
+ * ARGUMENTS
+ *  * dtout -- the output timestep size
+ ******
+ */
+
+/****f* recorder/cgns_particles()
+ * NAME
+ *  cgns_points()
+ * TYPE
+ */
+void cgns_points(real dtout);
 /*
  * FUNCTION
  *  Write the CGNS particles output file.

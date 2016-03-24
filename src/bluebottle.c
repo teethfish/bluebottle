@@ -23,6 +23,7 @@
 #include <mpi.h>
 #include "bluebottle.h"
 #include "particle.h"
+#include "point.h"
 #include "precursor.h"
 
 // define global variables that were declared in header file
@@ -139,6 +140,7 @@ int stepnum;
 int rec_flow_field_stepnum_out;
 int rec_paraview_stepnum_out;
 int rec_particle_stepnum_out;
+int rec_point_stepnum_out;
 int rec_prec_stepnum_out;
 int rec_prec_flow_field_stepnum_out;
 real rec_flow_field_dt;
@@ -155,6 +157,8 @@ real rec_paraview_dt;
 real rec_paraview_ttime_out;
 real rec_particle_dt;
 real rec_particle_ttime_out;
+real rec_point_dt;
+real rec_point_ttime_out;
 real rec_restart_dt;
 int rec_restart_stop;
 real rec_restart_ttime_out;
@@ -380,6 +384,8 @@ int main(int argc, char *argv[]) {
       /********* End messy CUDA_VISIBLE_DEVICES hack. */
 
       if(runrestart != 1) {
+				// if it is not restart, init the random number generator seeder	
+				rng_init(seeder);
         // start BICGSTAB recorder
         recorder_bicgstab_init("solver_expd.rec");
         #ifdef IMPLICIT
@@ -434,6 +440,11 @@ int main(int argc, char *argv[]) {
       cuda_part_malloc();
       printf("...done.\n");
       fflush(stdout);
+			printf("Allocating point particle CUDA device memory...");
+			fflush(stdout);
+			cuda_point_malloc();
+			printf("...done.\n");
+			fflush(stdout);
 
       // copy host data to devices
       printf("Copying host domain data to devices...");
@@ -446,6 +457,11 @@ int main(int argc, char *argv[]) {
       cuda_part_push();
       printf("done.\n");
       fflush(stdout);
+			printf("Copying host point particle data to devices...");
+			fflush(stdout);
+			cuda_point_push();
+			printf("done.\n");
+			fflush(stdout);
 
       count_mem();
 
@@ -480,6 +496,11 @@ int main(int argc, char *argv[]) {
         printf("Copying host particle data to devices...");
         fflush(stdout);
         cuda_part_push();
+        printf("done.\n");
+        fflush(stdout);
+				printf("Copying host point particle data to devices...");
+				fflush(stdout);
+				cuda_point_push();
         printf("done.\n");
         fflush(stdout);
         cgns_grid();
@@ -518,6 +539,7 @@ int main(int argc, char *argv[]) {
         rec_flow_field_stepnum_out = -1;
         rec_paraview_stepnum_out = -1;
         rec_particle_stepnum_out = -1;
+				rec_point_stepnum_out = -1;
         //rec_restart_stepnum_out = -1;
         rec_prec_stepnum_out = -1;
         cuda_part_pull();
@@ -560,7 +582,7 @@ int main(int argc, char *argv[]) {
         if(runrestart != 1) {
           cuda_dom_pull();
           cuda_part_pull();
-
+					cuda_point_pull();
         #ifdef DDEBUG
             printf("Writing ParaView file %d (t = %e)...",
             rec_paraview_stepnum_out, ttime);
@@ -588,6 +610,14 @@ int main(int argc, char *argv[]) {
             printf("done.               \n");
             fflush(stdout);
           }
+					if(rec_point_dt > 0) {
+            printf("Writing point particle file t = %e...", ttime);
+            fflush(stdout);
+            cgns_points(rec_point_dt);
+            rec_point_stepnum_out++;
+            printf("done.               \n");
+            fflush(stdout);
+          }
           if(rec_paraview_dt > 0) {
             printf("Writing ParaView file %d (t = %e)...",
               rec_paraview_stepnum_out, ttime);
@@ -597,14 +627,13 @@ int main(int argc, char *argv[]) {
             printf("done.               \n");
             fflush(stdout);
           }
-
+				// if it is not restarted, init the random number generator
         #endif
         }
-
-	// set the initial frocing term A which should calculated from sigma2 and tf
-	real forcing_var;
-	forcing_var = cuda_phys_forcing_init();
-	rng_init(seeder);
+				// set the initial frocing term A which should calculated from sigma2 and tf
+				real forcing_var;
+				forcing_var = cuda_phys_forcing_init();
+				printf("rec_point_dt is %f\n",rec_point_dt);
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -613,14 +642,15 @@ int main(int argc, char *argv[]) {
           rec_flow_field_ttime_out += dt;
           rec_paraview_ttime_out += dt;
           rec_particle_ttime_out += dt;
+					rec_point_ttime_out += dt;
           rec_restart_ttime_out += dt;
           stepnum++;
           printf("EXPD: Time = %e of %e (dt = %e).\n", ttime, duration, dt);
           fflush(stdout);
 	
-	//Before each step, calculate forcing in host and copy to device
-	  cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
-	  cuda_compute_phys_forcing(forcing_var);
+					//Before each step, calculate forcing in host and copy to device
+					cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+					cuda_compute_phys_forcing(forcing_var);
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);
@@ -706,6 +736,8 @@ int main(int argc, char *argv[]) {
           if(!lambflag) {
             // update particle position
             cuda_move_parts();
+						// update point particle position
+						cuda_move_points();
 
             // write particle internal flow equal to solid body velocity
             cuda_parts_internal();
@@ -730,8 +762,9 @@ int main(int argc, char *argv[]) {
           } else {
             return EXIT_FAILURE;
           }
-	  cuda_part_pull();
-	  //record_phys_forcing("forcing_hydro.dat", A);
+					cuda_part_pull();
+					cuda_point_pull();
+					//record_phys_forcing("forcing_hydro.dat", A);
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields
@@ -794,6 +827,25 @@ int main(int argc, char *argv[]) {
               rec_particle_stepnum_out++;
             }
           }
+          if(rec_point_dt > 0) {
+            if(rec_point_ttime_out >= rec_point_dt) {
+              // pull back data and write fields
+              cuda_point_pull();
+              #ifndef BATCHRUN
+                printf("  Writing point particle file t = %e...                  \r",
+                  ttime);
+                fflush(stdout);
+              #endif
+              #ifdef DDEBUG
+              #else
+                cgns_points(rec_point_dt);
+              #endif
+              printf("  Writing point particle file t = %e...done.\n", ttime);
+              fflush(stdout);
+              rec_point_ttime_out = rec_point_ttime_out - rec_point_dt;
+              rec_point_stepnum_out++;
+            }
+          }
 
           // write a restart file and exit when the time is appropriate
           timestepwalltime = time(NULL);
@@ -853,11 +905,21 @@ int main(int argc, char *argv[]) {
       cuda_part_free();
       printf("done.\n");
       fflush(stdout);
+			printf("Cleaning up point particle data on devices...");
+      fflush(stdout);
+      cuda_point_free();
+      printf("done.\n");
+      fflush(stdout);
 
       // clean up host
       printf("Cleaning up particles...");
       fflush(stdout);
       parts_clean();
+      printf("done.\n");
+      fflush(stdout);
+			printf("Cleaning up point particles...");
+      fflush(stdout);
+      points_clean();
       printf("done.\n");
       fflush(stdout);
       printf("Cleaning up domain...");

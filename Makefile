@@ -49,6 +49,7 @@ CUDALIBS = -L $(CUDA_DIR)/lib64 -lcudart
 SRCC =	bluebottle.c	\
 	domain.c	\
 	particle.c	\
+	point.c		\
 	precursor.c	\
 	recorder.c	\
 	seeder.c	\
@@ -58,6 +59,7 @@ SRCC =	bluebottle.c	\
 SRCCUDA = cuda_bluebottle.cu	\
 	cuda_bicgstab.cu	\
 	cuda_particle.cu	\
+	cuda_point.cu		\
 	cuda_quadrature.cu	\
 	cuda_testing.cu		\
 	entrySearch.cu		\
@@ -65,6 +67,7 @@ SRCCUDA = cuda_bluebottle.cu	\
 	bicgstab_kernel.cu	\
 	entrySearch_kernel.cu	\
 	particle_kernel.cu	\
+	point_kernel.cu		\
 	quadrature_kernel.cu
 
 EXTRA = Makefile		\
@@ -72,11 +75,13 @@ EXTRA = Makefile		\
 	cuda_bluebottle.h	\
 	cuda_bicgstab.h		\
 	cuda_particle.h		\
+	cuda_point.h		\
 	cuda_quadrature.h	\
 	cuda_testing.h		\
 	domain.h		\
 	entrySearch.h		\
 	particle.h		\
+	point.h		\
 	precursor.h		\
 	recorder.h		\
 	vtk.h			\
