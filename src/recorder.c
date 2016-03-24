@@ -170,7 +170,6 @@ void recorder_read_config(void)
       // remove newline character
       real dtout = 0;
       sscanf(buf, "%s %lf\n", bufconfig, &dtout);
-			printf("%s is %f\n",bufconfig, dtout);
       // check config list
       if(strcmp(configs[i][0], bufconfig) == 0) {
         // found: continue reading config
@@ -220,14 +219,12 @@ void recorder_read_config(void)
 
                 exit(EXIT_FAILURE);
               }
-							printf("case 0\n");
               // read next line
               fret = fgets(buf, CHAR_BUF_SIZE, infile);
             }
             break;
           case 1: // PARAVIEW
             rec_paraview_dt = dtout;
-						printf("case 1\n");
             // read next line
             fret = fgets(buf, CHAR_BUF_SIZE, infile);
             break;
@@ -284,14 +281,12 @@ void recorder_read_config(void)
 
                 exit(EXIT_FAILURE);
               }
-							printf("case 3\n");
               // read next line
               fret = fgets(buf, CHAR_BUF_SIZE, infile);
             }
             break;
 					case 3: //POINT
 						rec_point_dt = dtout;
-						printf("case 4\n");
 						fret = fgets(buf, CHAR_BUF_SIZE, infile);
 						break;
           case 4: // RESTART
@@ -388,15 +383,6 @@ void recorder_read_config(void)
   }
   free(configs);
   free(nconfigsn);
-
-  rec_flow_field_dt = 0.01;
-  rec_paraview_dt = -1.0;
-  rec_particle_dt = -1.0;
-  rec_point_dt = 0.01;
-  rec_restart_dt = 30;
-  rec_prec_dt = -1.0;
-  rec_restart_stop = 1;
-  rec_prec_flow_field_dt = -1.0;
 
 }
 

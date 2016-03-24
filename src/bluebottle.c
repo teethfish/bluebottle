@@ -233,7 +233,6 @@ int main(int argc, char *argv[]) {
             break;
 	  case 'n':
 	    seeder = atoi(argv[argc-1]);
-	    //printf("seeder is %d\n", seeder);
 	    argc = argc - 1;
 	    break;
           case 'r':
@@ -249,7 +248,6 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    printf("seeder is %d\n", seeder); 
     if(runseeder == 1) {
       int fret = 0;
       fret = fret;
@@ -429,6 +427,16 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
 
+      printf("Initializing points variables...");
+      fflush(stdout);
+      int points_init_flag = points_init();
+      printf("done.\n");
+      fflush(stdout);
+      if(points_init_flag == EXIT_FAILURE) {
+        printf("\nThe initial point configuration is not allowed.\n");
+        return EXIT_FAILURE;
+      }
+
       // allocate device memory
       printf("Allocating domain CUDA device memory...");
       fflush(stdout);
@@ -479,6 +487,14 @@ int main(int argc, char *argv[]) {
       // set up particles
       cuda_build_cages();
       cuda_part_pull();
+     
+       // set the initial frocing term A which should calculated from sigma2 and tf
+      real forcing_var;
+      forcing_var = cuda_phys_forcing_init();
+      if(runrestart != 1) {
+          // if it is not restart, init A array
+          cuda_phys_forcing_A_init(forcing_var);
+      }
 
       // run restart if requested
       if(runrestart == 1) {
@@ -630,10 +646,6 @@ int main(int argc, char *argv[]) {
 				// if it is not restarted, init the random number generator
         #endif
         }
-				// set the initial frocing term A which should calculated from sigma2 and tf
-				real forcing_var;
-				forcing_var = cuda_phys_forcing_init();
-				printf("rec_point_dt is %f\n",rec_point_dt);
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/

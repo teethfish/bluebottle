@@ -25,6 +25,10 @@
 
 unsigned long long int rng_j = 1;
 unsigned long long int rng_v = 4101842887655102017ULL;
+double rng_V1;
+double rng_V2;
+double rng_S;
+int rng_phase = 0;
 
 void rng_init(unsigned long long seed)
 {
@@ -80,24 +84,23 @@ double rng_dbl(void)
 // generate random gaussian distribution
 double gaussrand(void)
 {
-	static double V1, V2, S;
-	static int phase = 0;
+	//static double V1, V2, S;
+	//static int phase = 0;
 	double X;
-
-	if(phase == 0){
+  
+	if(rng_phase == 0){
 		do{
 			double U1 = rng_dbl();
 			double U2 = rng_dbl();
-		
-			V1 = 2*U1 - 1;
-			V2 = 2*U2 - 1;
-			S = V1 * V1 + V2 * V2;
-			} while(S >=1 || S == 0);
-		X = V1 * sqrt(-2 * log(S)/S);
+			rng_V1 = 2*U1 - 1;
+			rng_V2 = 2*U2 - 1;
+			rng_S = rng_V1 * rng_V1 + rng_V2 * rng_V2;
+			} while(rng_S >=1 || rng_S == 0);
+		X = rng_V1 * sqrt(-2 * log(rng_S)/rng_S);
 	}else
-		X = V2 * sqrt(-2 * log(S)/S);
+		X = rng_V2 * sqrt(-2 * log(rng_S)/rng_S);
 
-	phase = 1 - phase;
+	rng_phase = 1 - rng_phase;
 	
 	return X;
 }

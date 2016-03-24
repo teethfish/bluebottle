@@ -2896,6 +2896,8 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
  */
 real cuda_phys_forcing_init(void);
 
+void cuda_phys_forcing_A_init(double forcing_var);
+
 void cuda_compute_phys_forcing(real sigma2);
 /*
  * FUNCTION
@@ -2924,7 +2926,7 @@ void cuda_compute_turb_forcing(void);
  *  cuda_move_parts_sub()
  * USAGE
  */
-void cuda_move_parts_sub();
+void cuda_move_parts_sub(void);
 /*
  * FUNCTION
  *  Calculate new particle velocities and positions for sub-timestep implicit
@@ -2937,7 +2939,7 @@ void cuda_move_parts_sub();
  *  cuda_move_parts()
  * USAGE
  */
-void cuda_move_parts();
+void cuda_move_parts(void);
 /*
  * FUNCTION
  *  Calculate new particle velocities and positions.

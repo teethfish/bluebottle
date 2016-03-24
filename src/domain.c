@@ -98,7 +98,7 @@ void domain_read_input(void)
 #endif
   mu = nu * rho_f;  // set dynamic viscosity
   fret = fscanf(infile, "\n");
-
+  
   fret = fscanf(infile, "SIMULATION PARAMETERS\n");
 #ifdef DOUBLE
   fret = fscanf(infile, "duration %lf\n", &duration);
@@ -120,7 +120,7 @@ void domain_read_input(void)
   fret = fscanf(infile, "lamb_cut %f\n", &lamb_cut);
 #endif
   fret = fscanf(infile, "\n");
-
+  
   fret = fscanf(infile, "BOUNDARY CONDITIONS\n");
 #ifdef DOUBLE
   fret = fscanf(infile, "vel_tDelay %lf\n", &vel_tDelay);
@@ -3305,6 +3305,11 @@ void out_restart(void)
 
 	fwrite(&rng_j, sizeof(unsigned long long int), 1, rest);
 	fwrite(&rng_v, sizeof(unsigned long long int), 1, rest);
+  fwrite(&rng_V1, sizeof(double), 1, rest);
+  fwrite(&rng_V2, sizeof(double), 1, rest);
+  fwrite(&rng_S, sizeof(double), 1, rest);
+  fwrite(&rng_phase, sizeof(int), 1, rest);
+  fwrite(A, sizeof(real), 12, rest);
 
   fwrite(u, sizeof(real), Dom.Gfx.s3b, rest);
   fwrite(u0, sizeof(real), Dom.Gfx.s3b, rest);
@@ -3405,6 +3410,11 @@ void in_restart(void)
 
 	fret = fread(&rng_j, sizeof(unsigned long long int), 1, infile);
   fret = fread(&rng_v, sizeof(unsigned long long int), 1, infile);
+  fret = fread(&rng_V1, sizeof(double), 1, infile);
+  fret = fread(&rng_V2, sizeof(double), 1, infile);
+  fret = fread(&rng_S, sizeof(double), 1, infile);
+  fret = fread(&rng_phase, sizeof(int), 1, infile);
+  fret = fread(A, sizeof(real), 12, infile);
 
   fret = fread(u, sizeof(real), Dom.Gfx.s3b, infile);
   fret = fread(u0, sizeof(real), Dom.Gfx.s3b, infile);
@@ -3503,6 +3513,11 @@ void out_restart_turb(void)
 
   fwrite(&rng_j, sizeof(unsigned long long int), 1, rest);
   fwrite(&rng_v, sizeof(unsigned long long int), 1, rest);
+  fwrite(&rng_V1, sizeof(double), 1, rest);
+  fwrite(&rng_V2, sizeof(double), 1, rest);
+  fwrite(&rng_S, sizeof(double), 1, rest);
+  fwrite(&rng_phase, sizeof(int), 1, rest);
+  fwrite(A, sizeof(real), 12, rest);
 
   fwrite(u, sizeof(real), Dom.Gfx.s3b, rest);
   fwrite(u0, sizeof(real), Dom.Gfx.s3b, rest);
@@ -3573,6 +3588,11 @@ void in_restart_turb(void)
 
   fret = fread(&rng_j, sizeof(unsigned long long int), 1, infile);
   fret = fread(&rng_v, sizeof(unsigned long long int), 1, infile);
+  fret = fread(&rng_V1, sizeof(double), 1, infile);
+  fret = fread(&rng_V2, sizeof(double), 1, infile);
+  fret = fread(&rng_S, sizeof(double), 1, infile);
+  fret = fread(&rng_phase, sizeof(int), 1, infile);
+  fret = fread(A, sizeof(real), 12, infile);
 
   fret = fread(u, sizeof(real), Dom.Gfx.s3b, infile);
   fret = fread(u0, sizeof(real), Dom.Gfx.s3b, infile);

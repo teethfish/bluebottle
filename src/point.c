@@ -38,6 +38,7 @@ void points_read_input(void)
     fprintf(stderr, "Could not open file %s\n", fname);
     exit(EXIT_FAILURE);
   }
+
   
   // read particle list
   fret = fscanf(infile, "n %d\n", &npoints);
@@ -45,6 +46,8 @@ void points_read_input(void)
   cpumem += npoints * sizeof(point_struct);
   
   fclose(infile);
+
+  printf("npoints is %d\n", npoints);
 }    	  
 	  
 
