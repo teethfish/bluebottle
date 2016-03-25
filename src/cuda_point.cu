@@ -89,8 +89,16 @@ void cuda_move_points(void)
 		dim3 dimBlocks(threads);
 		dim3 numBlocks(blocks);
 
-		move_points<<<numBlocks, dimBlocks>>>(_points[dev], npoints, _u[dev], _v[dev], _w[dev], _dom[dev], mu, dt);
+    move_points<<<numBlocks, dimBlocks>>>(_dom[dev], _points[dev], g, _conv_u[dev], _conv_v[dev], _conv_w[dev], _u[dev], _v[dev], _w[dev], _u0[dev], _v0[dev], _w0[dev], rho_f, mu, dt);   
+
 	}
+  /*for(int i = 0; i < npoints; i++) {
+    //printf("points[%d].u = %f\n", points[i].u);
+    printf("points[%d].x = %f\n", points[i].x);
+    printf("points[%d].y = %f\n", points[i].y);
+    printf("points[%d].z = %f\n", points[i].z);
+  }*/
+
 }
 
 

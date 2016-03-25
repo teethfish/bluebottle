@@ -1933,7 +1933,7 @@ void cgns_points(real dtout)
     cg_open(fnameall, CG_MODE_WRITE, &fn);
     cg_base_write(fn, "Base", 3, 3, &bn);
     cgsize_t size[3][1];
-    size[0][0] = nparts;
+    size[0][0] = npoints;
     size[1][0] = 0;
     size[2][0] = 0;
     cg_zone_write(fn, bn, "Zone0", size[0], Unstructured, &zn);
@@ -1967,32 +1967,64 @@ void cgns_points(real dtout)
     // cpumem += nparts * sizeof(real);
   
     real *Fx = malloc(npoints * sizeof(real));
-    // cpumem += nparts * sizeof(real);
     real *Fy = malloc(npoints * sizeof(real));
-    // cpumem += nparts * sizeof(real);
     real *Fz = malloc(npoints * sizeof(real));
-    // cpumem += nparts * sizeof(real);
+
+    real *Fax = malloc(npoints * sizeof(real));
+    real *Fay = malloc(npoints * sizeof(real));
+    real *Faz = malloc(npoints * sizeof(real));
+
+    real *Fdx = malloc(npoints * sizeof(real));
+    real *Fdy = malloc(npoints * sizeof(real));
+    real *Fdz = malloc(npoints * sizeof(real));
+
+    real *Fcx = malloc(npoints * sizeof(real));
+    real *Fcy = malloc(npoints * sizeof(real));
+    real *Fcz = malloc(npoints * sizeof(real));
 
     for(int i = 0; i < npoints; i++) {
 			conn[i] = npoints-i;
-      x[i] = parts[i].x;
-      y[i] = parts[i].y;
-      z[i] = parts[i].z;
-      a[i] = parts[i].r;
-      rho[i] = parts[i].rho;
+      x[i] = points[i].x;
+      y[i] = points[i].y;
+      z[i] = points[i].z;
+      a[i] = points[i].r;
+      rho[i] = points[i].rho;
 
-      u[i] = parts[i].u;
-      v[i] = parts[i].v;
-      w[i] = parts[i].w;
+      u[i] = points[i].u;
+      v[i] = points[i].v;
+      w[i] = points[i].w;
 
-      Fx[i] = parts[i].Fx;
-      Fy[i] = parts[i].Fy;
-      Fz[i] = parts[i].Fz;
-   
-      ox[i] = parts[i].ox;
-      oy[i] = parts[i].oy;
-      oz[i] = parts[i].oz;
-	}
+      ox[i] = points[i].ox;
+      oy[i] = points[i].oy;
+      oz[i] = points[i].oz;
+
+      Fx[i] = points[i].Fx;
+      Fy[i] = points[i].Fy;
+      Fz[i] = points[i].Fz;
+
+      Fax[i] = points[i].Fax;
+      Fay[i] = points[i].Fay;
+      Faz[i] = points[i].Faz;
+      Fdx[i] = points[i].Fdx;
+      Fdy[i] = points[i].Fdy;
+      Fdz[i] = points[i].Fdz;
+      Fcx[i] = points[i].Fcx;
+      Fcy[i] = points[i].Fcy;
+      Fcz[i] = points[i].Fcz;
+
+      /*printf("x[%d] is %f\n", i, x[i]);
+      printf("y[%d] is %f\n", i, y[i]);
+      printf("z[%d] is %f\n", i, z[i]);
+      printf("u[%d] is %f\n", i, u[i]);
+      printf("v[%d] is %f\n", i, v[i]);
+      printf("w[%d] is %f\n", i, w[i]);
+      printf("ox[%d] is %f\n", i, ox[i]);
+      printf("oy[%d] is %f\n", i, oy[i]);
+      printf("oz[%d] is %f\n", i, oz[i]);
+      printf("Fx[%d] is %f\n", i, Fx[i]);
+      printf("Fy[%d] is %f\n", i, Fy[i]);
+      printf("Fz[%d] is %f\n", i, w[i]);*/
+  	}
 	
     cg_coord_write(fn, bn, zn, RealDouble, "CoordinateX", x, &Xn);
     cg_coord_write(fn, bn, zn, RealDouble, "CoordinateY", y, &Yn);
@@ -2002,10 +2034,10 @@ void cgns_points(real dtout)
 
     cg_sol_write(fn, bn, zn, "Solution", Vertex, &sn);
     cg_field_write(fn, bn, zn, sn, RealDouble, "Radius", a, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Density", rho, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityX", u, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityY", v, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ", w, &fnr);
-    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ", rho, &fnr);
 
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularVelocityX", ox, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularVelocityY", oy, &fnr);
@@ -2015,6 +2047,16 @@ void cgns_points(real dtout)
     cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceX", Fx, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceY", Fy, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "TotalForceZ", Fz, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AddedMassForceX", Fax, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AddedMassForceY", Fay, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "AddedMassForceZ", Faz, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "DragForceX", Fdx, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "DragForceY", Fdy, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "DragForceZ", Fdz, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "ConvForceX", Fcx, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "ConvForceY", Fcy, &fnr);
+    cg_field_write(fn, bn, zn, sn, RealDouble, "ConvForceZ", Fcz, &fnr);
+
 
     cg_goto(fn, bn, "Zone_t", zn, "end");
     cg_user_data_write("Etc");
@@ -2039,9 +2081,17 @@ void cgns_points(real dtout)
     free(Fx);
     free(Fy);
     free(Fz);
+    free(Fax);
+    free(Fay);
+    free(Faz);
+    free(Fdx);
+    free(Fdy);
+    free(Fdz);
+    free(Fcx);
+    free(Fcy);
+    free(Fcz);
   }
 }
-
 
 void recorder_bicgstab_init(char *name)
 {

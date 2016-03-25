@@ -52,6 +52,15 @@ typedef struct point_struct {
 	real Fx;
 	real Fy;
 	real Fz;
+  real Fax;
+  real Fay;
+  real Faz;
+  real Fdx;
+  real Fdy;
+  real Fdz;
+  real Fcx;
+  real Fcy;
+  real Fcz;
   real rho;
 } point_struct;
 /*
@@ -68,7 +77,19 @@ typedef struct point_struct {
  *  * ox -- angular velocity in x-direction
  *  * oy -- angular velocity in y-direction
  *  * oz -- angular velocity in z-direction
- *  * m -- mass
+ *  * rho -- density
+ *  * Fx -- total force in x-direction
+ *  * Fy -- total force in y-direction
+ *  * Fz -- total force in z-direction
+ *  * Fax -- added mass force in x-direction: fa = 0.5*rho*vol*(du/dt - dv/dt)
+ *  * Fay -- added mass force in y-direction
+ *  * Faz
+ *  * Fdx -- drag force in x direction: fd = 6*pi*mu*a*(u-v)
+ *  * Fdy 
+ *  * Fdz
+ *  * Fcx -- force due to acceleration of fluid fc = rho*vol*(du/dt - g)
+ *  * Fcy
+ *  * Fzz
  ******
  */
 
@@ -110,6 +131,18 @@ extern point_struct **_points;
  ******
  */
 
+/****f* point/points_read_input
+ * NAME
+ *  points_read_input
+ * USAGE
+ *
+ */
+void points_read_input(void);
+/*
+ * FUNCTION
+ ******
+ */
+
 /****f* particle/parts_init()
  * NAME
  *  points_init()
@@ -124,6 +157,14 @@ int points_init(void);
  *  EXIT_SUCCESS if successful, EXIT_FAILURE otherwise.
  ******
  */
+
+/****f* point/points_init()
+ * NAME
+ *  points_show()
+ * USAGE
+ *
+ */
+void points_show(void);
 
 
 /****f* particle/parts_clean()

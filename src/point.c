@@ -44,7 +44,18 @@ void points_read_input(void)
   fret = fscanf(infile, "n %d\n", &npoints);
   points = (point_struct*) malloc(npoints * sizeof(point_struct));
   cpumem += npoints * sizeof(point_struct);
-  
+
+
+  // read point particle density and radius
+  if(npoints > 0)  {
+#ifdef DOUBLE
+    fret = fscanf(infile, "rho %lf\n", &points[0].rho);
+    fret = fscanf(infile, "r %lf\n", &points[0].r);
+#else
+    fret = fscanf(infile, "rho %f\n", &points[0].rho);           
+    fret = fscanf(infile, "r %f\n", &points[0].r);    
+#endif
+  }  
   fclose(infile);
 
   printf("npoints is %d\n", npoints);
@@ -55,10 +66,12 @@ int points_init(void)
 {
 
   for(int i = 0; i < npoints; i++) {
-		points[i].r = 0.01;
-    points[i].x = (2.*rng_dbl() - 1.0)*Dom.xl;
-    points[i].y = (2.*rng_dbl() - 1.0)*Dom.yl;
-    points[i].z = (2.*rng_dbl() - 1.0)*Dom.zl;
+		points[i].r = points[0].r;
+    points[i].rho = points[0].rho;
+
+    points[i].x = (rng_dbl() - 0.5)*Dom.xl;
+    points[i].y = (rng_dbl() - 0.5)*Dom.yl;
+    points[i].z = (rng_dbl() - 0.5)*Dom.zl;
 
     points[i].u = 0.;
     points[i].v = 0.;
@@ -71,10 +84,32 @@ int points_init(void)
 		points[i].Fx = 0.;
     points[i].Fy = 0.;
     points[i].Fz = 0.;
+  
+    points[i].Fax = 0.;
+    points[i].Fay = 0.;
+    points[i].Faz = 0.;
 
-    points[i].rho = 2.0;
+    points[i].Fdx = 0.;
+    points[i].Fdy = 0.;
+    points[i].Fdz = 0.;
+
+    points[i].Fcx = 0.;
+    points[i].Fcy = 0.;
+    points[i].Fcz = 0.;
   }
   return EXIT_SUCCESS;
+}
+
+void points_show(void)
+{
+  for(int i = 0; i < npoints; i++) {
+    printf("points[%d].u is %f\n", i, points[i].u);
+    printf("points[%d].v is %f\n", i, points[i].v);
+    printf("points[%d].w is %f\n", i, points[i].w);
+    printf("points[%d].Fx is %f\n", i, points[i].Fx);
+    printf("points[%d].Fy is %f\n", i, points[i].Fy);
+    printf("points[%d].Fz is %f\n", i, points[i].Fz);
+  }
 }
 
 
@@ -82,3 +117,5 @@ void points_clean(void)
 {
   free(points);
 }
+
+

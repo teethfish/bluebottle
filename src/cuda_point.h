@@ -26,13 +26,27 @@
 extern "C"
 {
 #include "bluebottle.h"
+#include "domain.h"
 #include "point.h"
 }
-
-__global__ void move_points(point_struct *points, int npoints, real *u, real *v, real *w, dom_struct *dom, real mu, real dt);
+__global__ void move_points(dom_struct *dom, point_struct *points, g_struct g, real *conv_u, real *conv_v, real *conv_w,real *u, real *v, real *w, real *u0, real *v0, real *w0, real rho_f, real mu, real dt);
 /*
  *	Update point particle position after solving the fluid domain
- *	* mu fluid viscousity
+ *	* dom -- dom information
+ *  * points -- point particle information
+ *  * g -- gravity
+ *  * u -- correct flow field x velocity
+ *  * v -- correct flow field y velocity
+ *  * w -- correct flow field z velocity
+ *  * u0 -- previous flow field x velocity
+ *  * v0 -- previous flow field y velocity
+ *  * w0 -- previous flow field z velocity
+ *  * conv_u -- current convection term
+ *  * conv_v -- current convection term
+ *  * conv_w -- current convection term
+ *  * rho_f -- fluid density
+ *  * mu -- fluid viscosity
+ *  * dt -- current time step
  *******
  */	
 

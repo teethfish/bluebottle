@@ -340,9 +340,10 @@ int main(int argc, char *argv[]) {
 
       // read simulation input configuration file
       printf("\nRunning Bluebottle...\n\n");
-      printf("Reading the domain and particle input files...\n\n");
+      printf("Reading the domain, particle and point particle input files...\n\n");
       domain_read_input();
       parts_read_input(turb);
+      points_read_input();
       fflush(stdout);
       //printf("EXPD: Using devices %d through %d.\n\n", dev_start, dev_end);
       //fflush(stdout);
@@ -594,7 +595,7 @@ int main(int argc, char *argv[]) {
         cuda_parts_internal();
         cuda_dom_BC();
 
-	// write initial fields
+	      // write initial fields
         if(runrestart != 1) {
           cuda_dom_pull();
           cuda_part_pull();

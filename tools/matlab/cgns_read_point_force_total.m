@@ -20,19 +20,19 @@
 %   commercial and/or for-profit applications.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [u, v, w, t] = cgns_read_point_vel(casename, time)
-% CGNS_READ_POINT_VEL  Read the flow velocity time series from a BLUEBOTTLE-
-%   generated CGNS file at a point.
+function [Fx, Fy, Fz] = cgns_read_point_force_total(casename, time)
+% CGNS_READ_PART_FORCE_TOTAL Read the particle forces from a BLUEBOTTLE-generated
+%   CGNS file.
 %
-%   CGNS_READ_POINT_VEL(CASENAME, TS, TE, X, Y, Z) plots the particle velocity
-%   time series at point (X, Y, Z) from the simulation CASENAME between TS
-%   and TE.
+%   [Fx, Fy, Fz] = CGNS_READ_PART_FORCE_TOTAL(CASENAME, TIME) reads the particle
+%   body forces from the simulation CASENAME at time TIME. Each of the force
+%   components is an array representing all of the particles in the simulation.
 %
 %   Example:
-%     cgns_read_point_vel('simulation',0,1,2,3,4) will plot the velocity time
-%     series for the CASENAME = 'simulation' between t = 0 and 1 at
-%     point (2,3,4).
+%     cgns_read_part_force_total('simulation', 3.14159) will read the
+%     appropriate output file located in 'simulation/output'.
 
+% determine input type of 'time'
 
 if isa(time, 'double') == 1
     % find the directory contents
@@ -55,11 +55,10 @@ end
 
 path = [casename '/output/point-' tt '.cgns'];
 
-usol = '/Base/Zone0/Solution/VelocityX/ data';
-vsol = '/Base/Zone0/Solution/VelocityY/ data';
-wsol = '/Base/Zone0/Solution/VelocityZ/ data';
+fxsol = '/Base/Zone0/Solution/TotalForceX/ data';
+fysol = '/Base/Zone0/Solution/TotalForceY/ data';
+fzsol = '/Base/Zone0/Solution/TotalForceZ/ data';
 
-u = h5read(path, usol);
-v = h5read(path, vsol);
-w = h5read(path, wsol);
-
+Fx = h5read(path, fxsol);
+Fy = h5read(path, fysol);
+Fz = h5read(path, fzsol);

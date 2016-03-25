@@ -2343,10 +2343,12 @@ int domain_init(void)
   rec_flow_field_stepnum_out = 0;
   rec_paraview_stepnum_out = 0;
   rec_particle_stepnum_out = 0;
+  rec_point_stepnum_out = 0;
   rec_prec_stepnum_out = 0;
   rec_flow_field_ttime_out = 0;
   rec_paraview_ttime_out = 0;
   rec_particle_ttime_out = 0;
+  rec_point_ttime_out = 0;
   rec_restart_ttime_out = 0;
   rec_prec_ttime_out = 0;
 
@@ -3146,10 +3148,12 @@ int domain_init_turb(void)
   rec_flow_field_stepnum_out = 0;
   rec_paraview_stepnum_out = 0;
   rec_particle_stepnum_out = 0;
+  rec_point_stepnum_out = 0;
   rec_prec_stepnum_out = 0;
   rec_flow_field_ttime_out = 0;
   rec_paraview_ttime_out = 0;
   rec_particle_ttime_out = 0;
+  rec_point_ttime_out = 0;
   rec_restart_ttime_out = 0;
   rec_prec_ttime_out = 0;
 
@@ -3353,6 +3357,8 @@ void out_restart(void)
 
   fwrite(bc_plane_pos, sizeof(real), 9, rest);
 
+  fwrite(points, sizeof(point_struct), npoints, rest);
+
   fwrite(parts, sizeof(part_struct), nparts, rest);
 
   fwrite(&coeff_stride, sizeof(int), 1, rest);
@@ -3379,6 +3385,7 @@ void out_restart(void)
   fwrite(&rec_flow_field_ttime_out, sizeof(real), 1, rest);
   fwrite(&rec_paraview_ttime_out, sizeof(real), 1, rest);
   fwrite(&rec_particle_ttime_out, sizeof(real), 1, rest);
+  fwrite(&rec_point_ttime_out, sizeof(real), 1, rest);
   fwrite(&rec_restart_ttime_out, sizeof(real), 1, rest);
   fwrite(&rec_prec_ttime_out, sizeof(real), 1, rest);
   fwrite(&pid_int, sizeof(real), 1, rest);
@@ -3458,6 +3465,8 @@ void in_restart(void)
 
   fret = fread(bc_plane_pos, sizeof(real), 9, infile);
 
+  fret = fread(points, sizeof(point_struct), npoints, infile);
+  
   fret = fread(parts, sizeof(part_struct), nparts, infile);
 
   fret = fread(&coeff_stride, sizeof(int), 1, infile);
@@ -3484,6 +3493,7 @@ void in_restart(void)
   fret = fread(&rec_flow_field_ttime_out, sizeof(real), 1, infile);
   fret = fread(&rec_paraview_ttime_out, sizeof(real), 1, infile);
   fret = fread(&rec_particle_ttime_out, sizeof(real), 1, infile);
+  fret = fread(&rec_point_ttime_out, sizeof(real), 1, infile);
   fret = fread(&rec_restart_ttime_out, sizeof(real), 1, infile);
   fret = fread(&rec_prec_ttime_out, sizeof(real), 1, infile);
   fret = fread(&pid_int, sizeof(real), 1, infile);
