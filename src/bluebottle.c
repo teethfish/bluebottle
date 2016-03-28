@@ -749,8 +749,6 @@ int main(int argc, char *argv[]) {
           if(!lambflag) {
             // update particle position
             cuda_move_parts();
-						// update point particle position
-						cuda_move_points();
 
             // write particle internal flow equal to solid body velocity
             cuda_parts_internal();
@@ -758,6 +756,10 @@ int main(int argc, char *argv[]) {
 
             // store u, conv, and coeffs for use in next timestep
             cuda_store_u();
+
+            // after replace old velocity with new velocity, move points
+            cuda_move_points();
+
             if(nparts > 0)
               cuda_store_coeffs();
 

@@ -68,17 +68,15 @@ __global__ void move_points(dom_struct *dom, point_struct *points, g_struct g, r
 
   // calculate forces on the particles except the added mass term
   points[pp].Fcx = rho_f * vol * (dudt - g.x);
-	points[pp].Fdx = 6 * PI * mu * points[pp].r * (uu - points[pp].u);
 
   // calculate the rhs of equation: the last term accounts for added mass term
-  real fx = m * g.x + points[pp].Fcx + 0.5*vol*rho_f*dudt;
+  real fx = m * g.x + points[pp].Fcx + 0.5*vol*rho_f*dudt + (m + 0.5*vol*rho_f)*points[pp].u/dt;
 	
   // update point particle u velocity
-  points[pp].u = fx * dt / (m + 0.5*vol*rho_f) + points[pp].u;
+  points[pp].u = fx / ((m + 0.5*vol*rho_f)/dt + 6*PI*mu*points[pp].r);
 
   // calculate added mass force and total force
-  points[pp].Fax = 0.5 * vol * rho_f * (dudt - fx / (m + 0.5*vol*rho_f));
-  points[pp].Fx = m*g.x + points[pp].Fcx + points[pp].Fdx + points[pp].Fax;
+  points[pp].Fdx = 6*PI*mu*points[pp].r*(uu - points[pp].u);
 
   // update point particle position
   points[pp].x += points[pp].u * dt;
@@ -119,17 +117,15 @@ __global__ void move_points(dom_struct *dom, point_struct *points, g_struct g, r
 
   // calculate forces on the particle in y direction except the added mass term
   points[pp].Fcy = rho_f * vol * (dvdt - g.y);
-  points[pp].Fdy = 6 * PI * mu * points[pp].r * (vv - points[pp].v);
 
   // calculate the rhs of equation: the last term comes from added mass term
-  real fy = m * g.y + points[pp].Fcy + 0.5*vol*rho_f*dvdt;
+  real fy = m * g.y + points[pp].Fcy + 0.5*vol*rho_f*dvdt + (m + 0.5*vol*rho_f)*points[pp].v/dt;;
 
   // update point particle v velocity
-  points[pp].v = fy * dt / (m + 0.5*vol*rho_f) + points[pp].v;
+  points[pp].v = fy / ((m + 0.5*vol*rho_f)/dt + 6*PI*mu*points[pp].r);
 
   // calculate added mass force and total force
-  points[pp].Fay = 0.5 * vol * rho_f * (dvdt - fy / (m + 0.5*vol*rho_f));
-  points[pp].Fy = m*g.y + points[pp].Fcy + points[pp].Fdy + points[pp].Fay;
+  points[pp].Fdy = 6*PI*mu*points[pp].r*(vv - points[pp].v);
 
   // update point particle position in y direction
   points[pp].y += points[pp].v * dt;
@@ -171,17 +167,15 @@ __global__ void move_points(dom_struct *dom, point_struct *points, g_struct g, r
   
   // calculate forces on the particles except the added mass term
   points[pp].Fcz = rho_f * vol * (dwdt - g.z);
-  points[pp].Fdz = 6 * PI * mu * points[pp].r * (ww - points[pp].w);
   
   // calculate the rhs of equation: the last term accounts for added mass term
-  real fz = m * g.z + points[pp].Fcz + 0.5*vol*rho_f*dwdt;
+  real fz = m * g.z + points[pp].Fcz + 0.5*vol*rho_f*dwdt + (m + 0.5*vol*rho_f)*points[pp].w/dt;
   
   // update point particle w velocity
-  points[pp].w = fz * dt / (m + 0.5*vol*rho_f) + points[pp].w;
+  points[pp].w = fz / ((m + 0.5*vol*rho_f)/dt + 6*PI*mu*points[pp].r);
 
   // calculate added mass force and total force
-  points[pp].Faz = 0.5 * vol * rho_f * (dwdt - fz / (m + 0.5*vol*rho_f));
-  points[pp].Fz = m*g.z + points[pp].Fcz + points[pp].Fdz + points[pp].Faz;
+  points[pp].Fdz = 6 * PI * mu * points[pp].r * (ww - points[pp].w);
 
 	// update point particle z position
   points[pp].z += points[pp].w * dt;
