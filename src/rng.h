@@ -28,6 +28,10 @@
 
 extern unsigned long long int rng_j; // seed value
 extern unsigned long long int rng_v; // random number sequence
+extern double rng_V1;
+extern double rng_V2;
+extern double rng_S;
+extern int rng_phase;
 
 // set seed value
 void rng_init(unsigned long long int seed);

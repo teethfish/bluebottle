@@ -225,27 +225,26 @@ int main(int argc, char *argv[]) {
         switch(argin) {
           case 's':
             runseeder = 1;
-	    printf("seeder!\n");
+      	    printf("seeder!\n");
             break;
-	  case 'n':
-	    seeder = atoi(argv[argc-1]);
-	    //printf("seeder is %d\n", seeder);
-	    argc = argc - 1;
-	    break;
+      	  case 'n':
+	          seeder = atoi(argv[argc-1]);
+	          //printf("seeder is %d\n", seeder);
+	          argc = argc - 1;
+	        break;
           case 'r':
             runrestart = 1;
-	    break;
+	        break;
           default:
             runseeder = 2;
             runrestart = 2;
-	    seeder = 1;
+	          seeder = 1;
             printf("bluebottle: illegal option %c\n", argin);
             argc = 0;
             break;
         }
       }
     }
-    printf("seeder is %d\n", seeder); 
     if(runseeder == 1) {
       int fret = 0;
       fret = fret;
@@ -466,6 +465,14 @@ int main(int argc, char *argv[]) {
       cuda_build_cages();
       cuda_part_pull();
 
+      // set the initial frocing term A which should calculated from sigma2 and tf
+      real forcing_var;
+      forcing_var = cuda_phys_forcing_init();
+      if(runrestart != 1) {
+          // if it is not restart, init A array
+          cuda_phys_forcing_A_init(forcing_var);
+      }
+
       // run restart if requested
       if(runrestart == 1) {
         printf("\nRestart requested.\n\n");
@@ -603,9 +610,6 @@ int main(int argc, char *argv[]) {
         #endif
         }
 
-				// set the initial frocing term A which should calculated from sigma2 and tf
-				real forcing_var;
-				forcing_var = cuda_phys_forcing_init();
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/

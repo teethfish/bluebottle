@@ -3827,10 +3827,8 @@ extern "C"
 real cuda_phys_forcing_init(void)
 {
 	//sigma2 is the forcing variance
-	real tmp;
 	real sigma2;
 	if(tf_g == 0 || Re_g == 0){
-		tmp = 0.0;
 		tf_g = 1.e7;
 		sigma2 = 0.0;
 	}
@@ -3838,13 +3836,18 @@ real cuda_phys_forcing_init(void)
 		real disp = nu*nu*nu/pow(pow(8.5/(Re_g*pow(6.,2./9.)),1.2),4)*(1.+tf_g*1.25*pow(6.0, 1./3.))/24.;
 		tf_g = tf_g/pow(disp, 1.0/3.0);
 		sigma2 = disp/tf_g;
-		tmp = sqrt(2*sigma2*dt/tf_g);
-	}
-	for(int i = 0; i < 12; i++){
-		A[i] = tmp;
 	}
 	return sigma2;
 }
+
+extern "C"
+void cuda_phys_forcing_A_init(double forcing_var)
+{
+  for(int i = 0; i < 12; i++){
+    A[i] =sqrt(2*forcing_var*dt/tf_g);
+  }
+}
+
 
 extern "C"
 void cuda_compute_phys_forcing(real sigma2)

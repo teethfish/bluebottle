@@ -2873,6 +2873,8 @@ void cuda_compute_forcing(real *pid_int, real *pid_back, real Kp, real Ki,
  */
 real cuda_phys_forcing_init(void);
 
+void cuda_phys_forcing_A_init(double forcing_var);
+
 void cuda_compute_phys_forcing(real sigma2);
 /*
  * FUNCTION
