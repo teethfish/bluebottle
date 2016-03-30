@@ -604,7 +604,7 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
 
     //printf("viscous part is %f\n",- PI * mu * nu * 2.*N11 * (pnm_re[stride*pp + 2] + 6.*phinm_re[stride*pp + 2]));
 
-    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y/rho_f - fx)
+    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y/rho_f - fy)
       + parts[pp].rho * vol * fy
       + PI * mu * nu * 2.*N11 * (pnm_im[stride*pp + 2]
       + 6.*phinm_im[stride*pp + 2]);
