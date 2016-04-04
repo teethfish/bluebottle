@@ -572,30 +572,11 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
     real vol = 4./3. * PI *  parts[pp].r*parts[pp].r*parts[pp].r;
     real N10 = sqrt(3./4./PI);
     real N11 = sqrt(3./8./PI);
-/*   
-    real kx = 2*PI/dom->xl;
-    real ky = 2*PI/dom->yl;
-    real kz = 2*PI/dom->zl;
- 
-    // particle volume intergral of the random forcing
-    real tmp1 = inter_cos(ky, parts[pp].y, parts[pp].r);
-    real tmp2 = inter_sin(ky, parts[pp].y, parts[pp].r);
-    real tmp3 = inter_cos(kz, parts[pp].z, parts[pp].r);
-    real tmp4 = inter_sin(kz, parts[pp].z, parts[pp].r);
-    real tmp5 = inter_cos(kx, parts[pp].x, parts[pp].r);
-    real tmp6 = inter_sin(kx, parts[pp].x, parts[pp].r);
-    
-   
-    //printf("fx is %f\n", fx); 
-    real fx_int = 2*(A[0]*tmp1 - A[1]*tmp2 + A[2]*tmp3 - A[3]*tmp4);
-    real fy_int = 2*(A[4]*tmp5 - A[5]*tmp6 + A[6]*tmp3 - A[7]*tmp4);
-    real fz_int = 2*(A[8]*tmp5 - A[9]*tmp6 + A[10]*tmp1 - A[11]*tmp2);
-    */
 
    real fx = 2*(A[0]*cos(2*PI*parts[pp].y/dom->yl) - A[1]*sin(2*PI*parts[pp].y/dom->yl) + A[2]*cos(2*PI*parts[pp].z/dom->zl) - A[3]*sin(2*PI*parts[pp].z/dom->zl));
 
    real fy = 2*(A[4]*cos(2*PI*parts[pp].x/dom->xl) - A[5]*sin(2*PI*parts[pp].x/dom->xl) + A[6]*cos(2*PI*parts[pp].z/dom->zl) - A[7]*sin(2*PI*parts[pp].z/dom->zl));
-   real fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].y/dom->yl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
+   real fz = 2*(A[8]*cos(2*PI*parts[pp].x/dom->xl) - A[9]*sin(2*PI*parts[pp].x/dom->xl) + A[10]*cos(2*PI*parts[pp].y/dom->yl) - A[11]*sin(2*PI*parts[pp].y/dom->yl));
 
     parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x/rho_f - fx)
       + parts[pp].rho * vol * fx
