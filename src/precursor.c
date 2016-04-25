@@ -76,48 +76,53 @@ void expd_update_BC(int np, MPI_Status status)
 
     // only one precursor domain at rank = 1 for now
     MPI_Send(&bc_flow_vels, 18, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD);
-
     // receive the planes to be used as inflow velocities
     if(bc_flow_configs[ 0] == PRECURSOR || bc_flow_configs[ 1] == PRECURSOR)
       MPI_Recv(u_WE, Dom.Gfx.jnb*Dom.Gfx.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR)
+    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR) {
       MPI_Recv(u_SN_S, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(u_SN_N, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR) {
       MPI_Recv(u_BT_B, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(u_BT_T, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR) {
       MPI_Recv(v_WE_W, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(v_WE_E, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
+    }
     if(bc_flow_configs[ 8] == PRECURSOR || bc_flow_configs[ 9] == PRECURSOR)
       MPI_Recv(v_SN, Dom.Gfy.inb*Dom.Gfy.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR)
+    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR) {
       MPI_Recv(v_BT_B, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(v_BT_T, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR)
+    }
+    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR) {
       MPI_Recv(w_WE_W, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(w_WE_E, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR)
+    }
+    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR) {
       MPI_Recv(w_SN_S, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
       MPI_Recv(w_SN_N, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-    if(bc_flow_configs[16] == PRECURSOR || bc_flow_configs[17] == PRECURSOR)
+    }
+    if(bc_flow_configs[16] == PRECURSOR || bc_flow_configs[17] == PRECURSOR) {
       MPI_Recv(w_BT, Dom.Gfz.inb*Dom.Gfz.jnb, MPI_DOUBLE, 1, 1,
         MPI_COMM_WORLD, &status);
-
+    }
     // push planes to devices
     cuda_dom_turb_planes_push(bc_flow_configs);
   }
@@ -161,7 +166,6 @@ void prec_update_BC(int np, int rank, MPI_Status status)
 
     MPI_Recv(&bc_flow_vels, 18, MPI_DOUBLE, MASTER, rank,
       MPI_COMM_WORLD, &status);
-
     // yank the appropriate planes for the inflow from the precursor domain
     // and put into their own plane arrays
     cuda_yank_turb_planes(bc_flow_configs, bc_plane_pos, bc_flow_vels);
@@ -287,47 +291,53 @@ void prec_update_BC(int np, int rank, MPI_Status status)
 
     // pull the planes for the inflow
     cuda_dom_turb_planes_pull(bc_flow_configs);
-
     // send the planes to MASTER to be used as inflow velocities
     if(bc_flow_configs[ 0] == PRECURSOR || bc_flow_configs[ 1] == PRECURSOR)
       MPI_Send(u_WE, Dom.Gfx.jnb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR)
+    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR) { 
       MPI_Send(u_SN_S, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-     MPI_Send(u_SN_N, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
+      MPI_Send(u_SN_N, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR) {
       MPI_Send(u_BT_B, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(u_BT_T, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR) {
       MPI_Send(v_WE_W, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(v_WE_E, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
+    }
     if(bc_flow_configs[ 8] == PRECURSOR || bc_flow_configs[ 9] == PRECURSOR)
       MPI_Send(v_SN, Dom.Gfy.inb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR)
+    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR) {
       MPI_Send(v_BT_B, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(v_BT_T, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR)
+    }
+    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR) {
       MPI_Send(w_WE_W, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(w_WE_E, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR)
+    }
+    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR) {
       MPI_Send(w_SN_S, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(w_SN_N, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[16] == PRECURSOR || bc_flow_configs[17] == PRECURSOR)
+    }
+    if(bc_flow_configs[16] == PRECURSOR || bc_flow_configs[17] == PRECURSOR) {
       MPI_Send(w_BT, Dom.Gfz.inb*Dom.Gfz.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
+    }
   }
 }
 
@@ -349,39 +359,45 @@ void prec_send_BC(int np, int rank, MPI_Status status)
     if(bc_flow_configs[ 0] == PRECURSOR || bc_flow_configs[ 1] == PRECURSOR)
       MPI_Send(u_WE, Dom.Gfx.jnb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR)
+    if(bc_flow_configs[ 2] == PRECURSOR || bc_flow_configs[ 3] == PRECURSOR) {
       MPI_Send(u_SN_S, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(u_SN_N, Dom.Gfx.inb*Dom.Gfx.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 4] == PRECURSOR || bc_flow_configs[ 5] == PRECURSOR) {
       MPI_Send(u_BT_B, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(u_BT_T, Dom.Gfx.inb*Dom.Gfx.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR)
+    }
+    if(bc_flow_configs[ 6] == PRECURSOR || bc_flow_configs[ 7] == PRECURSOR) {
       MPI_Send(v_WE_W, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(v_WE_E, Dom.Gfy.jnb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
+    }
     if(bc_flow_configs[ 8] == PRECURSOR || bc_flow_configs[ 9] == PRECURSOR)
       MPI_Send(v_SN, Dom.Gfy.inb*Dom.Gfy.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR)
+    if(bc_flow_configs[10] == PRECURSOR || bc_flow_configs[11] == PRECURSOR) {
       MPI_Send(v_BT_B, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(v_BT_T, Dom.Gfy.inb*Dom.Gfy.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR)
+    }
+    if(bc_flow_configs[12] == PRECURSOR || bc_flow_configs[13] == PRECURSOR) {
       MPI_Send(w_WE_W, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(w_WE_E, Dom.Gfz.jnb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
-    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR)
+    }
+    if(bc_flow_configs[14] == PRECURSOR || bc_flow_configs[15] == PRECURSOR) {
       MPI_Send(w_SN_S, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
       MPI_Send(w_SN_N, Dom.Gfz.inb*Dom.Gfz.knb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
+    }
     if(bc_flow_configs[16] == PRECURSOR || bc_flow_configs[17] == PRECURSOR)
       MPI_Send(w_BT, Dom.Gfz.inb*Dom.Gfz.jnb, MPI_DOUBLE, MASTER, rank,
         MPI_COMM_WORLD);
