@@ -562,6 +562,21 @@ void cgns_flow_field(real dtout)
   }
   cg_field_write(fn, bn, zn, sn, RealDouble, "Pressure", pout, &fnpress);
 
+  // output the scalar field
+  real *sout = malloc(Dom.Gcc.s3 * sizeof(real));
+  if(scalar_on == 1) {
+    for(int k = Dom.Gcc.ks; k < Dom.Gcc.ke; k++) {
+      for(int j = Dom.Gcc.js; j < Dom.Gcc.je; j++) {
+        for(int i = Dom.Gcc.is; i < Dom.Gcc.ie; i++) {
+          int C = (i-DOM_BUF) + (j-DOM_BUF)*Dom.Gcc.s1 + (k-DOM_BUF)*Dom.Gcc.s2;
+          int CC = i + j*Dom.Gcc.s1b + k*Dom.Gcc.s2b;
+          sout[C] = s[CC];
+        }
+      }
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Scalar", sout, &fnpress);
+  }
+
   real *uout = malloc(Dom.Gcc.s3 * sizeof(real));
   // cpumem += Dom.Gcc.s3 * sizeof(real);
   for(int k = Dom.Gfx.ks; k < Dom.Gfx.ke; k++) {
@@ -638,6 +653,7 @@ void cgns_flow_field(real dtout)
   free(vout);
   free(wout);
   free(phaseout);
+  free(sout);
 
 //  // now link this timestep into time series
 //  // create the time series file if it doesn't exist
@@ -795,6 +811,22 @@ void cgns_turb_flow_field(real dtout)
   }
   cg_field_write(fn, bn, zn, sn, RealDouble, "Pressure", pout, &fnpress);
 
+  // output the scalar field
+  real *sout = malloc(Dom.Gcc.s3 * sizeof(real));
+  if(scalar_on == 1) {
+    for(int k = Dom.Gcc.ks; k < Dom.Gcc.ke; k++) {
+      for(int j = Dom.Gcc.js; j < Dom.Gcc.je; j++) {
+        for(int i = Dom.Gcc.is; i < Dom.Gcc.ie; i++) {
+          int C = (i-DOM_BUF) + (j-DOM_BUF)*Dom.Gcc.s1 + (k-DOM_BUF)*Dom.Gcc.s2;
+          int CC = i + j*Dom.Gcc.s1b + k*Dom.Gcc.s2b;
+          sout[C] = s[CC];
+        }
+      }
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Scalar", sout, &fnpress);
+  }
+
+
   real *uout = malloc(Dom.Gcc.s3 * sizeof(real));
   // cpumem += Dom.Gcc.s3 * sizeof(real);
   for(int k = Dom.Gfx.ks; k < Dom.Gfx.ke; k++) {
@@ -869,6 +901,7 @@ void cgns_turb_flow_field(real dtout)
   free(vout);
   free(wout);
   free(phaseout);
+  free(sout);
 }
 
 void cgns_particles(real dtout)

@@ -21,16 +21,16 @@
 ################################################################################
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT: DEPENDENCIES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-MPI_DIR =
-HDF5_DIR =
-CGNS_DIR =
-CUSP_DIR =
-CUDA_DIR =
+MPI_DIR = /usr/lib/openmpi
+HDF5_DIR = /opt/hdf5
+CGNS_DIR = /opt/cgns
+CUSP_DIR = /opt/cusplibrary
+CUDA_DIR = /opt/cuda
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EDIT: COMPILERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-MPICC =
-NVCC =
+MPICC = mpicc.openmpi
+NVCC = nvcc
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 PREC = DOUBLE
@@ -42,13 +42,14 @@ COPT = -std=c99 -pedantic -Wall -Wextra -fopenmp -D$(PREC)
 LDINCS = -I $(MPI_DIR)/include -I $(CGNS_DIR)/include -I $(CUSP_DIR)
 LDLIBS = -lm -L $(HDF5_DIR)/lib -L $(CGNS_DIR)/lib -lcgns -lhdf5 
 
-CUDAOPT = -arch=sm_35 -Xcompiler -fopenmp -m64 -D$(PREC)
+CUDAOPT = -arch=sm_30 -Xcompiler -fopenmp -m64 -D$(PREC)
 
 CUDALIBS = -L $(CUDA_DIR)/lib64 -lcudart
 
 SRCC =	bluebottle.c	\
 	domain.c	\
 	particle.c	\
+	scalar.c	\
 	precursor.c	\
 	recorder.c	\
 	seeder.c	\
@@ -58,6 +59,7 @@ SRCC =	bluebottle.c	\
 SRCCUDA = cuda_bluebottle.cu	\
 	cuda_bicgstab.cu	\
 	cuda_particle.cu	\
+	cuda_scalar.cu		\
 	cuda_quadrature.cu	\
 	cuda_testing.cu		\
 	entrySearch.cu		\
@@ -65,6 +67,7 @@ SRCCUDA = cuda_bluebottle.cu	\
 	bicgstab_kernel.cu	\
 	entrySearch_kernel.cu	\
 	particle_kernel.cu	\
+	scalar_kernel.cu	\
 	quadrature_kernel.cu
 
 EXTRA = Makefile		\
@@ -72,11 +75,13 @@ EXTRA = Makefile		\
 	cuda_bluebottle.h	\
 	cuda_bicgstab.h		\
 	cuda_particle.h		\
+	cuda_scalar.h		\
 	cuda_quadrature.h	\
 	cuda_testing.h		\
 	domain.h		\
 	entrySearch.h		\
 	particle.h		\
+	scalar.h		\
 	precursor.h		\
 	recorder.h		\
 	vtk.h			\

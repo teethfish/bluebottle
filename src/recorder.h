@@ -33,6 +33,7 @@
 
 #include "bluebottle.h"
 #include "particle.h"
+#include "scalar.h"
 #include <cgnslib.h>
 
 /****f* recorder/recorder_read_config()

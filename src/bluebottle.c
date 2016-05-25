@@ -23,6 +23,7 @@
 #include <mpi.h>
 #include "bluebottle.h"
 #include "particle.h"
+#include "scalar.h"
 #include "precursor.h"
 
 // define global variables that were declared in header file
@@ -328,6 +329,7 @@ int main(int argc, char *argv[]) {
       printf("Reading the domain and particle input files...\n\n");
       domain_read_input();
       parts_read_input(turb);
+      scalar_read_input();
       fflush(stdout);
       //printf("EXPD: Using devices %d through %d.\n\n", dev_start, dev_end);
       //fflush(stdout);
@@ -383,6 +385,7 @@ int main(int argc, char *argv[]) {
       printf("Initializing domain variables...");
       fflush(stdout);
       int domain_init_flag = domain_init();
+      scalar_init();
       printf("done.\n");
       fflush(stdout);
       if(domain_init_flag == EXIT_FAILURE) {
@@ -415,6 +418,11 @@ int main(int argc, char *argv[]) {
       cuda_dom_malloc();
       printf("...done.\n");
       fflush(stdout);
+      printf("Allocating scalar CUDA device memory...");
+      fflush(stdout);
+      cuda_scalar_malloc();
+      printf("...done.\n");
+      fflush(stdout);
       printf("Allocating particle CUDA device memory...");
       fflush(stdout);
       cuda_part_malloc();
@@ -425,6 +433,11 @@ int main(int argc, char *argv[]) {
       printf("Copying host domain data to devices...");
       fflush(stdout);
       cuda_dom_push();
+      printf("done.\n");
+      fflush(stdout);
+      printf("Copying host scalar data to devices...");
+      fflush(stdout);
+      cuda_scalar_push();
       printf("done.\n");
       fflush(stdout);
       printf("Copying host particle data to devices...");
@@ -456,11 +469,17 @@ int main(int argc, char *argv[]) {
         printf("Reading restart file...");
         fflush(stdout);
         in_restart();
+        scalar_in_restart();
         printf("done.\n");
         fflush(stdout);
         printf("Copying host domain data to devices...");
         fflush(stdout);
         cuda_dom_push();
+        printf("done.\n");
+        fflush(stdout);
+        printf("Copying host scalar data to devices...");
+        fflush(stdout);
+        cuda_scalar_push();
         printf("done.\n");
         fflush(stdout);
         printf("Copying host particle data to devices...");
@@ -485,6 +504,7 @@ int main(int argc, char *argv[]) {
         cuda_part_pull();
         domain_show_config();
         parts_show_config();
+        scalar_show_config();
         bin_show_config();
         printf("========================================");
         printf("========================================\n\n");
@@ -545,8 +565,9 @@ int main(int argc, char *argv[]) {
         // write initial fields
         if(runrestart != 1) {
           cuda_dom_pull();
+          cuda_scalar_pull();
           cuda_part_pull();
-
+    
         #ifdef DDEBUG
             printf("Writing ParaView file %d (t = %e)...",
             rec_paraview_stepnum_out, ttime);
@@ -699,6 +720,13 @@ int main(int argc, char *argv[]) {
             // compute div(U)
             //cuda_div_U();
 
+            // calculate the scalar field, if there are particles, do iterations
+            printf("Calculate scalar field...");
+            cuda_update_scalar();  // update results for inner nodes, s-->s0
+            cuda_scalar_BC(); // apply boundary condition to s0
+            cuda_solve_scalar_explicit(); // solve the diffusion equation
+            printf("done\n");
+
             // compute next timestep size
             dt0 = dt;
             dt = cuda_find_dt();
@@ -715,6 +743,7 @@ int main(int argc, char *argv[]) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields
               cuda_dom_pull();
+              cuda_scalar_pull();
               cuda_part_pull();
               #ifndef BATCHRUN
                 printf("  Writing flow field file t = %e...                  \r",
@@ -733,6 +762,7 @@ int main(int argc, char *argv[]) {
             if(rec_paraview_ttime_out >= rec_paraview_dt) {
               // pull back data and write fields
               cuda_dom_pull();
+              cuda_scalar_pull();
               cuda_part_pull();
               #ifndef BATCHRUN
                 printf("  Writing ParaView output file");
@@ -787,8 +817,10 @@ int main(int argc, char *argv[]) {
             printf("  Writing restart file (t = %e)...", ttime);
             fflush(stdout);
             cuda_dom_pull();
+            cuda_scalar_pull();
             cuda_part_pull();
             out_restart();
+            scalar_out_restart();
             printf("done.               \n");
             fflush(stdout);
             rec_restart_ttime_out = rec_restart_ttime_out - rec_restart_dt;
@@ -808,8 +840,10 @@ int main(int argc, char *argv[]) {
           printf("  Writing final restart file (t = %e)...", ttime);
           fflush(stdout);
           cuda_dom_pull();
+          cuda_scalar_pull();
           cuda_part_pull();
           out_restart();
+          scalar_out_restart();
           printf("done.               \n");
           fflush(stdout);
           rec_restart_ttime_out = rec_restart_ttime_out - rec_restart_dt;
@@ -827,6 +861,11 @@ int main(int argc, char *argv[]) {
       cuda_dom_free();
       printf("done.     \n");
       fflush(stdout);
+      printf("Cleaning up scalar data on devices...");
+      fflush(stdout);
+      cuda_scalar_free();
+      printf("done.     \n");
+      fflush(stdout);
       printf("Cleaning up particle data on devices...");
       fflush(stdout);
       cuda_part_free();
@@ -842,6 +881,10 @@ int main(int argc, char *argv[]) {
       printf("Cleaning up domain...");
       fflush(stdout);
       domain_clean();
+      printf("done.\n");
+      fflush(stdout);
+      printf("Cleaning up scalar...");
+      scalar_clean();
       printf("done.\n");
       fflush(stdout);
 

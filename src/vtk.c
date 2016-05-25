@@ -218,6 +218,20 @@ void dom_out_VTK(void)
         }
       }
     }
+    if(scalar_on == 1) {
+      fprintf(outfile, "\n");
+      fprintf(outfile, "</DataArray>\n");
+      fprintf(outfile, "<DataArray type=\"Float32\" Name=\"scalar\">\n");
+      for(k = ncz_s + Dom.Gcc.ksb; k < ncz_e + Dom.Gcc.ksb; k++) {
+        for(j = ncy_s + Dom.Gcc.jsb; j < ncy_e + Dom.Gcc.jsb; j++) {
+          for(i = ncx_s + Dom.Gcc.isb; i < ncx_e + Dom.Gcc.isb; i++) {
+            C = i + j * Dom.Gcc.s1b + k * Dom.Gcc.s2b;
+            fprintf(outfile, "%e ", s[C]);
+          }
+        }
+      }
+    }
+
     fprintf(outfile, "\n");
     fprintf(outfile, "</DataArray>\n");
     /*fprintf(outfile, "<DataArray type=\"Float32\" Name=\"divU\">\n");
@@ -506,6 +520,21 @@ void dom_out_VTK_turb(void)
         }
       }
     }
+    if(scalar_on == 1) {
+      fprintf(outfile, "\n");
+      fprintf(outfile, "</DataArray>\n");
+      fprintf(outfile, "<DataArray type=\"Float32\" Name=\"scalar\">\n");
+      for(k = ncz_s + Dom.Gcc.ksb; k < ncz_e + Dom.Gcc.ksb; k++) {
+        for(j = ncy_s + Dom.Gcc.jsb; j < ncy_e + Dom.Gcc.jsb; j++) {
+          for(i = ncx_s + Dom.Gcc.isb; i < ncx_e + Dom.Gcc.isb; i++) {
+            C = i + j * Dom.Gcc.s1b + k * Dom.Gcc.s2b;
+            fprintf(outfile, "%e ", s[C]);
+          }
+        }
+      }
+    }
+
+
     fprintf(outfile, "\n");
     fprintf(outfile, "</DataArray>\n");
     //fprintf(outfile, "<DataArray type=\"Float32\" Name=\"divU\">\n");
@@ -829,6 +858,20 @@ void dom_out_VTK_ghost(void)
       }
     }
 */
+    if(scalar_on == 1) {
+      fprintf(outfile, "\n");
+      fprintf(outfile, "</DataArray>\n");
+      fprintf(outfile, "<DataArray type=\"Float32\" Name=\"scalar\">\n");
+      for(k = ncz_s + Dom.Gcc.ksb; k < ncz_e + Dom.Gcc.ksb; k++) {
+        for(j = ncy_s + Dom.Gcc.jsb; j < ncy_e + Dom.Gcc.jsb; j++) {
+          for(i = ncx_s + Dom.Gcc.isb; i < ncx_e + Dom.Gcc.isb; i++) {
+            C = i + j * Dom.Gcc.s1b + k * Dom.Gcc.s2b;
+            fprintf(outfile, "%e ", s[C]);
+          }
+        }
+      }
+    }
+
     fprintf(outfile, "\n");
     fprintf(outfile, "</DataArray>\n");
     fprintf(outfile, "<DataArray type=\"Int32\" Name=\"phase\">\n");
