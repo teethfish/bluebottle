@@ -1026,6 +1026,9 @@ void cgns_particles(real dtout)
     real *azy = malloc(nparts * sizeof(real));
     real *azz = malloc(nparts * sizeof(real));
 
+    // only output scalar value on particle surface
+    real *s = malloc(nparts * sizeof(real));
+
     real   *p00_r = malloc(nparts * sizeof(real));
     real   *p00_i = malloc(nparts * sizeof(real));
     real *phi00_r = malloc(nparts * sizeof(real));
@@ -1206,6 +1209,9 @@ void cgns_particles(real dtout)
       azx[i] = parts[i].azx;
       azy[i] = parts[i].azy;
       azz[i] = parts[i].azz;
+      if(scalar_on == 1) {
+        s[i] = parts_s[i].s;
+      }    
 
         p00_r[i] = 0;
         p00_i[i] = 0;
@@ -1517,7 +1523,9 @@ void cgns_particles(real dtout)
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularPosZx", azx, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularPosZy", azy, &fnr);
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularPosZz", azz, &fnr);
-    
+    if(scalar_on == 1) {
+      cg_field_write(fn, bn, zn, sn, RealDouble, "Scalar", s, &fnr);    
+    }
 
     switch(coeff_stride) {
       case(21):
@@ -1714,6 +1722,9 @@ void cgns_particles(real dtout)
     free(azx);
     free(azy);
     free(azz);
+ 
+    // free scalar variable 
+    free(s);
 
     free(  p00_r);
     free(  p00_i);

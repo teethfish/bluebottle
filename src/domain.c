@@ -2329,6 +2329,13 @@ int domain_init(void)
   dt += 2. * nu / (Dom.dz * Dom.dz);
   dt = CFL / dt;
   dt0 = -1.;
+  if(scalar_on == 1) {
+    double dt_tmp = 2. * s_d /(dx_min * dx_min);
+    dt_tmp += 2. * s_d/(Dom.dy * Dom.dy);
+    dt_tmp += 2. * s_d/(Dom.dz * Dom.dz);
+    dt_tmp = CFL / dt_tmp;
+    if(dt_tmp < dt) dt = dt_tmp;
+  }
   stepnum = 0;
   rec_flow_field_stepnum_out = 0;
   rec_paraview_stepnum_out = 0;

@@ -322,23 +322,23 @@ __device__ real pnm(int n, int m, real theta)
     case 0: return 1;
     case 1:
       switch(m) {
-        //case -1: return -0.5*y;
+        case -1: return 0.5*y; // double check!!
         case 0: return x;
         case 1: return -y;
       }
     case 2:
       switch(m) {
-        //case -2: return 0.125*y*y;
-        //case -1: return -0.5*x*y;
+        case -2: return 0.125*y*y;
+        case -1: return 0.5*x*y; // double check!!
         case 0: return 0.5*(3.*x*x - 1.);
         case 1: return -3.*x*y;
         case 2: return 3.*y*y;
       }
     case 3:
       switch(m) {
-        //case -3: return -0.02083333333333*y*y*y;
-        //case -2: return 0.125*x*y*y;
-        //case -1: return -0.125*(1. - 5.*x*x)*y;
+        case -3: return 0.02083333333333*y*y*y; // double check!
+        case -2: return 0.125*x*y*y;
+        case -1: return 0.125*(5.*x*x - 1.)*y; // double check!
         case 0: return 0.5*x*(5.*x*x - 3.);
         case 1: return -1.5*(5.*x*x - 1.)*y;
         case 2: return 15.*x*y*y;
@@ -346,10 +346,10 @@ __device__ real pnm(int n, int m, real theta)
       }
     case 4:
       switch(m) {
-        //case -4: return .002604166666667*y*y*y*y;
-        //case -3: return -0.02083333333333*x*y*y*y*y;
-        //case -2: return 0.02083333333333*(7.*x*x - 1.)*y*y;
-        //case -1: return -0.125*x*(3. - 7.*x*x)*y;
+        case -4: return .002604166666667*y*y*y*y;
+        case -3: return 0.02083333333333*x*y*y*y*y;
+        case -2: return 0.02083333333333*(7.*x*x - 1.)*y*y;
+        case -1: return 0.125*x*(7.*x*x - 1.)*y;
         case 0: return 0.125*(35.*x*x*x*x - 30.*x*x + 3.);
         case 1: return -2.5*(7.*x*x - 3.)*x*y;
         case 2: return 7.5*(7.*x*x - 1.)*y*y;
@@ -358,11 +358,11 @@ __device__ real pnm(int n, int m, real theta)
       }
     case 5:
       switch(m) {
-        //case -5: return -0.000260416666667*y*y*y*y*y;
-        //case -4: return 0.002604166666667*x*y*y*y*y;
-        //case -3: return -0.002604166666667*y*y*y*(9.*x*x - 1.);
-        //case -2: return 0.0625*x*y*y*(3.*x*x - 1.);
-        //case -1: return -0.0625*(21.*x*x*x*x - 14.*x*x + 1.);
+        case -5: return 0.000260416666667*y*y*y*y*y;
+        case -4: return 0.002604166666667*x*y*y*y*y;
+        case -3: return 0.002604166666667*y*y*y*(9.*x*x - 1.);
+        case -2: return 0.0625*x*y*y*(3.*x*x - 1.);
+        case -1: return 0.0625*(21.*x*x*x*x - 14.*x*x + 1.);
         case 0: return 0.125*x*(63.*x*x*x*x - 70.*x*x + 15.);
         case 1: return -1.875*y*(21.*x*x*x*x - 14.*x*x + 1.);
         case 2: return 52.5*x*y*y*(3.*x*x - 1.);

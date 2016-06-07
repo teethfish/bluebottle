@@ -330,6 +330,7 @@ int main(int argc, char *argv[]) {
       domain_read_input();
       parts_read_input(turb);
       scalar_read_input();
+      parts_read_input_scalar();
       fflush(stdout);
       //printf("EXPD: Using devices %d through %d.\n\n", dev_start, dev_end);
       //fflush(stdout);
@@ -385,7 +386,6 @@ int main(int argc, char *argv[]) {
       printf("Initializing domain variables...");
       fflush(stdout);
       int domain_init_flag = domain_init();
-      scalar_init();
       printf("done.\n");
       fflush(stdout);
       if(domain_init_flag == EXIT_FAILURE) {
@@ -412,6 +412,12 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       }
 
+      // initialize the scalar field for domain and particles
+      printf("Initializing scalar variables...");
+      fflush(stdout);
+      scalar_init();
+      parts_init_scalar();
+
       // allocate device memory
       printf("Allocating domain CUDA device memory...");
       fflush(stdout);
@@ -426,6 +432,11 @@ int main(int argc, char *argv[]) {
       printf("Allocating particle CUDA device memory...");
       fflush(stdout);
       cuda_part_malloc();
+      printf("...done.\n");
+      fflush(stdout);
+      printf("Allocating particle scalar CUDA device memory...");
+      fflush(stdout);
+      cuda_part_scalar_malloc();
       printf("...done.\n");
       fflush(stdout);
 
@@ -444,11 +455,16 @@ int main(int argc, char *argv[]) {
       fflush(stdout);
       cuda_part_push();
       printf("done.\n");
+      printf("Copying host particle scalar data to devices...");
+      fflush(stdout);
+      cuda_part_scalar_push();
+      printf("done.\n");
       fflush(stdout);
 
       count_mem();
 
       // initialize ParaView VTK output PVD file
+      // TODO: add particle scalar variables into output
       if(runrestart != 1) {
         #ifdef DDEBUG
           init_VTK_ghost();
@@ -462,6 +478,7 @@ int main(int argc, char *argv[]) {
       // set up particles
       cuda_build_cages();
       cuda_part_pull();
+      cuda_part_scalar_pull();
 
       // run restart if requested
       if(runrestart == 1) {
@@ -485,6 +502,11 @@ int main(int argc, char *argv[]) {
         printf("Copying host particle data to devices...");
         fflush(stdout);
         cuda_part_push();
+        printf("done.\n");
+        fflush(stdout);
+        printf("Copying host particle scalar data to devices...");
+        fflush(stdout);
+        cuda_part_scalar_push();
         printf("done.\n");
         fflush(stdout);
         cgns_grid();
@@ -546,13 +568,13 @@ int main(int argc, char *argv[]) {
 
         // get initial dt; this is an extra check for the SHEAR initialization
         dt = cuda_find_dt();
-
         // share this with the precursor domain
         expd_compare_dt(np, status);
 
         // update the boundary condition config info to share with precursor
         expd_update_BC(np, status);
         // apply boundary conditions to field variables
+        // TODO: not sure if should apply scalar bc & particle internal scalar
         if(nparts > 0) {
           cuda_part_BC();
         }
@@ -567,7 +589,8 @@ int main(int argc, char *argv[]) {
           cuda_dom_pull();
           cuda_scalar_pull();
           cuda_part_pull();
-    
+          cuda_part_scalar_pull();
+
         #ifdef DDEBUG
             printf("Writing ParaView file %d (t = %e)...",
             rec_paraview_stepnum_out, ttime);
@@ -720,17 +743,11 @@ int main(int argc, char *argv[]) {
             // compute div(U)
             //cuda_div_U();
 
-            // calculate the scalar field, if there are particles, do iterations
-            printf("Calculate scalar field...");
-            cuda_update_scalar();  // update results for inner nodes, s-->s0
-            cuda_scalar_BC(); // apply boundary condition to s0
-            cuda_solve_scalar_explicit(); // solve the diffusion equation
-            printf("done\n");
-
+/*
             // compute next timestep size
             dt0 = dt;
             dt = cuda_find_dt();
-
+*/
             // compare this timestep size to that in the precursor and
             // and synchronize the result
             expd_compare_dt(np, status);
@@ -739,12 +756,49 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
           }
 
+          // calculate the scalar field, if there are particles, do iterations
+          printf("SCALAR:...");
+          int iter_s = 0; 
+          real iter_err_scalar = FLT_MAX;
+          //TODO: right now keep the residue same with velocity field
+          while(iter_err_scalar > lamb_residual) {
+          //while(iter_s < 2) {
+            // iterate for Lamb's coefficients
+            // solve for scalar field
+            cuda_scalar_BC(); // outer apply boundary condition to s0
+            if(nparts > 0) {
+              cuda_part_BC_scalar(); // inner b.c. apply to s0
+            }
+
+            cuda_solve_scalar_explicit(); // solve the diffusion equation for s only for inner nodes
+            
+            // update lamb's coefficients using the new field variable s
+            cuda_scalar_lamb();
+
+            iter_err_scalar = cuda_scalar_lamb_err();
+            iter_s++;
+            printf("iter_err is %f\n", iter_err_scalar);
+            // TODO: right now keep max_iter same as velocity field
+            if(iter_s == lamb_max_iter) {
+              // allow the simulation continues even if it reaches the max number
+              break;
+            }
+          }            
+          printf("  The Lamb's coefficients for scalar field converged in");
+          printf(" %d iterations.\n", iter_s);          
+          cuda_update_scalar();  // update results only for inner nodes, s-->s0
+          // after solving both velocity & scalar, compute next timestep size
+          dt0 = dt;
+          dt = cuda_find_dt();
+
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {
               // pull back data and write fields
               cuda_dom_pull();
               cuda_scalar_pull();
+              // TODO: check why we need to pull back particle data
               cuda_part_pull();
+              cuda_part_scalar_pull();
               #ifndef BATCHRUN
                 printf("  Writing flow field file t = %e...                  \r",
                   ttime);
@@ -764,6 +818,7 @@ int main(int argc, char *argv[]) {
               cuda_dom_pull();
               cuda_scalar_pull();
               cuda_part_pull();
+              cuda_part_scalar_pull();
               #ifndef BATCHRUN
                 printf("  Writing ParaView output file");
                 printf(" %d (t = %e)...                  \r",
@@ -786,6 +841,7 @@ int main(int argc, char *argv[]) {
             if(rec_particle_ttime_out >= rec_particle_dt) {
               // pull back data and write fields
               cuda_part_pull();
+              cuda_part_scalar_pull();
               #ifndef BATCHRUN
                 printf("  Writing particle file t = %e...                  \r",
                   ttime);
@@ -819,6 +875,7 @@ int main(int argc, char *argv[]) {
             cuda_dom_pull();
             cuda_scalar_pull();
             cuda_part_pull();
+            cuda_part_scalar_pull();
             out_restart();
             scalar_out_restart();
             printf("done.               \n");
@@ -841,8 +898,10 @@ int main(int argc, char *argv[]) {
           fflush(stdout);
           cuda_dom_pull();
           cuda_scalar_pull();
+          cuda_part_scalar_pull();
           cuda_part_pull();
           out_restart();
+          out_restart_turb(); //don't forget to write final turb restart file!
           scalar_out_restart();
           printf("done.               \n");
           fflush(stdout);
@@ -871,11 +930,21 @@ int main(int argc, char *argv[]) {
       cuda_part_free();
       printf("done.\n");
       fflush(stdout);
+      printf("Cleaning up particle scalar data on devices...");
+      fflush(stdout);
+      cuda_part_scalar_free();
+      printf("done.\n");
+      fflush(stdout);
 
       // clean up host
       printf("Cleaning up particles...");
       fflush(stdout);
       parts_clean();
+      printf("done.\n");
+      fflush(stdout);
+      printf("Cleaning up particles scalar...");
+      fflush(stdout);
+      parts_scalar_clean();
       printf("done.\n");
       fflush(stdout);
       printf("Cleaning up domain...");
