@@ -594,6 +594,46 @@ __device__ real X_an(int n, real theta, real phi, real *anm_re, real *anm_im, in
 }
 
 
+__global__ void forcing_boussinesq_x(real alpha, real gx, real s_init, real *s, real *fx, dom_struct *dom)
+{
+  int tj = blockIdx.x * blockDim.x + threadIdx.x;
+  int tk = blockIdx.y * blockDim.y + threadIdx.y;
+
+  for(int i = dom->Gfx._isb; i < dom->Gfx._ieb; i++) {
+    if(tj < dom->Gfx._jnb && tk < dom->Gfx._knb) {
+      fx[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b]
+        // buoyancy force is the opposite direction of the gravity force
+        += - gx * alpha * (s[i + tj*dom->Gfx._s1b + tk*dom->Gfx._s2b] - s_init);
+    }
+  }
+}
+
+__global__ void forcing_boussinesq_y(real alpha, real gy, real s_init, real *s, real *fy, dom_struct *dom)
+{
+  int tk = blockIdx.x * blockDim.x + threadIdx.x;
+  int ti = blockIdx.y * blockDim.y + threadIdx.y;
+
+  for(int j = dom->Gfy._jsb; j < dom->Gfy._jeb; j++) {
+    if(tk < dom->Gfy._knb && ti < dom->Gfy._inb) {
+      fy[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b]
+        += - gy * alpha * (s[ti + j*dom->Gfy._s1b + tk*dom->Gfy._s2b] - s_init);
+    }
+  }
+}
+
+__global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, real *fz, dom_struct *dom)
+{
+  int ti = blockIdx.x * blockDim.x + threadIdx.x;
+  int tj = blockIdx.y * blockDim.y + threadIdx.y;
+
+  for(int k = dom->Gfz._ksb; k < dom->Gfz._keb; k++) {
+    if(ti < dom->Gfz._inb && tj < dom->Gfz._jnb) {
+      fz[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b]
+        += - gz * alpha * (s[ti + tj*dom->Gfz._s1b + k*dom->Gfz._s2b] - s_init);
+    }
+  }
+}
+
 
 
 

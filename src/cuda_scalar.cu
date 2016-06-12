@@ -741,7 +741,7 @@ void cuda_scalar_lamb(void)
          
     // interpolate field scalar to Lebsque nodes
     // TODU: double check cuda_quad_check_nodes
-    // cuda_quad_check_nodes(dev, _node_t, _node_p, nnodes);
+    //cuda_quad_check_nodes_scalar(dev, _node_t, _node_p, nnodes);
     cuda_quad_interp_scalar(dev, _node_t, _node_p, nnodes, _ss);
 
     // create temporary storage for inner product inergrands
@@ -889,3 +889,78 @@ void cuda_part_BC_scalar(void)
   }
 }
 
+extern "C"
+void cuda_compute_boussinesq(void)
+{
+  if(scalar_on == 1){
+    if(s_alpha != 0){
+      #pragma omp parallel num_threads(nsubdom)
+      {
+        int dev = omp_get_thread_num();
+        (cudaSetDevice(dev + dev_start));
+
+        int threads_x = 0;
+        int threads_y = 0;
+        int threads_z = 0;
+        int blocks_x = 0;
+        int blocks_y = 0;
+        int blocks_z = 0;
+
+        // x-component
+        if(dom[dev].Gfx._jnb < MAX_THREADS_DIM)
+          threads_y = dom[dev].Gfx._jnb;
+        else
+          threads_y = MAX_THREADS_DIM;
+
+        if(dom[dev].Gfx._knb < MAX_THREADS_DIM)
+          threads_z = dom[dev].Gfx._knb;
+        else
+          threads_z = MAX_THREADS_DIM;
+
+        blocks_y = (int)ceil((real) dom[dev].Gfx._jnb / (real) threads_y);
+        blocks_z = (int)ceil((real) dom[dev].Gfx._knb / (real) threads_z);
+
+        dim3 dimBlocks_x(threads_y, threads_z);
+        dim3 numBlocks_x(blocks_y, blocks_z);
+
+        // y-component
+        if(dom[dev].Gfy._knb < MAX_THREADS_DIM)
+          threads_z = dom[dev].Gfy._knb;
+        else
+          threads_z = MAX_THREADS_DIM;
+
+        if(dom[dev].Gfy._inb < MAX_THREADS_DIM)
+          threads_x = dom[dev].Gfy._inb;
+        else
+          threads_x = MAX_THREADS_DIM;
+
+        blocks_z = (int)ceil((real) dom[dev].Gfy._knb / (real) threads_z);
+        blocks_x = (int)ceil((real) dom[dev].Gfy._inb / (real) threads_x);
+
+        dim3 dimBlocks_y(threads_z, threads_x);
+        dim3 numBlocks_y(blocks_z, blocks_x);
+
+        // z-component
+        if(dom[dev].Gfz._inb < MAX_THREADS_DIM)
+          threads_x = dom[dev].Gfz._inb;
+        else
+          threads_x = MAX_THREADS_DIM;
+
+        if(dom[dev].Gfz._jnb < MAX_THREADS_DIM)
+          threads_y = dom[dev].Gfz._jnb;
+        else
+          threads_y = MAX_THREADS_DIM;
+
+        blocks_x = (int)ceil((real) dom[dev].Gfz._inb / (real) threads_x);
+        blocks_y = (int)ceil((real) dom[dev].Gfz._jnb / (real) threads_y);
+
+        dim3 dimBlocks_z(threads_x, threads_y);
+        dim3 numBlocks_z(blocks_x, blocks_y);
+
+        forcing_boussinesq_x<<<numBlocks_x, dimBlocks_x>>>(s_alpha, g.x, s_init, _s[dev], _f_x[dev], _dom[dev]);
+        forcing_boussinesq_y<<<numBlocks_y, dimBlocks_y>>>(s_alpha, g.y, s_init, _s[dev], _f_y[dev], _dom[dev]);
+        forcing_boussinesq_z<<<numBlocks_z, dimBlocks_z>>>(s_alpha, g.z, s_init, _s[dev], _f_z[dev], _dom[dev]);
+      }
+    }
+  }
+}  

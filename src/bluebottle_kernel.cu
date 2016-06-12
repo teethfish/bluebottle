@@ -2257,12 +2257,15 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
         + parts[pp].aFx - vol*gradP.x) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
+        //+ g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
         + parts[pp].aFy - vol*gradP.y) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
+        //+ g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
         + parts[pp].aFz - vol*gradP.z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
+        //+ g.z;
 
       // update linear velocities
       parts[pp].u = parts[pp].u0 + 0.5*dt*(parts[pp].udot + parts[pp].udot0);
@@ -2299,12 +2302,15 @@ __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
         + parts[pp].aFx - vol*gradP.x) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
+        //+ g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
         + parts[pp].aFy - vol*gradP.y) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
+        //+ g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-          + parts[pp].aFz - vol*gradP.z) / m
+        + parts[pp].aFz - vol*gradP.z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
+        //+ g.z;
 
       // update linear velocities
       parts[pp].u = parts[pp].u0 + 0.5*dt*(parts[pp].udot + parts[pp].udot0);

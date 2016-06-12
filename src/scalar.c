@@ -3,6 +3,8 @@
 BC_s bc_s;
 real s_d;
 real s_k;
+real s_init;
+real s_alpha;
 real lamb_cut_scalar;
 int scalar_on;
 int coeff_stride_scalar;
@@ -62,10 +64,14 @@ void scalar_read_input(void)
       fret = fscanf(infile, "diffusivity %lf\n", &s_d);
       fret = fscanf(infile, "conductivity %lf\n", &s_k);
       fret = fscanf(infile, "lamb_cut %lf\n", &lamb_cut_scalar);
+      fret = fscanf(infile, "initial_scalar %lf\n", &s_init);
+      fret = fscanf(infile, "alpha %lf\n", &s_alpha);
 #else
       fret = fscanf(infile, "diffusivity %f\n", &s_d);
       fret = fscanf(infile, "conductivity %f\n", &s_k);
       fret = fscanf(infile, "lamb_cut %f\n", &lamb_cut_scalar);
+      fret = fscanf(infile, "initial_scalar %f\n", &s_init);
+      fret = fscanf(infile, "alpha %f\n", &s_alpha);
 #endif
       fret = fscanf(infile, "\n");
       fret = fscanf(infile, "BOUNDARY CONDITIONS\n");
@@ -231,8 +237,8 @@ void scalar_init(void)
     // initialize QUIESCENT scalar field (default)
     
     for(int i = 0; i < Dom.Gcc.s3b; i++) {
-      s0[i] = 0.0;
-      s[i] = 0.0;
+      s0[i] = s_init;
+      s[i] = s_init;
       conv0_s[i] = 0.0;
       conv_s[i] = 0.0;
       diff0_s[i] = 0.0;

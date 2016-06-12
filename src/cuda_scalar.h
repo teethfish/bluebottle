@@ -129,6 +129,11 @@ __device__ real X_an(int n, real theta, real phi, real *anm_re, real *anm_im, in
 __global__ void show_variable(real *s0, real *s, dom_struct *dom);
 
 
+__global__ void forcing_boussinesq_x(real alpha, real gx, real s_init, real *s, real *fx, dom_struct *dom);
+
+__global__ void forcing_boussinesq_y(real alpha, real gy, real s_init, real *s, real *fy, dom_struct *dom);
+
+__global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, real *fz, dom_struct *dom);
 
 #endif
 

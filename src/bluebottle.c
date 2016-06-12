@@ -645,6 +645,7 @@ int main(int argc, char *argv[]) {
           fflush(stdout);
 
           cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+          cuda_compute_boussinesq();
           compute_vel_BC();
           // update the boundary condition config info and share with precursor
           expd_update_BC(np, status);

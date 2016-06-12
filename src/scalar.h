@@ -63,6 +63,9 @@ extern int coeff_stride_scalar;
 
 extern real lamb_cut_scalar;
 
+extern real s_init; //initial temperature
+
+extern real s_alpha; //coefficient of thermal expansion
 
 extern real s_d;
 
@@ -225,17 +228,7 @@ void cuda_part_BC_scalar(void);
 void cuda_show_variable(void);
 
 
-
-
-
-
-
-
-
-
-
-
-
+void cuda_compute_boussinesq(void);
 
 
 #endif
