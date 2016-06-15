@@ -330,6 +330,55 @@ __global__ void update_scalar(real *s, real *s0, dom_struct *dom)
   }
 }
 
+__global__ void check_nodes_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, real *theta, real *phi, int nnodes, BC_s bc_s)
+{
+  int node = threadIdx.x;
+  int part = blockIdx.x;
+
+  // convert node (r, theta, phi) to (x, y, z)
+  real xp, yp, zp;  // Cartesian radial vector
+  real x, y, z;   // Cartesian location of node
+  rtp2xyz(parts_s[part].rs*parts[part].r, theta[node], phi[node], &xp, &yp, &zp);
+
+  // shift from particle center
+  x = xp + parts[part].x;
+  y = yp + parts[part].y;
+  z = zp + parts[part].z;
+
+  // start off with all -1's
+  parts[part].nodes[node] = -1;
+
+  // check if the node is interfered with by a wall
+  // set equal to some number to identify which wall is interefering
+  // TODO:here re-use the parts[part].nodes[ndoe], which first been used in function check_nodes;
+  if(x - dom->xs < 0) {
+    if(bc_s.sW == DIRICHLET)
+      if(parts[part].nodes[node] == -1)
+        parts[part].nodes[node] = -10;
+    } if(x - dom->xe > 0) {
+      if(bc_s.sE == DIRICHLET)
+        if(parts[part].nodes[node] == -1)
+          parts[part].nodes[node] = -11;
+    } if(y - dom->ys < 0) {
+      if(bc_s.sS == DIRICHLET)
+        if(parts[part].nodes[node] == -1)
+          parts[part].nodes[node] = -12;
+    } if(y - dom->ye > 0) {
+      if(bc_s.sN == DIRICHLET)
+        if(parts[part].nodes[node] == -1)
+          parts[part].nodes[node] = -13;
+    } if(z - dom->zs < 0) {
+      if(bc_s.sB == DIRICHLET)
+        if(parts[part].nodes[node] == -1)
+          parts[part].nodes[node] = -14;
+    } if(z - dom->ze > 0) {
+      if(bc_s.sT == DIRICHLET)
+        if(parts[part].nodes[node] == -1)
+          parts[part].nodes[node] = -15;
+    }
+}
+  
+
 __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, real *theta, real *phi, int nnodes, real *ss,  BC_s bc_s)
 {
   int node = threadIdx.x;
@@ -391,8 +440,14 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
   //printf("dsdx, dsdy, dsdz is %f %f %f, x-xx, y-yy, z-zz is %f %f %f\n", dsdx, dsdy, dsdz, x-xx, y-yy, z-zz);
   //printf("nodes %d is %f, s[C] is %f\n", node+nnodes*part, ss[node+nnodes*part], s[C]);
   // wall temperature if this node intersects wall
-  // TODO: right now set it to be 0
-  ss[node+nnodes*part] = (parts[part].nodes[node]==-1)*ss[node+part*nnodes];
+  real sswall = (parts[part].nodes[node] == -10)*bc_s.sWD
+            + (parts[part].nodes[node] == -11)*bc_s.sED
+            + (parts[part].nodes[node] == -12)*bc_s.sSD
+            + (parts[part].nodes[node] == -13)*bc_s.sND
+            + (parts[part].nodes[node] == -14)*bc_s.sBD
+            + (parts[part].nodes[node] == -15)*bc_s.sTD;
+  ss[node+nnodes*part] = (parts[part].nodes[node]==-1)*ss[node+part*nnodes]
+                        + (parts[part].nodes[node] < -1)*sswall;
 }
     
 __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, real *ss, int stride_scalar, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real B)
@@ -415,7 +470,6 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
     real theta = node_t[node];
     real phi = node_p[node];
 
-    //TODO:since now m ranges from -n to n, remember to update function of nnm,pnm
     real N_nm = nnm(n,m);
     real P_nm = pnm(n,m,theta);
 

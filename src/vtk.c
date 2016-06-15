@@ -110,6 +110,9 @@ void dom_out_VTK(void)
   //fprintf(outfile, "<PCellData Scalars=\"p divU phase phase_shell\" Vectors=\"vel flag\">\n");
   fprintf(outfile, "<PCellData Scalars=\"p phase\" Vectors=\"vel\">\n");
   fprintf(outfile, "<PDataArray type=\"Float32\" Name=\"p\"/>\n");
+  if(scalar_on == 1){
+    fprintf(outfile, "<PDataArray type=\"Float32\" Name=\"s\"/>\n");
+  }
   //fprintf(outfile, "<PDataArray type=\"Float32\" Name=\"divU\"/>\n");
   fprintf(outfile, "<PDataArray type=\"Int32\" Name=\"phase\"/>\n");
   //fprintf(outfile, "<PDataArray type=\"Int32\" Name=\"phase_shell\"/>\n");
@@ -977,6 +980,7 @@ void dom_out_VTK_ghost(void)
 
 void part_out_VTK(void)
 {
+  //TODU: output particle scalar value
   int i; // iterator
   char fname[FILE_NAME_SIZE] = ""; // output filename
   int nparts_plot = 0;    // the number of particles to plot; may be greater

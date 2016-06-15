@@ -62,6 +62,20 @@ __global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, r
 __global__ void update_scalar(real *s, real *s0, dom_struct *dom);
 
 
+//check if the Lebsque nodes inter-section with the wall
+__global__ void check_nodes_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, real *theta, real *phi, int nnodes, BC_s bc_s);
+/*
+ * Function
+ * nparts: number of particle
+ * parts: use the particle position information. NOTES:DOUBLE USE PARTS.NODES INFORMATION, SINCE USES IT AFTER VELOCITY FIELD,SHOULD BE OK
+ * parts_s: use integrate distance information
+ * dom: domain information
+ * theta: 
+ * phi
+ * nnodes: number of nodes
+ * bc_s: use the boundary condition for scalar field information
+ */
+
 // interpolate scalar field to Lebsque nodes
 __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, real *theta, real *phi, int nnodes, real *ss, BC_s bc_s);
 

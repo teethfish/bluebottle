@@ -741,7 +741,7 @@ void cuda_scalar_lamb(void)
          
     // interpolate field scalar to Lebsque nodes
     // TODU: double check cuda_quad_check_nodes
-    //cuda_quad_check_nodes_scalar(dev, _node_t, _node_p, nnodes);
+    cuda_quad_check_nodes_scalar(dev, _node_t, _node_p, nnodes);
     cuda_quad_interp_scalar(dev, _node_t, _node_p, nnodes, _ss);
 
     // create temporary storage for inner product inergrands
@@ -768,6 +768,20 @@ void cuda_scalar_lamb(void)
     (cudaFree(int_scalar_re));
     (cudaFree(int_scalar_im));
   }
+}
+
+extern "C"
+void cuda_quad_check_nodes_scalar(int dev,real *node_t, real *node_p, int nnodes)
+{
+  int threads = nnodes;
+  int blocks = nparts;
+
+  dim3 dimBlocks(threads);
+  dim3 numBlocks(blocks);
+
+  if(nparts > 0)
+    check_nodes_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts[dev], _parts_s[dev], _dom[dev], node_t, node_p, nnodes, bc_s);
+
 }
 
 extern "C"

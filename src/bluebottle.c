@@ -417,6 +417,7 @@ int main(int argc, char *argv[]) {
       fflush(stdout);
       scalar_init();
       parts_init_scalar();
+      printf("done.\n");
 
       // allocate device memory
       printf("Allocating domain CUDA device memory...");
@@ -542,7 +543,7 @@ int main(int argc, char *argv[]) {
         fflush(stdout);
         dt = 1.;
         dt0 = -1.;
-        cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd);
+        cuda_compute_forcing(&pid_int, &pid_back, Kp, Ki, Kd); 
         rec_flow_field_stepnum_out = -1;
         rec_paraview_stepnum_out = -1;
         rec_particle_stepnum_out = -1;
@@ -758,12 +759,11 @@ int main(int argc, char *argv[]) {
           }
 
           // calculate the scalar field, if there are particles, do iterations
-          printf("SCALAR:...");
+          printf("SCALAR: calculation...");
           int iter_s = 0; 
           real iter_err_scalar = FLT_MAX;
           //TODO: right now keep the residue same with velocity field
           while(iter_err_scalar > lamb_residual) {
-          //while(iter_s < 2) {
             // iterate for Lamb's coefficients
             // solve for scalar field
             cuda_scalar_BC(); // outer apply boundary condition to s0
@@ -778,10 +778,10 @@ int main(int argc, char *argv[]) {
 
             iter_err_scalar = cuda_scalar_lamb_err();
             iter_s++;
-            printf("iter_err is %f\n", iter_err_scalar);
+            //printf("iter_err is %f\n", iter_err_scalar);
             // TODO: right now keep max_iter same as velocity field
             if(iter_s == lamb_max_iter) {
-              // allow the simulation continues even if it reaches the max number
+              // allow simulation continues even if it reaches the max number
               break;
             }
           }            

@@ -196,6 +196,13 @@ void cuda_solve_scalar_explicit(void);
 
 void cuda_update_scalar(void);
 
+void cuda_quad_check_nodes_scalar(int dev,real *node_t, real *node_p, int nnodes);
+/*
+ * Function
+ * check if the intergrat nodes inter-section with the wall
+ */
+
+
 void cuda_quad_interp_scalar(int dev, real *node_t, real *node_p, int nnodes, real *ss);
 /*
  * Function
