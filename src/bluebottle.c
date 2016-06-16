@@ -759,7 +759,7 @@ int main(int argc, char *argv[]) {
           }
 
           // calculate the scalar field, if there are particles, do iterations
-          printf("SCALAR: calculation...");
+          printf("SCALAR:");
           int iter_s = 0; 
           real iter_err_scalar = FLT_MAX;
           //TODO: right now keep the residue same with velocity field
@@ -787,7 +787,8 @@ int main(int argc, char *argv[]) {
           }            
           printf("  The Lamb's coefficients for scalar field converged in");
           printf(" %d iterations.\n", iter_s);          
-          cuda_update_scalar();  // update results only for inner nodes, s-->s0
+          cuda_update_scalar();  // update results, s-->s0, conv_s, diff_s
+
           // after solving both velocity & scalar, compute next timestep size
           dt0 = dt;
           dt = cuda_find_dt();

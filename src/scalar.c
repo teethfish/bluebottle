@@ -272,8 +272,12 @@ void scalar_out_restart(void)
     }
 
     // flow field variable 
-    fwrite(s, sizeof(real), Dom.Gfx.s3b, rest);     
-    fwrite(s0, sizeof(real), Dom.Gfx.s3b, rest);
+    fwrite(s, sizeof(real), Dom.Gcc.s3b, rest);     
+    fwrite(s0, sizeof(real), Dom.Gcc.s3b, rest);
+    fwrite(conv_s, sizeof(real), Dom.Gcc.s3b, rest);
+    fwrite(conv0_s, sizeof(real), Dom.Gcc.s3b, rest);
+    fwrite(diff_s, sizeof(real), Dom.Gcc.s3b, rest);
+    fwrite(diff0_s, sizeof(real), Dom.Gcc.s3b, rest);
 
     // particle related variable
     fwrite(parts_s, sizeof(part_struct_scalar), nparts, rest);
@@ -303,8 +307,12 @@ void scalar_in_restart(void)
     }  
 
     // flow field variable  
-    fret = fread(s, sizeof(real), Dom.Gfx.s3b, infile);
-    fret = fread(s0, sizeof(real), Dom.Gfx.s3b, infile);
+    fret = fread(s, sizeof(real), Dom.Gcc.s3b, infile);
+    fret = fread(s0, sizeof(real), Dom.Gcc.s3b, infile);
+    fret = fread(conv_s, sizeof(real), Dom.Gcc.s3b, infile);
+    fret = fread(conv0_s, sizeof(real), Dom.Gcc.s3b, infile);
+    fret = fread(diff_s, sizeof(real), Dom.Gcc.s3b, infile);
+    fret = fread(diff0_s, sizeof(real), Dom.Gcc.s3b, infile);
 
     // particle related variable
     fret = fread(parts_s, sizeof(part_struct_scalar), nparts, infile);

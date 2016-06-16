@@ -215,6 +215,15 @@ void cuda_scalar_push(void)
         cudaMemcpyHostToDevice));
       (cudaMemcpy(_s[dev], ss, sizeof(real) * dom[dev].Gcc.s3b,
         cudaMemcpyHostToDevice));
+      //TODO:right now only one-GPU
+      (cudaMemcpy(_conv_s[dev], conv_s, sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyHostToDevice));   
+      (cudaMemcpy(_conv0_s[dev], conv0_s, sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyHostToDevice)); 
+      (cudaMemcpy(_diff_s[dev], diff_s, sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyHostToDevice));
+      (cudaMemcpy(_diff0_s[dev], diff0_s, sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyHostToDevice));
 
       //free host subdomain working arrays
       free(ss);
@@ -246,7 +255,15 @@ void cuda_scalar_pull(void)
         cudaMemcpyDeviceToHost));
       (cudaMemcpy(ss, _s[dev], sizeof(real) * dom[dev].Gcc.s3b,
         cudaMemcpyDeviceToHost));
-  
+      (cudaMemcpy(conv_s, _conv_s[0], sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyDeviceToHost));
+      (cudaMemcpy(conv0_s, _conv0_s[0], sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyDeviceToHost));  
+      (cudaMemcpy(diff_s, _diff_s[0], sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyDeviceToHost));
+      (cudaMemcpy(diff0_s, _diff0_s[0], sizeof(real) * dom[dev].Gcc.s3b,
+        cudaMemcpyDeviceToHost));
+
       // scalar
       for(k = dom[dev].Gcc.ksb; k < dom[dev].Gcc.keb; k++) {
         for(j = dom[dev].Gcc.jsb; j < dom[dev].Gcc.jeb; j++) {
@@ -537,7 +554,7 @@ void cuda_solve_scalar_explicit(void)
 
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
-      scalar_explicit<<<numBlocks_s, dimBlocks_s>>>(_s0[dev], _s[dev], _conv_s[dev], _diff_s[dev], _u[dev], _v[dev], _w[dev], s_k, _dom[dev], dt);
+      scalar_explicit<<<numBlocks_s, dimBlocks_s>>>(_s0[dev], _s[dev], _conv_s[dev], _diff_s[dev], _conv0_s[dev], _diff0_s[dev], _u[dev], _v[dev], _w[dev], s_k, _dom[dev], dt, dt0);
     }
   }
 }    
@@ -591,6 +608,13 @@ void cuda_update_scalar(void)
       int dev = omp_get_thread_num();
       cudaSetDevice(dev + dev_start);
 
+      (cudaMemcpy(_s0[dev], _s[dev],
+      sizeof(real) * dom[dev].Gcc.s3b, cudaMemcpyDeviceToDevice));
+      (cudaMemcpy(_conv0_s[dev], _conv_s[dev],
+      sizeof(real) * dom[dev].Gcc.s3b, cudaMemcpyDeviceToDevice));
+      (cudaMemcpy(_diff0_s[dev], _diff_s[dev],
+      sizeof(real) * dom[dev].Gcc.s3b, cudaMemcpyDeviceToDevice));
+/*
       int threads_y = 0;
       int threads_z = 0;
       int blocks_y = 0;
@@ -606,14 +630,14 @@ void cuda_update_scalar(void)
       else
         threads_z = MAX_THREADS_DIM;
 
-
       blocks_y = (int)ceil((real) dom[dev].Gcc._jn / (real) threads_y);
       blocks_z = (int)ceil((real) dom[dev].Gcc._kn / (real) threads_z);
 
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
 
-      update_scalar<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s0[dev], _dom[dev]);
+      update_scalar<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s0[dev], _conv_s[dev], _conv0_s[dev], _diff_s[dev], _diff0_s[dev], _dom[dev]);
+*/  
     }
   }
 }

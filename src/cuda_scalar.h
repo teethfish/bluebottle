@@ -55,11 +55,11 @@ __global__ void BC_s_T_D(real *s, dom_struct *dom, real bc_s);
 __global__ void BC_s_T_N(real *s, dom_struct *dom, real bc_s);
 
 // calculate the scalar field explicitly
-__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *u, real *v, real *w, real s_k, dom_struct *dom, real dt);
+__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *conv0_s, real *diff0_s, real *u, real *v, real *w, real s_k, dom_struct *dom, real dt, real dt0);
 
 
 // update scalar filed
-__global__ void update_scalar(real *s, real *s0, dom_struct *dom);
+__global__ void update_scalar(real *s, real *s0, real *conv_s, real *conv0_s, real *diff_s, real *diff0_s, dom_struct *dom);
 
 
 //check if the Lebsque nodes inter-section with the wall

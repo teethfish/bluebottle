@@ -247,12 +247,14 @@ __global__ void BC_s_T_N(real *s, dom_struct *dom, real bc_s)
     s[ti + tj*s1b + (dom->Gcc._ke)*s2b] = s[ti + tj*s1b + (dom->Gcc._ke-1)*s2b] - bc_s*dom->dz;
 }
 
-__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *u, real *v, real *w, real s_k, dom_struct *dom, real dt)
+__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *conv0_s, real *diff0_s, real *u, real *v, real *w, real s_k, dom_struct *dom, real dt, real dt0)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x + DOM_BUF;
   int tk = blockIdx.y * blockDim.y + threadIdx.y + DOM_BUF;
 
   // working constants
+  real ab0 = 0.5 * dt / dt0;  // for Adams-Bashforth stepping
+  real ab = 1. + ab0;         // for Adams-Bashforth stepping
   real ddx = 1. / dom->dx;
   real ddy = 1. / dom->dy;
   real ddz = 1. / dom->dz;
@@ -281,13 +283,16 @@ __global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, r
       convec_y = convec_y * ddy;
       real convec_z = w[fz1] * 0.5 * (s0[Cz1] + s0[C]) - w[fz0] * 0.5 * (s0[C] + s0[Cz0]);
       convec_z = convec_z * ddz;  
+      // current time step
       conv_s[C] = convec_x + convec_y + convec_z;
+      conv_s[C] = ab * conv_s[C] - ab0 * conv0_s[C];  // Adams-Bashforth
       
       // calculate the diffusion term
       real diff_x = s_k * (s0[Cx0] - 2.*s0[C] + s0[Cx1]) * ddx * ddx;
       real diff_y = s_k * (s0[Cy0] - 2.*s0[C] + s0[Cy1]) * ddy * ddy;
       real diff_z = s_k * (s0[Cz0] - 2.*s0[C] + s0[Cz1]) * ddz * ddz;
       diff_s[C] = diff_x + diff_y + diff_z;
+      diff_s[C] = ab * diff_s[C] - ab0 * diff0_s[C];
 
       // calculate s at current time
       s[C] = s0[C] + dt * (diff_s[C] - conv_s[C]);
@@ -315,7 +320,7 @@ __global__ void show_variable(real *s0, real *s, dom_struct *dom)
 }
 
 
-__global__ void update_scalar(real *s, real *s0, dom_struct *dom)
+__global__ void update_scalar(real *s, real *s0, real *conv_s, real *conv0_s, real *diff_s, real *diff0_s, dom_struct *dom)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x + DOM_BUF;
   int tk = blockIdx.y * blockDim.y + threadIdx.y + DOM_BUF;
@@ -326,6 +331,8 @@ __global__ void update_scalar(real *s, real *s0, dom_struct *dom)
       // update current field as previous step
       int C = i + tj*dom->Gcc._s1b + tk*dom->Gcc._s2b;
       s0[C] = s[C];
+      conv0_s[C] = conv_s[C];
+      diff0_s[C] = diff_s[C];
     }
   }
 }
