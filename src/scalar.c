@@ -377,12 +377,16 @@ void parts_init_scalar(void)
   if(scalar_on == 1){
     for(int i = 0; i < nparts; i++) {
       parts_s[i].s = parts_s[i].s0;
+      parts_s[i].q = 0.0;
       // for each n, -n<=m<=n
       for(int j = 0; j <= parts_s[i].order; j++) {
         parts_s[i].ncoeff += 2*j + 1;
       }
       if(parts_s[i].ncoeff > coeff_stride_scalar) {
         coeff_stride_scalar = parts_s[i].ncoeff;
+      }
+      for(int j = 0; j < NNODES; j++) {
+        parts_s[i].dsdr[j] = 0.0;
       }
     }
     // allocate lamb's coefficients on host

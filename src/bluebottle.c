@@ -770,7 +770,6 @@ int main(int argc, char *argv[]) {
             if(nparts > 0) {
               cuda_part_BC_scalar(); // inner b.c. apply to s0
             }
-
             cuda_solve_scalar_explicit(); // solve the diffusion equation for s only for inner nodes
             
             // update lamb's coefficients using the new field variable s
@@ -787,6 +786,7 @@ int main(int argc, char *argv[]) {
           }            
           printf("  The Lamb's coefficients for scalar field converged in");
           printf(" %d iterations.\n", iter_s);          
+          cuda_part_heat_flux(); // calculate the heat flux across particle
           cuda_update_scalar();  // update results, s-->s0, conv_s, diff_s
 
           // after solving both velocity & scalar, compute next timestep size

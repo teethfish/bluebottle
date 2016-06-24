@@ -285,21 +285,25 @@ __global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, r
       convec_z = convec_z * ddz;  
       // current time step
       conv_s[C] = convec_x + convec_y + convec_z;
-      conv_s[C] = ab * conv_s[C] - ab0 * conv0_s[C];  // Adams-Bashforth
-      
+
       // calculate the diffusion term
       real diff_x = s_k * (s0[Cx0] - 2.*s0[C] + s0[Cx1]) * ddx * ddx;
       real diff_y = s_k * (s0[Cy0] - 2.*s0[C] + s0[Cy1]) * ddy * ddy;
       real diff_z = s_k * (s0[Cz0] - 2.*s0[C] + s0[Cz1]) * ddz * ddz;
       diff_s[C] = diff_x + diff_y + diff_z;
-      diff_s[C] = ab * diff_s[C] - ab0 * diff0_s[C];
 
-      // calculate s at current time
-      s[C] = s0[C] + dt * (diff_s[C] - conv_s[C]);
-    
-      /*if(s[C] > 90.0 || s[C] < -10.){
-        //printf("s[%d] is %f, i,j,k is %d %d %d, conv,diff is %f %f; is %f %f %f %f %f %f\n", C, s[C], i, tj, tk, conv_s[C], diff_s[C],s0[Cx0],s0[Cx1],s0[Cy0],s0[Cy1], s0[Cz0], s0[Cz1]);
+      // Adams-Bashforth
+      if(dt0 > 0) {
+        s[C] = s0[C] + dt * (ab * diff_s[C] - ab0 * diff0_s[C] - (ab * conv_s[C] - ab0 * conv0_s[C]));
+      }
+      else {
+        s[C] = s0[C] + dt * (diff_s[C] - conv_s[C]);
+      }
+
+      /*if(s[C] > 150.0 || s[C] < -10.){
+        printf("s[%d] is %f, i,j,k is %d %d %d, conv,diff is %f %f; is %f %f %f %f %f %f\n", C, s[C], i, tj, tk, conv_s[C], diff_s[C],s0[Cx0],s0[Cx1],s0[Cy0],s0[Cy1], s0[Cz0], s0[Cz1]);
       }*/
+
     }
   }
 }
@@ -312,8 +316,8 @@ __global__ void show_variable(real *s0, real *s, dom_struct *dom)
   if(tj < dom->Gcc._je && tk < dom->Gcc._ke) {
     for(int i = dom->Gcc._is; i < dom->Gcc._ie; i++) {
       int C   = i       + tj      *dom->Gcc._s1b + tk      *dom->Gcc._s2b;
-      if(s0[C] != 0 || s[C] != 0 || (C > 15625 && C < 16000)){
-        printf("s0[%d,%d,%d] and s[%d] is %f %f\n", i, tj, tk, C, s0[C], s[C]);
+      if(C > 65600 && C < 65700){
+        printf("diff0[%d,%d,%d] and diff[%d] is %f %f\n", i, tj, tk, C, s0[C], s[C]);
       }
     }
   }
@@ -480,9 +484,9 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
     real N_nm = nnm(n,m);
     real P_nm = pnm(n,m,theta);
 
-    int_scalar_re[j] += N_nm*P_nm*ss[node+part*nnodes]*cos(m*phi);
-    int_scalar_im[j] += -N_nm*P_nm*ss[node+part*nnodes]*sin(m*phi);
-    //printf("int_scalar_re[%d] is %f\n", j, int_scalar_re[j]);
+    int_scalar_re[j] = N_nm*P_nm*ss[node+part*nnodes]*cos(m*phi);
+    int_scalar_im[j] = -N_nm*P_nm*ss[node+part*nnodes]*sin(m*phi);
+    //printf("n,m is %d %d and N_nm is %f int_scalar_re[%d] is %f\n", n, m, N_nm, j, int_scalar_re[j]);
 
     __syncthreads();
     if(node == 0) {
@@ -503,8 +507,11 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
       real A = pow(rsa,n) - pow(asr,n+1.);
       anm_re[stride_scalar*part+coeff] = int_scalar_re[j]/ A;
       anm_im[stride_scalar*part+coeff] = int_scalar_im[j]/ A;
-      //printf("anm_re[%d] is %f\n", stride_scalar*part+coeff, anm_re[stride_scalar*part+coeff]);
-      //printf("anm_im[%d] is %f\n", stride_scalar*part+coeff, anm_im[stride_scalar*part+coeff]);
+
+      /*if(stride_scalar*part+coeff == 0){
+        printf("anm_re[%d] is %f\n", stride_scalar*part+coeff, anm_re[stride_scalar*part+coeff]);
+        printf("ss[%d] is %f\n", node+part*nnodes, ss[node+part*nnodes]);
+      }*/
     }
   }
 } 
@@ -695,32 +702,43 @@ __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, 
   }
 }
 
+// this function helps to calculate the integral of heat flux on the particle surface instanteneously, it uses the lamb coefficients from scalar field and lebsque nodes
+__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, int nnodes, int stride, real A1, real A2, real A3)
+{
+  int node = threadIdx.x;
+  int part = blockIdx.x;
+
+  int i;
+  // for each coefficients(n,m), calculate the surface integral; then add them together
+  if(node < nnodes) {
+    // for each nodes, sum the coefficients    
+    real theta = node_t[node];
+    real phi = node_p[node];
+    parts_s[part].dsdr[node] = X_an(0, theta, phi, anm_re, anm_im, part, stride) / parts[part].r;
+    for(int n = 1; n <= parts_s[part].order; n++) {
+      parts_s[part].dsdr[node] += (2*n+1) * X_an(n, theta, phi, anm_re, anm_im, part, stride) / parts[part].r;
+    }
+    //parts_s[part].dsdr[node] = 1.0;// for test, see sphere area
+    //printf("parts_s[part].dsdt[%d] is %f\n", node, parts_s[part].dsdr[node]);
+    __syncthreads();
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if(node == 0) {
+      parts_s[part].q = parts_s[part].dsdr[node] * A1;
+      for(i = 1; i < 6; i++) {
+        parts_s[part].q += A1 * parts_s[part].dsdr[node + i];
+      }
+      for(i = 6; i < 18; i++) {
+        parts_s[part].q += A2 * parts_s[part].dsdr[node + i];
+      }
+      for(i = 18; i < 26; i++) {
+        parts_s[part].q += A3 * parts_s[part].dsdr[node + i];
+      }
+      parts_s[part].q *= parts_s[part].k;
+      //printf("parts_s[part].q is %f\n", parts_s[part].q);
+    }
+  }
+}
 
 
 

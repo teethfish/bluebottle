@@ -4,6 +4,13 @@
 
 #include "bluebottle.h"
 
+#define NNODES 26
+/*
+ * PURPOSE
+ *  Define the number of nodes used for the Lebedev quadrature scheme.
+ ******
+ */
+
 typedef struct BC_s {
   int sW;
   real sWD;
@@ -39,17 +46,22 @@ typedef struct part_struct_scalar {
   real s;
   real k;
   real rs;
+  real q;
   int order;
   int ncoeff;
+  real dsdr[NNODES];
 } part_struct_scalar;
 /*
  * PURPOSE
  * MEMBERS
  * * s0 is the previous time step scalar value
  * * s is the current time step scalar value
+ * * k is the termal conductivity for each particle
  * * order is the order to keep lamb solution, equals to index n in Ynm
  * * ncoeff is the corresponding m index in Ynm
  * * rs the integrate surface
+ * * q is the intergral of hear fluc across the particle surface
+ * * dsdr is the scalar gradient at particle surface for Lebsque nodes
 */
 
 extern part_struct_scalar *parts_s;
@@ -237,5 +249,6 @@ void cuda_show_variable(void);
 
 void cuda_compute_boussinesq(void);
 
+void cuda_part_heat_flux(void);
 
 #endif

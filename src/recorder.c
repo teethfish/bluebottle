@@ -1028,6 +1028,7 @@ void cgns_particles(real dtout)
 
     // only output scalar value on particle surface
     real *s = malloc(nparts * sizeof(real));
+    real *q = malloc(nparts * sizeof(real));
 
     real   *p00_r = malloc(nparts * sizeof(real));
     real   *p00_i = malloc(nparts * sizeof(real));
@@ -1211,6 +1212,8 @@ void cgns_particles(real dtout)
       azz[i] = parts[i].azz;
       if(scalar_on == 1) {
         s[i] = parts_s[i].s;
+        q[i] = parts_s[i].q;
+        //printf("\n .....total heat flux is %f....\n", q[i]);
       }    
 
         p00_r[i] = 0;
@@ -1525,6 +1528,7 @@ void cgns_particles(real dtout)
     cg_field_write(fn, bn, zn, sn, RealDouble, "AngularPosZz", azz, &fnr);
     if(scalar_on == 1) {
       cg_field_write(fn, bn, zn, sn, RealDouble, "Scalar", s, &fnr);    
+      cg_field_write(fn, bn, zn, sn, RealDouble, "Heat_flux", q, &fnr);
     }
 
     switch(coeff_stride) {
@@ -1725,6 +1729,7 @@ void cgns_particles(real dtout)
  
     // free scalar variable 
     free(s);
+    free(q);
 
     free(  p00_r);
     free(  p00_i);

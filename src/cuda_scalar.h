@@ -149,6 +149,9 @@ __global__ void forcing_boussinesq_y(real alpha, real gy, real s_init, real *s, 
 
 __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, real *fz, dom_struct *dom);
 
+__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, int nnodes, int stride, real A1, real A2, real A3);
+
+
 #endif
 
 

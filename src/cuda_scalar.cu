@@ -590,7 +590,7 @@ void cuda_show_variable(void)
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
       printf("before actual run show s0 and s\n");
-      show_variable<<<numBlocks_s, dimBlocks_s>>>(_s0[dev], _s[dev], _dom[dev]);
+      show_variable<<<numBlocks_s, dimBlocks_s>>>(_diff0_s[dev], _diff_s[dev], _dom[dev]);
       //printf("before actual run show s\n");
       //show_variable<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s[dev], _dom[dev]);
       //printf("before actual run show pressure\n");
@@ -614,6 +614,7 @@ void cuda_update_scalar(void)
       sizeof(real) * dom[dev].Gcc.s3b, cudaMemcpyDeviceToDevice));
       (cudaMemcpy(_diff0_s[dev], _diff_s[dev],
       sizeof(real) * dom[dev].Gcc.s3b, cudaMemcpyDeviceToDevice));
+
 /*
       int threads_y = 0;
       int threads_z = 0;
@@ -636,8 +637,8 @@ void cuda_update_scalar(void)
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
 
-      update_scalar<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s0[dev], _conv_s[dev], _conv0_s[dev], _diff_s[dev], _diff0_s[dev], _dom[dev]);
-*/  
+      update_scalar<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s0[dev], _conv_s[dev], _conv0_s[dev], _diff_s[dev], _diff0_s[dev], _dom[dev]); 
+*/
     }
   }
 }
@@ -702,8 +703,8 @@ void cuda_scalar_lamb(void)
 
     // nodes TODO: find a more elegant way of fixing the divide by sin(0)
     // TODO: put this in GPU constant memory
-    real a1_t[6] = {PI12, PI12, PI12, PI12, 0.+DIV_ST, PI-DIV_ST};
-    //real a1_t[6] = {PI12, PI12, PI12, PI12, 0., PI};
+    //real a1_t[6] = {PI12, PI12, PI12, PI12, 0.+DIV_ST, PI-DIV_ST};
+    real a1_t[6] = {PI12, PI12, PI12, PI12, 0., PI};
     real a1_p[6] = {0., PI12, PI, PI32, 0., 0.};
     real a2_t[12] = {PI12, PI12, PI12, PI12,
                      PI14, PI14, PI14, PI14,
@@ -1001,4 +1002,87 @@ void cuda_compute_boussinesq(void)
       }
     }
   }
-}  
+}
+
+
+extern "C"
+void cuda_part_heat_flux(void)
+{
+  if(scalar_on == 1) {
+    if(nparts > 0) {
+      // TODO: make node_t, node_p a global memory from the start
+      int i;
+      int nnodes = 26;
+      real A1 = 0.598398600683775;
+      real A2 = 0.478718880547015;
+      real A3 = 0.403919055461543;
+
+      real PI14 = 0.25 * PI;
+      real PI12 = 0.5 * PI;
+      real PI34 = 0.75 * PI;
+      real PI54 = 1.25 * PI;
+      real PI32 = 1.5 * PI;
+      real PI74 = 1.75 * PI;
+      real alph1 = 0.955316618124509; //54.736
+      real alph2 = 2.186276035465284; //125.264
+
+      //real a1_t[6] = {PI12, PI12, PI12, PI12, 0.+DIV_ST, PI-DIV_ST};
+      real a1_t[6] = {PI12, PI12, PI12, PI12, 0.0, PI};
+      real a1_p[6] = {0., PI12, PI, PI32, 0., 0.};
+      real a2_t[12] = {PI12, PI12, PI12, PI12,
+                       PI14, PI14, PI14, PI14,
+                       PI34, PI34, PI34, PI34};
+      real a2_p[12] = {PI14, PI34, PI54, PI74,
+                       0., PI12, PI, PI32,
+                       0., PI12, PI, PI32};
+      real a3_t[8] = {alph1, alph1, alph1, alph1,
+                      alph2, alph2, alph2, alph2};
+      real a3_p[8] = {PI14, PI34, PI54, PI74,
+                      PI14, PI34, PI54, PI74};
+
+      real node_t[nnodes];
+      real node_p[nnodes];
+      for(i = 0; i < 6; i++) {
+        node_t[i] = a1_t[i];
+        node_p[i] = a1_p[i];
+      }
+      for(i = 0; i < 12; i++) {
+        node_t[6+i] = a2_t[i];
+        node_p[6+i] = a2_p[i];
+      }
+      for(i = 0; i < 8; i++) {
+        node_t[18+i] = a3_t[i];
+        node_p[18+i] = a3_p[i];
+      }
+      real *_node_t;
+      real *_node_p;
+      (cudaMalloc((void**) &_node_t, nnodes * sizeof(real)));
+      gpumem += nnodes * sizeof(real);
+      (cudaMalloc((void**) &_node_p, nnodes * sizeof(real)));
+      gpumem += nnodes * sizeof(real);
+      (cudaMemcpy(_node_t, node_t, nnodes * sizeof(real),
+        cudaMemcpyHostToDevice));
+      (cudaMemcpy(_node_p, node_p, nnodes * sizeof(real),
+        cudaMemcpyHostToDevice));
+      // TODO: parallel over processes 
+      int dev = 0;
+      int threads = nnodes;
+      int blocks = nparts;
+
+      dim3 dimBlocks(threads);
+      dim3 numBlocks(blocks);
+
+      part_heat_flux<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _node_t, _node_p, _anm_re[dev], _anm_im[dev], nnodes, coeff_stride_scalar, A1, A2, A3);
+      // free cuda device memory
+      (cudaFree(_node_t));
+      (cudaFree(_node_p));
+    }
+  }
+}
+
+
+
+
+
+
+  
