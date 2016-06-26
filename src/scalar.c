@@ -378,6 +378,7 @@ void parts_init_scalar(void)
     for(int i = 0; i < nparts; i++) {
       parts_s[i].s = parts_s[i].s0;
       parts_s[i].q = 0.0;
+      parts_s[i].ncoeff = 0;
       // for each n, -n<=m<=n
       for(int j = 0; j <= parts_s[i].order; j++) {
         parts_s[i].ncoeff += 2*j + 1;
