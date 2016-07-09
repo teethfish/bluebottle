@@ -1029,6 +1029,57 @@ void cgns_particles(real dtout)
     // only output scalar value on particle surface
     real *s = malloc(nparts * sizeof(real));
     real *q = malloc(nparts * sizeof(real));
+    real *a00_r = malloc(nparts * sizeof(real));
+    real *a1_1_r = malloc(nparts * sizeof(real));
+    real *a10_r = malloc(nparts * sizeof(real));
+    real *a11_r = malloc(nparts * sizeof(real));
+    real *a2_2_r = malloc(nparts * sizeof(real));
+    real *a2_1_r = malloc(nparts * sizeof(real));
+    real *a20_r = malloc(nparts * sizeof(real));
+    real *a21_r = malloc(nparts * sizeof(real));
+    real *a22_r = malloc(nparts * sizeof(real));
+    real *a3_3_r = malloc(nparts * sizeof(real));
+    real *a3_2_r = malloc(nparts * sizeof(real));
+    real *a3_1_r = malloc(nparts * sizeof(real));
+    real *a30_r = malloc(nparts * sizeof(real));
+    real *a31_r = malloc(nparts * sizeof(real));
+    real *a32_r = malloc(nparts * sizeof(real));
+    real *a33_r = malloc(nparts * sizeof(real));
+    real *a4_4_r = malloc(nparts * sizeof(real));
+    real *a4_3_r = malloc(nparts * sizeof(real));
+    real *a4_2_r = malloc(nparts * sizeof(real));
+    real *a4_1_r = malloc(nparts * sizeof(real));
+    real *a40_r = malloc(nparts * sizeof(real));
+    real *a41_r = malloc(nparts * sizeof(real));
+    real *a42_r = malloc(nparts * sizeof(real));
+    real *a43_r = malloc(nparts * sizeof(real));
+    real *a44_r = malloc(nparts * sizeof(real));
+
+    real *a00_i = malloc(nparts * sizeof(real));
+    real *a1_1_i = malloc(nparts * sizeof(real));
+    real *a10_i = malloc(nparts * sizeof(real));
+    real *a11_i = malloc(nparts * sizeof(real));
+    real *a2_2_i = malloc(nparts * sizeof(real));
+    real *a2_1_i = malloc(nparts * sizeof(real));
+    real *a20_i = malloc(nparts * sizeof(real));
+    real *a21_i = malloc(nparts * sizeof(real));
+    real *a22_i = malloc(nparts * sizeof(real));
+    real *a3_3_i = malloc(nparts * sizeof(real));
+    real *a3_2_i = malloc(nparts * sizeof(real));
+    real *a3_1_i = malloc(nparts * sizeof(real));
+    real *a30_i = malloc(nparts * sizeof(real));
+    real *a31_i = malloc(nparts * sizeof(real));
+    real *a32_i = malloc(nparts * sizeof(real));
+    real *a33_i = malloc(nparts * sizeof(real));
+    real *a4_4_i = malloc(nparts * sizeof(real));
+    real *a4_3_i = malloc(nparts * sizeof(real));
+    real *a4_2_i = malloc(nparts * sizeof(real));
+    real *a4_1_i = malloc(nparts * sizeof(real));
+    real *a40_i = malloc(nparts * sizeof(real));
+    real *a41_i = malloc(nparts * sizeof(real));
+    real *a42_i = malloc(nparts * sizeof(real));
+    real *a43_i = malloc(nparts * sizeof(real));
+    real *a44_i = malloc(nparts * sizeof(real));
 
     real   *p00_r = malloc(nparts * sizeof(real));
     real   *p00_i = malloc(nparts * sizeof(real));
@@ -1213,9 +1264,119 @@ void cgns_particles(real dtout)
       if(scalar_on == 1) {
         s[i] = parts_s[i].s;
         q[i] = parts_s[i].q;
-        //printf("\n .....total heat flux is %f....\n", q[i]);
-      }    
+        a00_r[i] = 0;
+        a00_i[i] = 0;
+        a1_1_r[i] = 0;
+        a1_1_i[i] = 0;
+        a10_r[i] = 0;
+        a10_i[i] = 0;
+        a11_r[i] = 0;
+        a11_i[i] = 0;
+        a2_2_r[i] = 0;
+        a2_2_i[i] = 0;
+        a2_1_r[i] = 0;
+        a2_1_i[i] = 0;
+        a20_r[i] = 0;
+        a20_i[i] = 0;
+        a21_r[i] = 0;
+        a21_i[i] = 0;
+        a22_r[i] = 0;
+        a22_i[i] = 0;
+        a3_3_r[i] = 0;
+        a3_3_i[i] = 0;
+        a3_2_r[i] = 0;
+        a3_2_i[i] = 0;
+        a3_1_r[i] = 0;
+        a3_1_i[i] = 0;
+        a30_r[i] = 0;
+        a30_i[i] = 0;
+        a31_r[i] = 0;
+        a31_i[i] = 0;
+        a32_r[i] = 0;
+        a32_i[i] = 0;
+        a33_r[i] = 0;
+        a33_i[i] = 0;
+        a4_4_r[i] = 0;
+        a4_4_i[i] = 0;
+        a4_3_r[i] = 0;
+        a4_3_i[i] = 0;
+        a4_2_r[i] = 0;
+        a4_2_i[i] = 0;
+        a4_1_r[i] = 0;
+        a4_1_i[i] = 0;
+        a40_r[i] = 0;
+        a40_i[i] = 0;
+        a41_r[i] = 0;
+        a41_i[i] = 0;
+        a42_r[i] = 0;
+        a42_i[i] = 0;
+        a43_r[i] = 0;
+        a43_i[i] = 0;
+        a44_r[i] = 0;
+        a44_i[i] = 0;
+        switch(parts_s[i].ncoeff) {
+          case(25):
+            a44_r[i] = anm_re[coeff_stride_scalar*i + 24];
+            a43_r[i] = anm_re[coeff_stride_scalar*i + 23];
+            a42_r[i] = anm_re[coeff_stride_scalar*i + 22];
+            a41_r[i] = anm_re[coeff_stride_scalar*i + 21];
+            a40_r[i] = anm_re[coeff_stride_scalar*i + 20];
+            a4_1_r[i] = anm_re[coeff_stride_scalar*i + 19];
+            a4_2_r[i] = anm_re[coeff_stride_scalar*i + 18];
+            a4_3_r[i] = anm_re[coeff_stride_scalar*i + 17];
+            a4_4_r[i] = anm_re[coeff_stride_scalar*i + 16]; 
 
+            a44_i[i] = anm_im[coeff_stride_scalar*i + 24];
+            a43_i[i] = anm_im[coeff_stride_scalar*i + 23];
+            a42_i[i] = anm_im[coeff_stride_scalar*i + 22];
+            a41_i[i] = anm_im[coeff_stride_scalar*i + 21];
+            a40_i[i] = anm_im[coeff_stride_scalar*i + 20];
+            a4_1_i[i] = anm_im[coeff_stride_scalar*i + 19];
+            a4_2_i[i] = anm_im[coeff_stride_scalar*i + 18];
+            a4_3_i[i] = anm_im[coeff_stride_scalar*i + 17];
+            a4_4_i[i] = anm_im[coeff_stride_scalar*i + 16];
+          case(16):
+            a33_r[i] = anm_re[coeff_stride_scalar*i + 15];
+            a32_r[i] = anm_re[coeff_stride_scalar*i + 14];
+            a31_r[i] = anm_re[coeff_stride_scalar*i + 13];
+            a30_r[i] = anm_re[coeff_stride_scalar*i + 12];
+            a3_1_r[i] = anm_re[coeff_stride_scalar*i + 11];
+            a3_2_r[i] = anm_re[coeff_stride_scalar*i + 10];
+            a3_3_r[i] = anm_re[coeff_stride_scalar*i + 9];
+
+            a33_i[i] = anm_im[coeff_stride_scalar*i + 15];
+            a32_i[i] = anm_im[coeff_stride_scalar*i + 14];
+            a31_i[i] = anm_im[coeff_stride_scalar*i + 13];
+            a30_i[i] = anm_im[coeff_stride_scalar*i + 12];
+            a3_1_i[i] = anm_im[coeff_stride_scalar*i + 11];
+            a3_2_i[i] = anm_im[coeff_stride_scalar*i + 10];
+            a3_3_i[i] = anm_im[coeff_stride_scalar*i + 9];
+          case(9):
+            a22_r[i] = anm_re[coeff_stride_scalar*i + 8];
+            a21_r[i] = anm_re[coeff_stride_scalar*i + 7];
+            a20_r[i] = anm_re[coeff_stride_scalar*i + 6];
+            a2_1_r[i] = anm_re[coeff_stride_scalar*i + 5];
+            a2_2_r[i] = anm_re[coeff_stride_scalar*i + 4];
+
+            a22_i[i] = anm_im[coeff_stride_scalar*i + 8];
+            a21_i[i] = anm_im[coeff_stride_scalar*i + 7];
+            a20_i[i] = anm_im[coeff_stride_scalar*i + 6];
+            a2_1_i[i] = anm_im[coeff_stride_scalar*i + 5];
+            a2_2_i[i] = anm_im[coeff_stride_scalar*i + 4];
+          case(4):
+            a11_r[i] = anm_re[coeff_stride_scalar*i + 3];
+            a10_r[i] = anm_re[coeff_stride_scalar*i + 2];
+            a1_1_r[i] = anm_re[coeff_stride_scalar*i + 1];
+            
+            a11_i[i] = anm_im[coeff_stride_scalar*i + 3];
+            a10_i[i] = anm_im[coeff_stride_scalar*i + 2];
+            a1_1_i[i] = anm_im[coeff_stride_scalar*i + 1];
+          case(1):
+            a00_r[i] = anm_re[coeff_stride_scalar*i];
+            a00_i[i] = anm_im[coeff_stride_scalar*i];
+        }
+      }    
+        
         p00_r[i] = 0;
         p00_i[i] = 0;
       phi00_r[i] = 0;
@@ -1529,6 +1690,67 @@ void cgns_particles(real dtout)
     if(scalar_on == 1) {
       cg_field_write(fn, bn, zn, sn, RealDouble, "Scalar", s, &fnr);    
       cg_field_write(fn, bn, zn, sn, RealDouble, "Heat_flux", q, &fnr);
+      switch(coeff_stride_scalar) {
+        case(25):
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a44_re", a44_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a43_re", a43_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a42_re", a42_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a41_re", a41_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a40_re", a40_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_1_re", a4_1_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_2_re", a4_2_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_3_re", a4_3_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_4_re", a4_4_r, &fnr);
+
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a44_im", a44_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a43_im", a43_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a42_im", a42_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a41_im", a41_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a40_im", a40_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_1_im", a4_1_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_2_im", a4_2_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_3_im", a4_3_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a4_4_im", a4_4_i, &fnr);
+       case(16):
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a33_re", a33_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a32_re", a32_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a31_re", a31_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a30_re", a30_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_re", a3_1_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_re", a3_2_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_re", a3_3_r, &fnr); 
+    
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a33_im", a33_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a32_im", a32_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a31_im", a31_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a30_im", a30_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_im", a3_1_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_im", a3_2_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_im", a3_3_i, &fnr);
+        case(9):
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a22_re", a22_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a21_re", a21_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a20_re", a20_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_re", a2_1_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_re", a2_1_r, &fnr);
+        
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a22_im", a22_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a21_im", a21_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a20_im", a20_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_im", a2_1_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_im", a2_1_i, &fnr);
+        case(4):
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a11_re", a11_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a10_re", a10_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a1_1_re", a1_1_r, &fnr);
+      
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a11_re", a11_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a10_re", a10_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a1_1_re", a1_1_i, &fnr);
+        case(1):
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a00_re", a00_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a00_im", a00_i, &fnr);
+      }
     }
 
     switch(coeff_stride) {

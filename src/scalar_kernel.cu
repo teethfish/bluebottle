@@ -448,8 +448,6 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
   real dsdz = 0.5*(s_t - s_b) * ddz;
   // assumption that sclar is a constant on the particle surface
   ss[node+nnodes*part] = s_c + dsdx*(x-xx) + dsdy*(y-yy) + dsdz*(z-zz) - parts_s[part].s;
-  //printf("dsdx, dsdy, dsdz is %f %f %f, x-xx, y-yy, z-zz is %f %f %f\n", dsdx, dsdy, dsdz, x-xx, y-yy, z-zz);
-  //printf("nodes %d is %f, s[C] is %f\n", node+nnodes*part, ss[node+nnodes*part], s[C]);
   // wall temperature if this node intersects wall
   real sswall = (parts[part].nodes[node] == -10)*bc_s.sWD
             + (parts[part].nodes[node] == -11)*bc_s.sED
@@ -459,6 +457,7 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
             + (parts[part].nodes[node] == -15)*bc_s.sTD;
   ss[node+nnodes*part] = (parts[part].nodes[node]==-1)*ss[node+part*nnodes]
                         + (parts[part].nodes[node] < -1)*sswall;
+  //printf("ss[%d] is %f\n", node+nnodes*part, ss[node+nnodes*part]);
 }
     
 __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, real *ss, int stride_scalar, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real B)
@@ -626,21 +625,14 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
         // calculate analytic solution
         real ar = a / r;
         real ra = r / a;
-        /*for(int l = 0; l < 9; l++){
-          printf("anm_re[%d] anm_im[%d] is %f %f\n",l,l, anm_re[l], anm_im[l]);
-        }*/
         ss_tmp = (pow(ra,0.0) - pow(ar,1.)) * X_an(0, theta, phi, anm_re, anm_im, P, stride);
         for(int n = 1; n <= order; n++) {
           ss_tmp += (pow(ra,n) - pow(ar,n+1)) * X_an(n, theta, phi, anm_re, anm_im, P, stride);
         }
         ss_tmp += s_surface;
-        //printf("ss_tmp is %f\n", ss_tmp);
         // only apply value at nodes inside particle & phase_shell==0
         // phase_shell = 1 means normal nodes, phase_shell = 0 means pressure nodes
         s[CC] = ss_tmp * (phase[CC] > -1 && phase_shell[CC] < 1) + (phase_shell[CC] > 0)*s_surface; 
-        /*if(phase_shell[CC] < 1){
-          printf("s[CC] is %f, ar is %f\n", s[CC], ar);
-        }*/
       }
     }
   }
@@ -719,7 +711,6 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
       parts_s[part].dsdr[node] += (2*n+1) * X_an(n, theta, phi, anm_re, anm_im, part, stride) / parts[part].r;
     }
     //parts_s[part].dsdr[node] = 1.0;// for test, see sphere area
-    //printf("parts_s[part].dsdt[%d] is %f\n", node, parts_s[part].dsdr[node]);
     __syncthreads();
 
 
@@ -734,13 +725,9 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
       for(i = 18; i < 26; i++) {
         parts_s[part].q += A3 * parts_s[part].dsdr[node + i];
       }
-      parts_s[part].q *= parts_s[part].k;
+      parts_s[part].q *= parts_s[part].k * parts[part].r * parts[part].r;
       //printf("parts_s[part].q is %f\n", parts_s[part].q);
     }
   }
 }
-
-
-
-
 
