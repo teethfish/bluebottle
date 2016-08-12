@@ -79,9 +79,9 @@ extern real s_init; //initial temperature
 
 extern real s_alpha; //coefficient of thermal expansion
 
-extern real s_d;
+extern real s_D;
 
-extern real s_k;
+extern real s_perturbation;
 
 extern int scalar_on;
 
@@ -105,11 +105,15 @@ extern real *anm_re;
 extern real *anm_im;
 extern real *anm_re0;
 extern real *anm_im0;
+extern real *anm_re00;
+extern real *anm_im00;
 
 extern real **_anm_re;
 extern real **_anm_im;
 extern real **_anm_re0;
 extern real **_anm_im0;
+extern real **_anm_re00;
+extern real **_anm_im00;
 
 extern int *_nn_scalar;
 extern int *_mm_scalar;
@@ -251,4 +255,7 @@ void cuda_compute_boussinesq(void);
 
 void cuda_part_heat_flux(void);
 
+void cuda_store_coeffs_scalar(void);
+
+void cuda_update_part_scalar(void);
 #endif

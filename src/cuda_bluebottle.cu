@@ -3538,9 +3538,9 @@ real cuda_find_dt(void)
 #endif
     // add the constrain by scalar diffusion equation
     if(scalar_on == 1) {
-      real tmp = u_max / dom[dev].dx + 2.*s_k/dom[dev].dx/dom[dev].dx;
-      tmp += v_max / dom[dev].dy + 2.*s_k/dom[dev].dy/dom[dev].dy;
-      tmp += w_max / dom[dev].dz + 2.*s_k/dom[dev].dz/dom[dev].dz;
+      real tmp = u_max / dom[dev].dx + 2.*s_D/dom[dev].dx/dom[dev].dx;
+      tmp += v_max / dom[dev].dy + 2.*s_D/dom[dev].dy/dom[dev].dy;
+      tmp += w_max / dom[dev].dz + 2.*s_D/dom[dev].dz/dom[dev].dz;
       if(tmp > dts[dev]){
         dts[dev] = tmp;
       }

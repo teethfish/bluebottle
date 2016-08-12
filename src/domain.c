@@ -2330,9 +2330,9 @@ int domain_init(void)
   dt = CFL / dt;
   dt0 = -1.;
   if(scalar_on == 1) {
-    double dt_tmp = 2. * s_d /(dx_min * dx_min);
-    dt_tmp += 2. * s_d/(Dom.dy * Dom.dy);
-    dt_tmp += 2. * s_d/(Dom.dz * Dom.dz);
+    double dt_tmp = 2. * s_D /(dx_min * dx_min);
+    dt_tmp += 2. * s_D/(Dom.dy * Dom.dy);
+    dt_tmp += 2. * s_D/(Dom.dz * Dom.dz);
     dt_tmp = CFL / dt_tmp;
     if(dt_tmp < dt) dt = dt_tmp;
   }

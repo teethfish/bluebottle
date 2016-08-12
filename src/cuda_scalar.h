@@ -55,7 +55,7 @@ __global__ void BC_s_T_D(real *s, dom_struct *dom, real bc_s);
 __global__ void BC_s_T_N(real *s, dom_struct *dom, real bc_s);
 
 // calculate the scalar field explicitly
-__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *conv0_s, real *diff0_s, real *u, real *v, real *w, real s_k, dom_struct *dom, real dt, real dt0);
+__global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *conv0_s, real *diff0_s, real *u, real *v, real *w, real s_D, dom_struct *dom, real dt, real dt0);
 
 
 // update scalar filed
@@ -115,8 +115,7 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
  * dom: dom information
  */
 
-
-__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im);
+__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im, real *anm_re0, real *anm_im0, real s_D, real perturbation, real dt);
 /*
  * FUNCTION
  * s: scalar field
@@ -139,6 +138,28 @@ __device__ real X_an(int n, real theta, real phi, real *anm_re, real *anm_im, in
  * stride: the stride for lamb's coefficents == sum(2n+1)
  */
 
+/*
+ * Function
+ * calculate the perturbution of solution(add time dependent time)
+ */
+
+__device__ real perturbation_X_an(int n, real theta, real phi, real *anm_re, real *anm_re00, real *anm_im, real *anm_im00, int pp, int stride, real dt);
+
+__device__ real inte_A(int n, real a, real r0, real r1);
+/*
+ * n: order index of Ynm
+ * a: particle radius
+ * r0: integration lower limit
+ * r1: integration upper limit
+ */
+
+__device__ real inte_B(int n, real a, real r0, real r1);
+/*
+ * n: order index of Ynm
+ * a: particle radius
+ * r0: integration lower limit
+ * r1: integration upper limit
+ */
 
 __global__ void show_variable(real *s0, real *s, dom_struct *dom);
 
@@ -149,8 +170,9 @@ __global__ void forcing_boussinesq_y(real alpha, real gy, real s_init, real *s, 
 
 __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, real *fz, dom_struct *dom);
 
-__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, int nnodes, int stride, real A1, real A2, real A3);
+__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D);
 
+__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time);
 
 #endif
 

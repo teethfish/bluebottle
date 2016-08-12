@@ -1,8 +1,8 @@
 #include "scalar.h"
 
 BC_s bc_s;
-real s_d;
-real s_k;
+real s_D;
+real s_perturbation;
 real s_init;
 real s_alpha;
 real lamb_cut_scalar;
@@ -20,6 +20,8 @@ real *anm_re;
 real *anm_im;
 real *anm_re0;
 real *anm_im0;
+real *anm_re00;
+real *anm_im00;
 
 part_struct_scalar **_parts_s;
 real **_s0;
@@ -32,6 +34,8 @@ real **_anm_re;
 real **_anm_im;
 real **_anm_re0;
 real **_anm_im0;
+real **_anm_re00;
+real **_anm_im00;
 
 int *_nn_scalar;
 int *_mm_scalar;
@@ -61,14 +65,14 @@ void scalar_read_input(void)
     if (scalar_on == 1) {    
       // read domain
 #ifdef DOUBLE
-      fret = fscanf(infile, "diffusivity %lf\n", &s_d);
-      fret = fscanf(infile, "conductivity %lf\n", &s_k);
+      fret = fscanf(infile, "diffusivity %lf\n", &s_D);
+      fret = fscanf(infile, "perturbation solution %lf\n", &s_perturbation);
       fret = fscanf(infile, "lamb_cut %lf\n", &lamb_cut_scalar);
       fret = fscanf(infile, "initial_scalar %lf\n", &s_init);
       fret = fscanf(infile, "alpha %lf\n", &s_alpha);
 #else
-      fret = fscanf(infile, "diffusivity %f\n", &s_d);
-      fret = fscanf(infile, "conductivity %f\n", &s_k);
+      fret = fscanf(infile, "diffusivity %f\n", &s_D);
+      fret = fscanf(infile, "perturbation solution %f\n", &s_perturbation);
       fret = fscanf(infile, "lamb_cut %f\n", &lamb_cut_scalar);
       fret = fscanf(infile, "initial_scalar %f\n", &s_init);
       fret = fscanf(infile, "alpha %f\n", &s_alpha);
@@ -174,8 +178,7 @@ void show_scalar_config(void)
   if(scalar_on == 1) {
     printf("Show scalar.config...\n");
     printf("scalar_on is %d\n", scalar_on);
-    printf("diffusivity is %f\n", s_d);
-    printf("conductivity is %f\n", s_k);
+    printf("diffusivity is %f\n", s_D);
     printf("Boundary condition is:\n");
     printf("  On W ");
     if(bc_s.sW == DIRICHLET) printf("DIRICHELT BOUNDARY CONDITION %f\n", bc_s.sWD);
@@ -287,6 +290,8 @@ void scalar_out_restart(void)
     fwrite(anm_im, sizeof(real), nparts*coeff_stride_scalar, rest);  
     fwrite(anm_re0, sizeof(real), nparts*coeff_stride_scalar, rest);
     fwrite(anm_im0, sizeof(real), nparts*coeff_stride_scalar, rest);
+    fwrite(anm_re00, sizeof(real), nparts*coeff_stride_scalar, rest);
+    fwrite(anm_im00, sizeof(real), nparts*coeff_stride_scalar, rest);
     // close the file
     fclose(rest);
   }
@@ -322,7 +327,9 @@ void scalar_in_restart(void)
     fret = fread(anm_im, sizeof(real), nparts*coeff_stride_scalar, infile);
     fret = fread(anm_re0, sizeof(real), nparts*coeff_stride_scalar, infile);
     fret = fread(anm_im0, sizeof(real), nparts*coeff_stride_scalar, infile);
-    
+    fret = fread(anm_re00, sizeof(real), nparts*coeff_stride_scalar, infile);
+    fret = fread(anm_im00, sizeof(real), nparts*coeff_stride_scalar, infile);
+ 
     // close file
     fclose(infile);
   }
@@ -399,6 +406,10 @@ void parts_init_scalar(void)
     cpumem += coeff_stride_scalar * nparts * sizeof(real);
     anm_im0 = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
     cpumem += coeff_stride_scalar * nparts * sizeof(real);
+    anm_re00 = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
+    cpumem += coeff_stride_scalar * nparts * sizeof(real);
+    anm_im00 = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
+    cpumem += coeff_stride_scalar * nparts * sizeof(real);
   
     // initialize lamb's coefficents
     for(int i = 0; i < coeff_stride_scalar * nparts; i++) {
@@ -406,6 +417,8 @@ void parts_init_scalar(void)
       anm_im[i] = 0.0;
       anm_re0[i] = 0.0;
       anm_im0[i] = 0.0;
+      anm_re00[i] = 0.0;
+      anm_im00[i] = 0.0;
     }
 
 /*
@@ -441,6 +454,8 @@ void parts_scalar_clean(void)
     free(anm_im);
     free(anm_re0);
     free(anm_im0);
+    free(anm_re00);
+    free(anm_im00);
   }
 }
 

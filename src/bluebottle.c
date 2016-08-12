@@ -631,7 +631,6 @@ int main(int argc, char *argv[]) {
 
         #endif
         }
-
         /******************************************************************/
         /** Begin the main timestepping loop in the experimental domain. **/
         /******************************************************************/
@@ -745,11 +744,6 @@ int main(int argc, char *argv[]) {
             // compute div(U)
             //cuda_div_U();
 
-/*
-            // compute next timestep size
-            dt0 = dt;
-            dt = cuda_find_dt();
-*/
             // compare this timestep size to that in the precursor and
             // and synchronize the result
             expd_compare_dt(np, status);
@@ -763,21 +757,22 @@ int main(int argc, char *argv[]) {
           int iter_s = 0; 
           real iter_err_scalar = FLT_MAX;
           //TODO: right now keep the residue same with velocity field
+
+          //cuda_update_part_scalar(); //update scalar of particle
           while(iter_err_scalar > lamb_residual) {
             // iterate for Lamb's coefficients
-            // solve for scalar field
             cuda_scalar_BC(); // outer apply boundary condition to s0
             if(nparts > 0) {
               cuda_part_BC_scalar(); // inner b.c. apply to s0
             }
-            cuda_solve_scalar_explicit(); // solve the diffusion equation for s only for inner nodes
+            cuda_solve_scalar_explicit(); // solve scalar for all nodes
             
             // update lamb's coefficients using the new field variable s
             cuda_scalar_lamb();
 
             iter_err_scalar = cuda_scalar_lamb_err();
             iter_s++;
-            //printf("iter_err is %f\n", iter_err_scalar);
+            printf("iter_err is %f\n", iter_err_scalar);
             // TODO: right now keep max_iter same as velocity field
             if(iter_s == lamb_max_iter) {
               // allow simulation continues even if it reaches the max number
@@ -788,6 +783,7 @@ int main(int argc, char *argv[]) {
           printf(" %d iterations.\n", iter_s);          
           cuda_part_heat_flux(); // calculate the heat flux across particle
           cuda_update_scalar();  // update results, s-->s0, conv_s, diff_s
+          cuda_store_coeffs_scalar();
 
           // after solving both velocity & scalar, compute next timestep size
           dt0 = dt;
@@ -903,7 +899,6 @@ int main(int argc, char *argv[]) {
           cuda_part_scalar_pull();
           cuda_part_pull();
           out_restart();
-          out_restart_turb(); //don't forget to write final turb restart file!
           scalar_out_restart();
           printf("done.               \n");
           fflush(stdout);

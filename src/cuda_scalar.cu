@@ -17,6 +17,10 @@ void cuda_part_scalar_malloc(void)
     cpumem += nsubdom * sizeof(real*);
     _anm_im0 = (real**) malloc(nsubdom * sizeof(real*));
     cpumem += nsubdom * sizeof(real*);
+    _anm_re00 = (real**) malloc(nsubdom * sizeof(real*));
+    cpumem += nsubdom * sizeof(real*);
+    _anm_im00 = (real**) malloc(nsubdom * sizeof(real*));
+    cpumem += nsubdom * sizeof(real*);
 
     // allocate device memory on device
     #pragma omp parallel num_threads(nsubdom)
@@ -38,6 +42,12 @@ void cuda_part_scalar_malloc(void)
         sizeof(real) * coeff_stride_scalar * nparts));
       gpumem += sizeof(real) * coeff_stride_scalar * nparts;
       (cudaMalloc((void**) &(_anm_im0[dev]),
+        sizeof(real) * coeff_stride_scalar * nparts));
+      gpumem += sizeof(real) * coeff_stride_scalar * nparts;
+      (cudaMalloc((void**) &(_anm_re00[dev]),
+        sizeof(real) * coeff_stride_scalar * nparts));
+      gpumem += sizeof(real) * coeff_stride_scalar * nparts;
+      (cudaMalloc((void**) &(_anm_im00[dev]),
         sizeof(real) * coeff_stride_scalar * nparts));
       gpumem += sizeof(real) * coeff_stride_scalar * nparts;
     }
@@ -68,6 +78,10 @@ void cuda_part_scalar_push(void)
       (cudaMemcpy(_anm_re0[dev], anm_re0, sizeof(real) * coeff_stride_scalar
           * nparts, cudaMemcpyHostToDevice));
       (cudaMemcpy(_anm_im0[dev], anm_im0, sizeof(real) * coeff_stride_scalar
+          * nparts, cudaMemcpyHostToDevice));
+      (cudaMemcpy(_anm_re00[dev], anm_re00, sizeof(real) * coeff_stride_scalar
+          * nparts, cudaMemcpyHostToDevice));
+      (cudaMemcpy(_anm_im00[dev], anm_im00, sizeof(real) * coeff_stride_scalar
           * nparts, cudaMemcpyHostToDevice));
     }
     // copy coefficents to device
@@ -105,12 +119,16 @@ void cuda_part_scalar_free(void)
       (cudaFree(_anm_im[dev]));
       (cudaFree(_anm_re0[dev]));
       (cudaFree(_anm_im0[dev]));
+      (cudaFree(_anm_re00[dev]));
+      (cudaFree(_anm_im00[dev]));
     }
     free(_parts_s);
     free(_anm_re);
     free(_anm_im);
     free(_anm_re0);
     free(_anm_im0);
+    free(_anm_re00);
+    free(_anm_im00);
   }
 }
 
@@ -129,6 +147,10 @@ void cuda_part_scalar_pull(void)
     (cudaMemcpy(anm_re0, _anm_re0[0], sizeof(real) * coeff_stride_scalar
       * nparts,cudaMemcpyDeviceToHost));
     (cudaMemcpy(anm_im0, _anm_im0[0], sizeof(real) * coeff_stride_scalar
+      * nparts,cudaMemcpyDeviceToHost));
+    (cudaMemcpy(anm_re00, _anm_re00[0], sizeof(real) * coeff_stride_scalar
+      * nparts,cudaMemcpyDeviceToHost));
+    (cudaMemcpy(anm_im00, _anm_im00[0], sizeof(real) * coeff_stride_scalar
       * nparts,cudaMemcpyDeviceToHost));
   }
 }
@@ -554,7 +576,7 @@ void cuda_solve_scalar_explicit(void)
 
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
-      scalar_explicit<<<numBlocks_s, dimBlocks_s>>>(_s0[dev], _s[dev], _conv_s[dev], _diff_s[dev], _conv0_s[dev], _diff0_s[dev], _u[dev], _v[dev], _w[dev], s_k, _dom[dev], dt, dt0);
+      scalar_explicit<<<numBlocks_s, dimBlocks_s>>>(_s0[dev], _s[dev], _conv_s[dev], _diff_s[dev], _conv0_s[dev], _diff0_s[dev], _u[dev], _v[dev], _w[dev], s_D, _dom[dev], dt, dt0);
     }
   }
 }    
@@ -922,7 +944,7 @@ void cuda_part_BC_scalar(void)
 
         dim3 dimBlocks_c(threads_c, threads_c);
         dim3 numBlocks_c(blocks_y, blocks_z);
-        part_BC_scalar<<<numBlocks_c, dimBlocks_c>>>(_s0[dev], _phase[dev], _phase_shell[dev], _parts[dev], _parts_s[dev], _dom[dev], coeff_stride_scalar, _anm_re[dev], _anm_im[dev]);
+        part_BC_scalar<<<numBlocks_c, dimBlocks_c>>>(_s0[dev], _phase[dev], _phase_shell[dev], _parts[dev], _parts_s[dev], _dom[dev], coeff_stride_scalar, _anm_re[dev], _anm_im[dev], _anm_re00[dev], _anm_im00[dev], s_D, s_perturbation, dt);
       }
     }
   }
@@ -1072,7 +1094,7 @@ void cuda_part_heat_flux(void)
       dim3 dimBlocks(threads);
       dim3 numBlocks(blocks);
 
-      part_heat_flux<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _node_t, _node_p, _anm_re[dev], _anm_im[dev], nnodes, coeff_stride_scalar, A1, A2, A3);
+      part_heat_flux<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _node_t, _node_p, _anm_re[dev], _anm_im[dev],_anm_re00[dev],  _anm_im00[dev], nnodes, coeff_stride_scalar, A1, A2, A3, s_perturbation, dt, s_D);
       // free cuda device memory
       (cudaFree(_node_t));
       (cudaFree(_node_p));
@@ -1080,7 +1102,36 @@ void cuda_part_heat_flux(void)
   }
 }
 
+void cuda_store_coeffs_scalar(void)
+{
+  if(scalar_on == 1) {
+    if(nparts > 0) {
+      // store copy of coefficients for future calculation
+      (cudaMemcpy(_anm_re00[0], _anm_re[0],
+        coeff_stride_scalar*nparts*sizeof(real), cudaMemcpyDeviceToDevice));
+      (cudaMemcpy(_anm_im00[0], _anm_im[0],
+        coeff_stride_scalar*nparts*sizeof(real), cudaMemcpyDeviceToDevice));
+    }
+  }
+}
 
+void cuda_update_part_scalar(void)
+{
+  if(scalar_on == 1){
+    if(nparts > 0) {
+      #pragma omp parallel num_threads(nsubdom)
+      {
+        int dev = omp_get_thread_num();
+        (cudaSetDevice(dev + dev_start));
+
+        dim3 dimBlocks(1);
+        dim3 numBlocks(nparts);
+
+        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts_s[dev], ttime);
+      }
+    }
+  }
+}
 
 
 
