@@ -23,6 +23,9 @@ real *anm_im0;
 real *anm_re00;
 real *anm_im00;
 
+real *anm_re_perturb;
+real *anm_im_perturb;
+
 part_struct_scalar **_parts_s;
 real **_s0;
 real **_s;
@@ -36,6 +39,9 @@ real **_anm_re0;
 real **_anm_im0;
 real **_anm_re00;
 real **_anm_im00;
+
+real **_anm_re_perturb;
+real **_anm_im_perturb;
 
 int *_nn_scalar;
 int *_mm_scalar;
@@ -410,7 +416,12 @@ void parts_init_scalar(void)
     cpumem += coeff_stride_scalar * nparts * sizeof(real);
     anm_im00 = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
     cpumem += coeff_stride_scalar * nparts * sizeof(real);
-  
+ 
+    anm_re_perturb = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
+    cpumem += coeff_stride_scalar * nparts * sizeof(real);
+    anm_im_perturb = (real*) malloc(coeff_stride_scalar * nparts * sizeof(real));
+    cpumem += coeff_stride_scalar * nparts * sizeof(real);
+ 
     // initialize lamb's coefficents
     for(int i = 0; i < coeff_stride_scalar * nparts; i++) {
       anm_re[i] = 0.0;
@@ -419,6 +430,9 @@ void parts_init_scalar(void)
       anm_im0[i] = 0.0;
       anm_re00[i] = 0.0;
       anm_im00[i] = 0.0;
+      
+      anm_re_perturb[i] = 0.0;
+      anm_im_perturb[i] = 0.0;
     }
 
 /*
@@ -456,6 +470,9 @@ void parts_scalar_clean(void)
     free(anm_im0);
     free(anm_re00);
     free(anm_im00);
+
+    free(anm_re_perturb);
+    free(anm_im_perturb);
   }
 }
 

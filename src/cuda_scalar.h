@@ -99,6 +99,27 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
  * A1, A2, A3, B weights of spherical integrant
  */
 
+
+// get the perturbation coefficients for scalar lamb's solution
+__global__ void cuda_get_coeffs_scalar_perturbation(part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, int stride_scalar, real *anm_re_perturb, real *anm_im_perturb, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real dt, real s_D);
+/*
+ * Function
+ * nn: the coefficients table for order n
+ * mm: the coefficients table for order m
+ * note_t: the theta of lebsque nodes
+ * node_p: the phi of lebsque nodes
+ * stride_scalar: the stride for lamb's coefficents == sum(2n+1)
+ * anm_re_perturb: the real part of perturbed coefficients Anm (1/D*dTdt,Ynm) 
+ * anm_im_perturb: the imaginary part of perturbed coefficients Anm (1/D*dTdt,Ynm)
+ * int_scalar_re: real part of integrant of dTdt*Ynm at each nodes
+ * int_scalar_im: imaginary part of intgrant of dTdt*Ynm
+ * nnodes: number of lebsque nodes
+ * A1, A2, A3 weights of spherical integrant
+ * dt: used to calculate the time derivative of dTdt
+ * s_D: thermal difisivity, coefficients are (1/D*dTdt,Ynm)
+ */
+
+
 __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *coeffs, real *errors, real *part_errors, dom_struct *dom);
 /*
  * Function
@@ -115,7 +136,7 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
  * dom: dom information
  */
 
-__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im, real *anm_re0, real *anm_im0, real s_D, real perturbation, real dt);
+__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, real *anm_re_perturb, real *anm_im_perturb, real s_D, real perturbation, real dt);
 /*
  * FUNCTION
  * s: scalar field
@@ -140,10 +161,12 @@ __device__ real X_an(int n, real theta, real phi, real *anm_re, real *anm_im, in
 
 /*
  * Function
- * calculate the perturbution of solution(add time dependent time)
+ * calculate part of the perturbation correction(add time dependent time)
  */
-
 __device__ real perturbation_X_an(int n, real theta, real phi, real *anm_re, real *anm_re00, real *anm_im, real *anm_im00, int pp, int stride, real dt);
+/*
+ * calculates the (dAnmdt, Ynm) part
+ */
 
 __device__ real inte_A(int n, real a, real r0, real r1);
 /*
@@ -161,6 +184,19 @@ __device__ real inte_B(int n, real a, real r0, real r1);
  * r1: integration upper limit
  */
 
+
+__device__ real inte_M(int n, real r0, real r1);
+/*
+ * calculate r^(n+3)/(n+3)
+ r0: lower limit
+ r1: upper limit
+ */
+
+__device__ real inte_N(int n, real r0, real r1);
+/*
+ * calculate r^(-n+2)/(-n+2)
+ */
+
 __global__ void show_variable(real *s0, real *s, dom_struct *dom);
 
 
@@ -172,7 +208,7 @@ __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, 
 
 __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D);
 
-__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time);
+__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time, real dt);
 
 #endif
 

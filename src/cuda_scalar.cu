@@ -21,6 +21,12 @@ void cuda_part_scalar_malloc(void)
     cpumem += nsubdom * sizeof(real*);
     _anm_im00 = (real**) malloc(nsubdom * sizeof(real*));
     cpumem += nsubdom * sizeof(real*);
+    
+    _anm_re_perturb = (real**) malloc(nsubdom * sizeof(real*));
+    cpumem += nsubdom * sizeof(real*);
+    _anm_im_perturb = (real**) malloc(nsubdom * sizeof(real*));
+    cpumem += nsubdom * sizeof(real*);
+
 
     // allocate device memory on device
     #pragma omp parallel num_threads(nsubdom)
@@ -48,6 +54,13 @@ void cuda_part_scalar_malloc(void)
         sizeof(real) * coeff_stride_scalar * nparts));
       gpumem += sizeof(real) * coeff_stride_scalar * nparts;
       (cudaMalloc((void**) &(_anm_im00[dev]),
+        sizeof(real) * coeff_stride_scalar * nparts));
+      gpumem += sizeof(real) * coeff_stride_scalar * nparts;
+
+      (cudaMalloc((void**) &(_anm_re_perturb[dev]),
+        sizeof(real) * coeff_stride_scalar * nparts));
+      gpumem += sizeof(real) * coeff_stride_scalar * nparts;
+      (cudaMalloc((void**) &(_anm_im_perturb[dev]),
         sizeof(real) * coeff_stride_scalar * nparts));
       gpumem += sizeof(real) * coeff_stride_scalar * nparts;
     }
@@ -83,6 +96,12 @@ void cuda_part_scalar_push(void)
           * nparts, cudaMemcpyHostToDevice));
       (cudaMemcpy(_anm_im00[dev], anm_im00, sizeof(real) * coeff_stride_scalar
           * nparts, cudaMemcpyHostToDevice));
+
+      (cudaMemcpy(_anm_re_perturb[dev], anm_re_perturb, sizeof(real) * coeff_stride_scalar
+          * nparts, cudaMemcpyHostToDevice));
+      (cudaMemcpy(_anm_im_perturb[dev], anm_im_perturb, sizeof(real) * coeff_stride_scalar
+          * nparts, cudaMemcpyHostToDevice));
+
     }
     // copy coefficents to device
 
@@ -121,6 +140,9 @@ void cuda_part_scalar_free(void)
       (cudaFree(_anm_im0[dev]));
       (cudaFree(_anm_re00[dev]));
       (cudaFree(_anm_im00[dev]));
+      
+      (cudaFree(_anm_re_perturb[dev]));
+      (cudaFree(_anm_im_perturb[dev]));
     }
     free(_parts_s);
     free(_anm_re);
@@ -129,6 +151,9 @@ void cuda_part_scalar_free(void)
     free(_anm_im0);
     free(_anm_re00);
     free(_anm_im00);
+
+    free(_anm_re_perturb);
+    free(_anm_im_perturb);
   }
 }
 
@@ -152,6 +177,12 @@ void cuda_part_scalar_pull(void)
       * nparts,cudaMemcpyDeviceToHost));
     (cudaMemcpy(anm_im00, _anm_im00[0], sizeof(real) * coeff_stride_scalar
       * nparts,cudaMemcpyDeviceToHost));
+
+    (cudaMemcpy(anm_re_perturb, _anm_re_perturb[0], sizeof(real) * coeff_stride_scalar
+      * nparts,cudaMemcpyDeviceToHost));
+    (cudaMemcpy(anm_im_perturb, _anm_im_perturb[0], sizeof(real) * coeff_stride_scalar
+      * nparts,cudaMemcpyDeviceToHost));
+
   }
 }
 
@@ -611,7 +642,7 @@ void cuda_show_variable(void)
 
       dim3 dimBlocks_s(threads_y, threads_z);
       dim3 numBlocks_s(blocks_y, blocks_z);
-      printf("before actual run show s0 and s\n");
+      printf("before actual show s0 and s\n");
       show_variable<<<numBlocks_s, dimBlocks_s>>>(_diff0_s[dev], _diff_s[dev], _dom[dev]);
       //printf("before actual run show s\n");
       //show_variable<<<numBlocks_s, dimBlocks_s>>>(_s[dev], _s[dev], _dom[dev]);
@@ -807,6 +838,12 @@ void cuda_scalar_lamb(void)
     if(nparts > 0) {
       cuda_get_coeffs_scalar<<<numBlocks, dimBlocks>>>(_parts[dev],_parts_s[dev], _nn_scalar, _mm_scalar, _node_t, _node_p, _ss, coeff_stride_scalar, _anm_re[dev], _anm_re0[dev], _anm_im[dev], _anm_im0[dev], int_scalar_re, int_scalar_im, nnodes, A1, A2, A3, B);
     }
+    if(nparts > 0) {
+      if(s_perturbation != 0) {
+        cuda_get_coeffs_scalar_perturbation<<<numBlocks, dimBlocks>>>(_parts_s[dev], _nn_scalar, _mm_scalar, _node_t, _node_p, coeff_stride_scalar, _anm_re_perturb[dev], _anm_im_perturb[dev], int_scalar_re, int_scalar_im, nnodes, A1, A2, A3, dt, s_D);
+      }
+    }
+    
 
     // clean up temporary variables
     (cudaFree(_ss));
@@ -851,11 +888,11 @@ real cuda_scalar_lamb_err(void)
         real *_sorted_errors;
         real *_part_errors; 
         (cudaMalloc((void**) &_sorted_coeffs,
-          nparts*2*coeff_stride*sizeof(real)));
-        gpumem += 2 * nparts * coeff_stride * sizeof(real);
+          nparts*2*coeff_stride_scalar*sizeof(real)));
+        gpumem += 2 * nparts * coeff_stride_scalar * sizeof(real);
         (cudaMalloc((void**) &_sorted_errors,
-          nparts*2*coeff_stride*sizeof(real)));
-        gpumem += 2 * nparts * coeff_stride * sizeof(real);
+          nparts*2*coeff_stride_scalar*sizeof(real)));
+        gpumem += 2 * nparts * coeff_stride_scalar * sizeof(real);
         (cudaMalloc((void**) &_part_errors,
           nparts*sizeof(real)));
         gpumem += nparts * sizeof(real);
@@ -944,7 +981,7 @@ void cuda_part_BC_scalar(void)
 
         dim3 dimBlocks_c(threads_c, threads_c);
         dim3 numBlocks_c(blocks_y, blocks_z);
-        part_BC_scalar<<<numBlocks_c, dimBlocks_c>>>(_s0[dev], _phase[dev], _phase_shell[dev], _parts[dev], _parts_s[dev], _dom[dev], coeff_stride_scalar, _anm_re[dev], _anm_im[dev], _anm_re00[dev], _anm_im00[dev], s_D, s_perturbation, dt);
+        part_BC_scalar<<<numBlocks_c, dimBlocks_c>>>(_s0[dev], _phase[dev], _phase_shell[dev], _parts[dev], _parts_s[dev], _dom[dev], coeff_stride_scalar, _anm_re[dev], _anm_im[dev], _anm_re00[dev], _anm_im00[dev], _anm_re_perturb[dev], _anm_im_perturb[dev], s_D, s_perturbation, dt);
       }
     }
   }
@@ -1127,7 +1164,7 @@ void cuda_update_part_scalar(void)
         dim3 dimBlocks(1);
         dim3 numBlocks(nparts);
 
-        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts_s[dev], ttime);
+        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts_s[dev], ttime, dt);
       }
     }
   }

@@ -448,6 +448,8 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
   real dsdz = 0.5*(s_t - s_b) * ddz;
   // assumption that sclar is a constant on the particle surface
   ss[node+nnodes*part] = s_c + dsdx*(x-xx) + dsdy*(y-yy) + dsdz*(z-zz) - parts_s[part].s;
+
+ // printf("ss[%d] is %f, s_c,dsdx, dsdy, dsdz is %f %f %f %f\n", node+nnodes*part, ss[node+nnodes*part], s_c, dsdx, dsdy, dsdz);
   // wall temperature if this node intersects wall
   real sswall = (parts[part].nodes[node] == -10)*bc_s.sWD
             + (parts[part].nodes[node] == -11)*bc_s.sED
@@ -457,7 +459,7 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
             + (parts[part].nodes[node] == -15)*bc_s.sTD;
   ss[node+nnodes*part] = (parts[part].nodes[node]==-1)*ss[node+part*nnodes]
                         + (parts[part].nodes[node] < -1)*sswall;
-  //printf("ss[%d] is %f\n", node+nnodes*part, s[node+nnodes*part]);
+  //printf("ss[%d] is %f\n", node+nnodes*part, ss[node+nnodes*part]);
 }
     
 __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, real *ss, int stride_scalar, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real B)
@@ -485,6 +487,7 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
 
     int_scalar_re[j] = N_nm*P_nm*ss[node+part*nnodes]*cos(m*phi);
     int_scalar_im[j] = -N_nm*P_nm*ss[node+part*nnodes]*sin(m*phi);
+    //printf("ss[%d] is %f\n",node+part*nnodes,ss[node+part*nnodes]);
 
     __syncthreads();
     if(node == 0) {
@@ -506,16 +509,73 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
       anm_re[stride_scalar*part+coeff] = int_scalar_re[j]/ A;
       anm_im[stride_scalar*part+coeff] = int_scalar_im[j]/ A;
 
-      /* 
+/*       
       if(stride_scalar*part+coeff == 0){
         printf("anm_re[%d] is %f\n", stride_scalar*part+coeff, anm_re[stride_scalar*part+coeff]);
-        printf("ss[%d] is %f\n", node+part*nnodes, ss[node+part*nnodes]);
-      }*/
-      
+       // printf("ss[%d] is %f\n", node+part*nnodes, ss[node+part*nnodes]);
+      }
+*/      
     }
   }
 } 
         
+__global__ void cuda_get_coeffs_scalar_perturbation(part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, int stride_scalar, real *anm_re_perturb, real *anm_im_perturb, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real dt, real s_D)
+{
+  int node = threadIdx.x;
+  int part = blockIdx.x;
+  int coeff = blockIdx.y;
+  int i;
+
+  if(coeff < parts_s[part].ncoeff) {
+    // calculate integrand at each node
+    int j = part*nnodes*stride_scalar + coeff*nnodes + node;
+    int_scalar_re[j] = 0.0;
+    int_scalar_im[j] = 0.0;
+    int n = nn[coeff];
+    int m = mm[coeff];
+    real theta = node_t[node];
+    real phi = node_p[node];
+
+    real N_nm = nnm(n,m);
+    real P_nm = pnm(n,m,theta);
+
+    int_scalar_re[j] = N_nm * P_nm * (parts_s[part].s - parts_s[part].s0) / dt * cos(m*phi);
+    int_scalar_im[j] = -N_nm * P_nm * (parts_s[part].s - parts_s[part].s0) / dt * sin(m*phi);
+ 
+    //int_scalar_re[j] = N_nm * P_nm * (-10000.*sin(100.*dt)) * cos(m*phi);
+    //int_scalar_im[j] = -N_nm * P_nm * (-10000.*sin(100.*dt)) * sin(m*phi);
+    //printf("dt is %f and dTdt is %f\n", dt, -10000.*sin(100.*dt));
+ 
+    __syncthreads();
+    if(node == 0) {
+      int_scalar_re[j] *= A1;
+      int_scalar_im[j] *= A1;
+      for(i = 1; i < 6; i++) {
+        int_scalar_re[j] += A1 * int_scalar_re[j+i];
+        int_scalar_im[j] += A1 * int_scalar_im[j+i];
+      }
+      for(i = 6; i < 18; i++) {
+        int_scalar_re[j] += A2 * int_scalar_re[j+i];
+        int_scalar_im[j] += A2 * int_scalar_im[j+i];
+      }
+      for(i = 18; i < 26; i++) {
+        int_scalar_re[j] += A3 * int_scalar_re[j+i];
+        int_scalar_im[j] += A3 * int_scalar_im[j+i];
+      }
+      anm_re_perturb[stride_scalar*part+coeff] = int_scalar_re[j]/s_D;
+      anm_im_perturb[stride_scalar*part+coeff] = int_scalar_im[j]/s_D;
+ 
+/*     
+      if(stride_scalar*part+coeff == 0){
+        printf("anm_re_perturb[%d] is %f\n", stride_scalar*part+coeff, anm_re_perturb[stride_scalar*part+coeff]);
+        //printf("dT0dt is %f\n", (parts_s[part].s - parts_s[part].s0)/dt);
+      }
+*/    
+    }
+  }
+}
+
+
 
 __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *coeffs, real *errors, real *part_errors, dom_struct *dom)
 {
@@ -523,7 +583,7 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
   int i,j;
   real tmp = FLT_MIN;
   int loc = 0;
-  real avg = 0;
+  //real avg = 0;
   real div = 0;
 
   // create shared memory space
@@ -541,12 +601,6 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
     s_coeffs0[i+1*stride] = anm_im0[part*stride+i];
   }
 
-  // compute the average of the coefficients
-  for(i = 0; i < stride*2; i++) {
-    avg += s_coeffs[i]*s_coeffs[i];
-  }
-  avg = avg / (stride*2.);
-
   // sort the coefficients in shared memory and calculate errors along the way
   for(i = 0; i < 2*stride; i++) {
     // search for the largest magnitude value in shared and store its location
@@ -559,31 +613,35 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
     }
 
     // move the largest value into sorted list
-    coeffs[part*stride+i] = s_coeffs[loc];
+    coeffs[part*stride*2+i] = s_coeffs[loc];
 
     // if its corresponding coefficient has large enough magnitude,
     // compute error for this coefficient
-    if(fabs(s_coeffs[loc]) > lamb_cut*fabs(coeffs[part*stride+0])) {
+    if(fabs(s_coeffs[loc]) > lamb_cut*fabs(coeffs[part*stride*2+0])) {
       div = fabs(s_coeffs[loc]);// + fabs(avg)*1e-4;
       if(div < 1e-16) div = 1e-16;
-      errors[part*stride+i] = fabs((s_coeffs[loc] - s_coeffs0[loc]) / div);
-    } else errors[part*stride+i] = 0.;
+      errors[part*stride*2+i] = fabs((s_coeffs[loc] - s_coeffs0[loc]) / div);
+    } else errors[part*stride*2+i] = 0.;
 
     // discard this value since we've used it once
     s_coeffs[loc] = 0.;
-  }
 
+  }
+  
   // find the largest error for each particle
   tmp = FLT_MIN;
   for(i = 0; i < 2*stride; i++) {
-    if(errors[part*stride+i] > tmp) tmp = errors[part*stride+i];
+    if(errors[part*2*stride+i] > tmp) {
+      tmp = errors[part*stride*2+i];
+    }
   }
 
   // write error to return for each particle
   part_errors[part] = tmp;
+  //printf("final erros for part %d is %f\n", part, part_errors[part]);
 }
 
-__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, real s_D, real perturbation, real dt)
+__global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struct *parts, part_struct_scalar *parts_s, dom_struct *dom, int stride, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, real *anm_re_perturb, real *anm_im_perturb, real s_D, real perturbation, real dt)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gcc._js;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gcc._ks;
@@ -630,24 +688,30 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
         for(int n = 1; n <= order; n++) {
           ss_tmp += (pow(ra,n) - pow(ar,n+1)) * X_an(n, theta, phi, anm_re, anm_im, P, stride);
         }
+
         // if perturbation not zero, add the perturbation correction term
         if(perturbation > 0) {
           real rs = parts_s[P].rs * parts[P].r; //integration surface
-          real tmp = 0.0;   // r dependence associate with each order n
+          real tmp = 0.0;
+          real tmp1 = 0.0; //dT_0/dt term
+          real tmp2 = 0.0;   // d(A_lm)dt term; r dependence associate with each order n
           real denominator = 0.0; // coefficients associate with each order n
 
           for(int n = 0; n <= order; n++) {
             denominator = 1./((2*n+1)*(pow(a, 2*n+1) - pow(rs, 2*n+1)));
-            // don't forget divide by s_D, in document it is in inte_A,B
-            denominator = denominator / s_D;
-            tmp = (inte_B(n,a,rs,a) + pow(a,2*n+1) * inte_A(n,a,a,r) - pow(rs,2*n+1)*inte_A(n,a,rs,r)) * denominator * pow(r, n);
-            tmp -= (pow(rs, 2*n+1)*pow(a, 2*n+1) * inte_A(n,a,a,rs) + pow(a, 2*n+1)*inte_B(n,a,rs,r) - pow(rs, 2*n+1)*inte_B(n,a,a,r)) * denominator * pow(1./r, n+1);
-            tmp = perturbation * tmp * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, P, stride, dt);
-            //if(n==0 && phase_shell[CC] < 1) printf("perturbation correction is %f\n", tmp);
+            tmp1 = (inte_M(n,rs,a) + pow(a, 2*n+1)*inte_N(n,a,r) - pow(rs,2*n+1)*inte_N(n,rs,r)) * denominator * pow(r, n);
+            tmp1 -= (pow(rs*a,2*n+1)*inte_N(n,a,rs) + pow(a,2*n+1)*inte_M(n,rs,r) - pow(rs,2*n+1)*inte_M(n,a,r)) * denominator *  pow(1.0/r, n+1);
+            tmp1 = tmp1 * X_an(n, theta, phi, anm_re_perturb, anm_im_perturb, P, stride);
+
+            tmp2 = (inte_B(n,a,rs,a) + pow(a,2*n+1) * inte_A(n,a,a,r) - pow(rs,2*n+1)*inte_A(n,a,rs,r)) * denominator * pow(r, n);
+            tmp2 -= (pow(rs*a,2*n+1) * inte_A(n,a,a,rs) + pow(a, 2*n+1)*inte_B(n,a,rs,r) - pow(rs, 2*n+1)*inte_B(n,a,a,r)) * denominator * pow(1./r, n+1);
+            // second part of solution, d(A_lm)dt
+            tmp2 *= perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, P, stride, dt)/s_D;             tmp = tmp1 + tmp2;
+            
             ss_tmp += tmp;
+            //if(phase_shell[CC] < 1) printf("ss_tmp, tmp1, tmp2, tmp, n is %f %f %f %f %d\n", ss_tmp, tmp1, tmp2, tmp, n);
           }
         }
-
         ss_tmp += s_surface;
         // only apply value at nodes inside particle & phase_shell==0
         // phase_shell = 1 means normal nodes, phase_shell = 0 means pressure nodes
@@ -701,6 +765,25 @@ __device__ real inte_B(int n, real a, real r0, real r1)
 {
   real sum = 0.0;
   sum = (pow(r1, 2*n+3) - pow(r0,2*n+3))/(2*n+3)/pow(a,n) - 0.5*pow(a, n+1)*(r1*r1 - r0*r0);
+  return sum;
+}
+
+__device__ real inte_M(int n, real r0, real r1)
+{
+  real sum = 0.0;
+  sum = (pow(r1, n+3) - pow(r0, n+3))/(n+3);
+  return sum;
+}
+
+__device__ real inte_N(int n, real r0, real r1)
+{
+  real sum = 0.0;
+  if(n!=2){
+    sum = (pow(r1,-n+2) - pow(r0,-n+2))/(-n+2);
+  }
+  else {
+    sum = log(r1) - log(r0);
+  }
   return sum;
 }
 
@@ -791,12 +874,12 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
   }
 }
 
-__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time)
+__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time, real dt)
 {
   int part = blockIdx.x;
   if(parts_s[part].s < 1000) {
-    parts_s[part].s0 = 100.0*cos(5*time);
-    parts_s[part].s = 100.0*cos(5*time);
+    parts_s[part].s0 = 100.0*cos(100*(time-dt));
+    parts_s[part].s = 100.0*cos(100*time);
   } else {
     parts_s[part].s0 = 100.0;
     parts_s[part].s = 100.0;

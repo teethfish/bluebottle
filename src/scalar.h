@@ -107,6 +107,10 @@ extern real *anm_re0;
 extern real *anm_im0;
 extern real *anm_re00;
 extern real *anm_im00;
+extern real *anm_re_perturb;
+extern real *anm_im_perturb;
+
+
 
 extern real **_anm_re;
 extern real **_anm_im;
@@ -114,6 +118,9 @@ extern real **_anm_re0;
 extern real **_anm_im0;
 extern real **_anm_re00;
 extern real **_anm_im00;
+extern real **_anm_re_perturb;
+extern real **_anm_im_perturb;
+
 
 extern int *_nn_scalar;
 extern int *_mm_scalar;

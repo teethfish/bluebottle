@@ -629,15 +629,15 @@ __global__ void compute_error(real lamb_cut, int stride, int nparts,
     }
 
     // move the largest value into sorted list
-    coeffs[part*stride+i] = s_coeffs[loc];
+    coeffs[part*stride*6+i] = s_coeffs[loc];
 
     // if its corresponding coefficient has large enough magnitude,
     // compute error for this coefficient
     if(fabs(s_coeffs[loc]) > lamb_cut*fabs(coeffs[part*stride+0])) {
       div = fabs(s_coeffs[loc]);// + fabs(avg)*1e-4;
       if(div < 1e-16) div = 1e-16;
-      errors[part*stride+i] = fabs((s_coeffs[loc] - s_coeffs0[loc]) / div);
-    } else errors[part*stride+i] = 0.;
+      errors[part*stride*6+i] = fabs((s_coeffs[loc] - s_coeffs0[loc]) / div);
+    } else errors[part*stride*6+i] = 0.;
 
     // discard this value since we've used it once
     s_coeffs[loc] = 0.;
@@ -646,7 +646,7 @@ __global__ void compute_error(real lamb_cut, int stride, int nparts,
   // find the largest error for each particle
   tmp = FLT_MIN;
   for(i = 0; i < 6*stride; i++) {
-    if(errors[part*stride+i] > tmp) tmp = errors[part*stride+i];
+    if(errors[part*stride*6+i] > tmp) tmp = errors[part*stride*6+i];
   }
 
   // write error to return for each particle
