@@ -1717,36 +1717,36 @@ void cgns_particles(real dtout)
           cg_field_write(fn, bn, zn, sn, RealDouble, "a31_re", a31_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a30_re", a30_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_re", a3_1_r, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_re", a3_2_r, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_re", a3_3_r, &fnr); 
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_re", a3_2_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_3_re", a3_3_r, &fnr); 
     
           cg_field_write(fn, bn, zn, sn, RealDouble, "a33_im", a33_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a32_im", a32_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a31_im", a31_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a30_im", a30_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_im", a3_1_i, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_1_im", a3_2_i, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_im", a3_3_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_2_im", a3_2_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a3_3_im", a3_3_i, &fnr);
         case(9):
           cg_field_write(fn, bn, zn, sn, RealDouble, "a22_re", a22_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a21_re", a21_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a20_re", a20_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_re", a2_1_r, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_re", a2_1_r, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_2_re", a2_2_r, &fnr);
         
           cg_field_write(fn, bn, zn, sn, RealDouble, "a22_im", a22_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a21_im", a21_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a20_im", a20_i, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_im", a2_1_i, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_1_im", a2_1_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a2_2_im", a2_2_i, &fnr);
         case(4):
           cg_field_write(fn, bn, zn, sn, RealDouble, "a11_re", a11_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a10_re", a10_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a1_1_re", a1_1_r, &fnr);
       
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a11_re", a11_i, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a10_re", a10_i, &fnr);
-          cg_field_write(fn, bn, zn, sn, RealDouble, "a1_1_re", a1_1_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a11_im", a11_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a10_im", a10_i, &fnr);
+          cg_field_write(fn, bn, zn, sn, RealDouble, "a1_1_im", a1_1_i, &fnr);
         case(1):
           cg_field_write(fn, bn, zn, sn, RealDouble, "a00_re", a00_r, &fnr);
           cg_field_write(fn, bn, zn, sn, RealDouble, "a00_im", a00_i, &fnr);
