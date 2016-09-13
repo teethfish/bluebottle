@@ -706,8 +706,8 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
             tmp2 = (inte_B(n,a,rs,a) + pow(a,2*n+1) * inte_A(n,a,a,r) - pow(rs,2*n+1)*inte_A(n,a,rs,r)) * denominator * pow(r, n);
             tmp2 -= (pow(rs*a,2*n+1) * inte_A(n,a,a,rs) + pow(a, 2*n+1)*inte_B(n,a,rs,r) - pow(rs, 2*n+1)*inte_B(n,a,a,r)) * denominator * pow(1./r, n+1);
             // second part of solution, d(A_lm)dt
-            tmp2 *= perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, P, stride, dt)/s_D;             tmp = tmp1 + tmp2;
-            
+            tmp2 *= perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, P, stride, dt)/s_D;             
+            tmp = tmp1 + tmp2;            
             ss_tmp += tmp;
             //if(phase_shell[CC] < 1) printf("ss_tmp, tmp1, tmp2, tmp, n is %f %f %f %f %d\n", ss_tmp, tmp1, tmp2, tmp, n);
           }
@@ -847,9 +847,13 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
       for(int n = 0; n <= parts_s[part].order; n++) {
         real a = parts[part].r;
         real rs = parts_s[part].rs * parts[part].r;
-        real perturb = (inte_B(n,a,rs,a) + pow(rs,2*n+1)*inte_A(n,a,a,rs))*pow(a, n-1)/(pow(a, 2*n+1) - pow(rs, 2*n+1)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt) / s_D;
+        real denominator = pow(a, n-1)/(pow(a, 2*n+1) - pow(rs, 2*n+1));
+        real tmp1 = (inte_M(n,rs,a) + pow(a, 2*n+1)*inte_N(n,a,r)) * X_an(n, theta, phi, anm_re_perturb, anm_im_perturb, part, stride);
+        real tmp2 = (inte_B(n,a,rs,a) + pow(a, 2*n+1)*inte_A(n,a,a,r)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt)/s_D;
+        real perturb = (tmp1 + tmp2) * denominator;
+        //real perturb = (inte_B(n,a,rs,a) + pow(rs,2*n+1)*inte_A(n,a,a,rs))*pow(a, n-1)/(pow(a, 2*n+1) - pow(rs, 2*n+1)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt) / s_D; //without the first piece, change of particle surface temperature
         //if(node == 0) printf("pertubation correction to gradient is %f\n", perturb);
-        parts_s[part].dsdr[node] += perturbation * perturb;
+        parts_s[part].dsdr[node] += perturb;
       }
     }
     //parts_s[part].dsdr[node] = 1.0;// for test, see sphere area
