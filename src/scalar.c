@@ -365,10 +365,12 @@ void parts_read_input_scalar(void)
 #ifdef DOUBLE
       fret = fscanf(infile, "s %lf\n", &parts_s[i].s0);
       fret = fscanf(infile, "k %lf\n", &parts_s[i].k);
+      fret = fscanf(infile, "cp %lf\n", &parts_s[i].cp);
       fret = fscanf(infile, "rs %lf\n", &parts_s[i].rs);
 #else
       fret = fscanf(infile, "s %f\n", &parts_s[i].s0);
       fret = fscanf(infile, "k %f\n", &parts_s[i].k);
+      fret = fscanf(infile, "cp %f\n", &parts_s[i].cp);
       fret = fscanf(infile, "rs %f\n", &parts_s[i].rs);
 #endif
       fret = fscanf(infile, "order %d\n", &parts_s[i].order);

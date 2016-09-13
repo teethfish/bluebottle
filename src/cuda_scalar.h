@@ -206,9 +206,12 @@ __global__ void forcing_boussinesq_y(real alpha, real gy, real s_init, real *s, 
 
 __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, real *fz, dom_struct *dom);
 
+/* FUNCTION
+ * calculate the heat flux across the particle surface, only dsdr*A, no conductivity included
+ */
 __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D);
 
-__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time, real dt);
+__global__ void update_part_scalar(int nparts, part_struct *parts,  part_struct_scalar *parts_s, real time, real dt);
 
 #endif
 

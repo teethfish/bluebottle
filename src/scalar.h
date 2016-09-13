@@ -47,6 +47,7 @@ typedef struct part_struct_scalar {
   real k;
   real rs;
   real q;
+  real cp;
   int order;
   int ncoeff;
   real dsdr[NNODES];
@@ -60,7 +61,8 @@ typedef struct part_struct_scalar {
  * * order is the order to keep lamb solution, equals to index n in Ynm
  * * ncoeff is the corresponding m index in Ynm
  * * rs the integrate surface
- * * q is the intergral of hear fluc across the particle surface
+ * * cp is the particle specific heat
+ * * q is the intergral of hear flux across the particle surface
  * * dsdr is the scalar gradient at particle surface for Lebsque nodes
 */
 

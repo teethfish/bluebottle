@@ -569,6 +569,7 @@ int main(int argc, char *argv[]) {
 
         // get initial dt; this is an extra check for the SHEAR initialization
         dt = cuda_find_dt();
+
         // share this with the precursor domain
         expd_compare_dt(np, status);
 
@@ -746,7 +747,7 @@ int main(int argc, char *argv[]) {
 
             // compare this timestep size to that in the precursor and
             // and synchronize the result
-            expd_compare_dt(np, status);
+            //expd_compare_dt(np, status);
 
           } else {
             return EXIT_FAILURE;
@@ -758,7 +759,7 @@ int main(int argc, char *argv[]) {
           real iter_err_scalar = FLT_MAX;
           //TODO: right now keep the residue same with velocity field
 
-          //cuda_update_part_scalar(); //update scalar of particle
+          cuda_update_part_scalar(); //update scalar of particle
           while(iter_err_scalar > lamb_residual) {
             // iterate for Lamb's coefficients
             cuda_scalar_BC(); // outer apply boundary condition to s0
@@ -788,6 +789,7 @@ int main(int argc, char *argv[]) {
           // after solving both velocity & scalar, compute next timestep size
           dt0 = dt;
           dt = cuda_find_dt();
+          expd_compare_dt(np, status);
 
           if(rec_flow_field_dt > 0) {
             if(rec_flow_field_ttime_out >= rec_flow_field_dt) {

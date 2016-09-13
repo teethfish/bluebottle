@@ -868,15 +868,22 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
       for(i = 18; i < 26; i++) {
         parts_s[part].q += A3 * parts_s[part].dsdr[node + i];
       }
-      parts_s[part].q *= parts_s[part].k * parts[part].r * parts[part].r;
+      parts_s[part].q *= parts[part].r * parts[part].r;
       //printf("parts_s[part].q is, gradient is %f %f\n", parts_s[part].q, parts_s[part].dsdr[node]/parts_s[part].s);
     }
   }
 }
 
-__global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real time, real dt)
+__global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, real time, real dt)
 {
   int part = blockIdx.x;
+  real vol = 4./3. * PI * parts[part].r*parts[part].r*parts[part].r;
+  real m = vol * parts[part].rho;
+  parts_s[part].s0 = parts_s[part].s;
+  parts_s[part].s = parts_s[part].s0 + parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp;
+  printf("previous, current temperature is %f %f\n", parts_s[part].s0, parts_s[part].s);
+  printf("updated temperature is %f\n", parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp);
+/*
   if(parts_s[part].s < 1000) {
     parts_s[part].s0 = 100.0*cos(100*(time-dt));
     parts_s[part].s = 100.0*cos(100*time);
@@ -884,4 +891,5 @@ __global__ void update_part_scalar(int nparts, part_struct_scalar *parts_s, real
     parts_s[part].s0 = 100.0;
     parts_s[part].s = 100.0;
   }
+*/  
 }

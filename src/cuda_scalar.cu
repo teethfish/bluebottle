@@ -1164,7 +1164,7 @@ void cuda_update_part_scalar(void)
         dim3 dimBlocks(1);
         dim3 numBlocks(nparts);
 
-        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts_s[dev], ttime, dt);
+        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts[dev], _parts_s[dev], ttime, dt);
       }
     }
   }
