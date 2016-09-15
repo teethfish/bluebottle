@@ -1131,7 +1131,7 @@ void cuda_part_heat_flux(void)
       dim3 dimBlocks(threads);
       dim3 numBlocks(blocks);
 
-      part_heat_flux<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _node_t, _node_p, _anm_re[dev], _anm_im[dev],_anm_re00[dev],  _anm_im00[dev], nnodes, coeff_stride_scalar, A1, A2, A3, s_perturbation, dt, s_D);
+      part_heat_flux<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _node_t, _node_p, _anm_re[dev], _anm_im[dev],_anm_re00[dev], _anm_im00[dev], _anm_re_perturb[dev], _anm_im_perturb[dev], nnodes, coeff_stride_scalar, A1, A2, A3, s_perturbation, dt, s_D);
       // free cuda device memory
       (cudaFree(_node_t));
       (cudaFree(_node_p));

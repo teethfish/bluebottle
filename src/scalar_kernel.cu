@@ -541,11 +541,11 @@ __global__ void cuda_get_coeffs_scalar_perturbation(part_struct_scalar *parts_s,
 
     int_scalar_re[j] = N_nm * P_nm * (parts_s[part].s - parts_s[part].s0) / dt * cos(m*phi);
     int_scalar_im[j] = -N_nm * P_nm * (parts_s[part].s - parts_s[part].s0) / dt * sin(m*phi);
- 
-    //int_scalar_re[j] = N_nm * P_nm * (-10000.*sin(100.*dt)) * cos(m*phi);
-    //int_scalar_im[j] = -N_nm * P_nm * (-10000.*sin(100.*dt)) * sin(m*phi);
+/* 
+    int_scalar_re[j] = N_nm * P_nm * (-100.*1.*sin(1.*dt)) * cos(m*phi);
+    int_scalar_im[j] = -N_nm * P_nm * (-100.*1.*sin(1.*dt)) * sin(m*phi);
     //printf("dt is %f and dTdt is %f\n", dt, -10000.*sin(100.*dt));
- 
+*/ 
     __syncthreads();
     if(node == 0) {
       int_scalar_re[j] *= A1;
@@ -828,7 +828,7 @@ __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, 
 }
 
 // this function helps to calculate the integral of heat flux on the particle surface instanteneously, it uses the lamb coefficients from scalar field and lebsque nodes
-__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D)
+__global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, real *anm_re_perturb, real *anm_im_perturb, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D)
 {
   int node = threadIdx.x;
   int part = blockIdx.x;
@@ -848,8 +848,8 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
         real a = parts[part].r;
         real rs = parts_s[part].rs * parts[part].r;
         real denominator = pow(a, n-1)/(pow(a, 2*n+1) - pow(rs, 2*n+1));
-        real tmp1 = (inte_M(n,rs,a) + pow(a, 2*n+1)*inte_N(n,a,r)) * X_an(n, theta, phi, anm_re_perturb, anm_im_perturb, part, stride);
-        real tmp2 = (inte_B(n,a,rs,a) + pow(a, 2*n+1)*inte_A(n,a,a,r)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt)/s_D;
+        real tmp1 = (inte_M(n,rs,a) + pow(a, 2*n+1)*inte_N(n,a,rs)) * X_an(n, theta, phi, anm_re_perturb, anm_im_perturb, part, stride);
+        real tmp2 = (inte_B(n,a,rs,a) + pow(a, 2*n+1)*inte_A(n,a,a,rs)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt)/s_D;
         real perturb = (tmp1 + tmp2) * denominator;
         //real perturb = (inte_B(n,a,rs,a) + pow(rs,2*n+1)*inte_A(n,a,a,rs))*pow(a, n-1)/(pow(a, 2*n+1) - pow(rs, 2*n+1)) * perturbation_X_an(n, theta, phi, anm_re, anm_re00, anm_im, anm_im00, part, stride, dt) / s_D; //without the first piece, change of particle surface temperature
         //if(node == 0) printf("pertubation correction to gradient is %f\n", perturb);
@@ -887,13 +887,13 @@ __global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_s
   parts_s[part].s = parts_s[part].s0 + parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp;
   printf("previous, current temperature is %f %f\n", parts_s[part].s0, parts_s[part].s);
   printf("updated temperature is %f\n", parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp);
-/*
-  if(parts_s[part].s < 1000) {
-    parts_s[part].s0 = 100.0*cos(100*(time-dt));
-    parts_s[part].s = 100.0*cos(100*time);
+
+/*  if(parts_s[part].s < 1000) {
+    parts_s[part].s0 = 100.0*cos(1.*(time-dt));
+    parts_s[part].s = 100.0*cos(1.*time);
   } else {
     parts_s[part].s0 = 100.0;
     parts_s[part].s = 100.0;
   }
-*/  
+*/ 
 }
