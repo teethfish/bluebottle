@@ -107,7 +107,7 @@ __global__ void check_nodes(int nparts, part_struct *parts, dom_struct *dom,
 __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real rho_f, real nu, gradP_struct gradP,
   part_struct *parts, dom_struct *dom, real *theta, real *phi, int nnodes,
-  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc);
+  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g);
 /*
  * PURPOSE
  *  CUDA kernel to interpolate field variables to Lebedev quadrature nodes.
@@ -199,7 +199,7 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
   real rho_f, real mu, real nu, int stride,
   real *pnm_re, real *pnm_im,
   real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im);
+  real *chinm_re, real *chinm_im, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g);
 /* 
  * PURPOSE
  *  Calculate the hydrodynamic forces on each particle.

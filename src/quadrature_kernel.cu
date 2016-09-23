@@ -95,7 +95,7 @@ __global__ void check_nodes(int nparts, part_struct *parts, dom_struct *dom,
 __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   real rho_f, real nu, gradP_struct gradP,
   part_struct *parts, dom_struct *dom, real *theta, real *phi, int nnodes,
-  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc)
+  real *pp, real *ur, real *ut, real *up, real dt0, real dt, BC bc, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g)
 {
   int node = threadIdx.x;
   int part = blockIdx.x;
@@ -173,8 +173,10 @@ __global__ void interpolate_nodes(real *p0, real *p, real *u, real *v, real *w,
   ocrossr2 += (ox*zp - oz*xp) * (ox*zp - oz*xp);
   ocrossr2 += (ox*yp - oy*xp) * (ox*yp - oy*xp);
   real rhoV = rho_f;
-  real accdotr = (-gradP.x/rhoV - udot)*xp + (-gradP.y/rhoV - vdot)*yp
-    + (-gradP.z/rhoV - wdot)*zp;
+  real bousiq_x = -s_alpha*(parts_s[part].s - s_init)*g.x;
+  real bousiq_y = -s_alpha*(parts_s[part].s - s_init)*g.y;
+  real bousiq_z = -s_alpha*(parts_s[part].s - s_init)*g.z;
+  real accdotr = (-gradP.x/rhoV - udot + bousiq_x)*xp + (-gradP.y/rhoV - vdot + bousiq_y)*yp + (-gradP.z/rhoV - wdot + bousiq_z)*zp;
   pp[node+nnodes*part] -= 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
   // zero if this node intersects wall
   pp[node+nnodes*part] = (parts[part].nodes[node]==-1)*pp[node+part*nnodes];
@@ -547,7 +549,7 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
   real rho_f, real mu, real nu, int stride,
   real *pnm_re, real *pnm_im,
   real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
 
@@ -556,13 +558,17 @@ __global__ void cuda_calc_forces(dom_struct *dom, part_struct *parts,
     real N10 = sqrt(3./4./PI);
     real N11 = sqrt(3./8./PI);
 
-    parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x/rho_f)
+    real bousiq_x = -s_alpha*(parts_s[pp].s - s_init)*g.x;
+    real bousiq_y = -s_alpha*(parts_s[pp].s - s_init)*g.y;
+    real bousiq_z = -s_alpha*(parts_s[pp].s - s_init)*g.z;
+    
+    parts[pp].Fx = rho_f * vol * (parts[pp].udot + gradP.x/rho_f + bousiq_x)
       - PI * mu * nu * 2.*N11 * (pnm_re[stride*pp + 2]
       + 6.*phinm_re[stride*pp + 2]);
-    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y/rho_f)
+    parts[pp].Fy = rho_f * vol * (parts[pp].vdot + gradP.y/rho_f + bousiq_y)
       + PI * mu * nu * 2.*N11 * (pnm_im[stride*pp + 2]
       + 6.*phinm_im[stride*pp + 2]);
-    parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z/rho_f)
+    parts[pp].Fz = rho_f * vol * (parts[pp].wdot + gradP.z/rho_f + bousiq_z)
       + PI * mu * nu * N10 * (pnm_re[stride*pp + 1]
       + 6.*phinm_re[stride*pp + 1]);
 

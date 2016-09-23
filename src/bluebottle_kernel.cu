@@ -2245,25 +2245,30 @@ __global__ void plane_eps_z_T(real eps, real *w_star, dom_struct *dom)
 }
 
 __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime,
+  part_struct_scalar *parts_s, real s_alpha, real s_init)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
+  
+  real bousiq_x = -s_alpha*(parts_s[pp].s - s_init)*g.x;
+  real bousiq_y = -s_alpha*(parts_s[pp].s - s_init)*g.y;
+  real bousiq_z = -s_alpha*(parts_s[pp].s - s_init)*g.z;
 
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x) / m
+        + parts[pp].aFx - vol*gradP.x + vol*rho_f*bousiq_x) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
         //+ g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y) / m
+        + parts[pp].aFy - vol*gradP.y + vol*rho_f*bousiq_y) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
         //+ g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z) / m
+        + parts[pp].aFz - vol*gradP.z + vol*rho_f*bousiq_z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
         //+ g.z;
 
@@ -2290,25 +2295,29 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
 }
 
 __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime)
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime, 
+  part_struct_scalar *parts_s, real s_alpha, real s_init)
 {
   int pp = threadIdx.x + blockIdx.x*blockDim.x; // particle number
   real vol = 4./3. * PI * parts[pp].r*parts[pp].r*parts[pp].r;
   real m = vol * parts[pp].rho;
+  real bousiq_x = -s_alpha*(parts_s[pp].s - s_init)*g.x;
+  real bousiq_y = -s_alpha*(parts_s[pp].s - s_init)*g.y;
+  real bousiq_z = -s_alpha*(parts_s[pp].s - s_init)*g.z;
 
   if(pp < nparts) {
     if(parts[pp].translating) {
       // update linear accelerations
       parts[pp].udot = (parts[pp].Fx + parts[pp].kFx + parts[pp].iFx
-        + parts[pp].aFx - vol*gradP.x) / m
+        + parts[pp].aFx - vol*gradP.x + vol*rho_f*bousiq_x) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.x;
         //+ g.x;
       parts[pp].vdot = (parts[pp].Fy + parts[pp].kFy + parts[pp].iFy
-        + parts[pp].aFy - vol*gradP.y) / m
+        + parts[pp].aFy - vol*gradP.y + vol*rho_f*bousiq_y) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.y;
         //+ g.y;
       parts[pp].wdot = (parts[pp].Fz + parts[pp].kFz + parts[pp].iFz
-        + parts[pp].aFz - vol*gradP.z) / m
+        + parts[pp].aFz - vol*gradP.z + vol*rho_f*bousiq_z) / m
         + (parts[pp].rho - rho_f) / parts[pp].rho * g.z;
         //+ g.z;
 

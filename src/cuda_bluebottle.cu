@@ -4349,7 +4349,7 @@ void cuda_move_parts_sub()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime, _parts_s[dev], s_alpha, s_init);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4417,7 +4417,7 @@ void cuda_move_parts_sub()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime, _parts_s[dev], s_alpha, s_init);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4467,7 +4467,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime, _parts_s[dev], s_alpha, s_init);
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         spring_parts<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
@@ -4535,7 +4535,7 @@ void cuda_move_parts()
         collision_walls<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev],
           nparts, bc, eps, mu, rho_f, nu, interactionLengthRatio, dt);
         move_parts_a<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-          dt, dt0, g, gradP, rho_f, ttime);
+          dt, dt0, g, gradP, rho_f, ttime, _parts_s[dev], s_alpha, s_init);
 
         collision_init<<<numBlocks, dimBlocks>>>(_parts[dev], nparts);
         
@@ -4556,7 +4556,7 @@ void cuda_move_parts()
       }
 
       move_parts_b<<<numBlocks, dimBlocks>>>(_dom[dev], _parts[dev], nparts,
-        dt, dt0, g, gradP, rho_f, ttime);
+        dt, dt0, g, gradP, rho_f, ttime, _parts_s[dev], s_alpha, s_init);
     }
   }
 }

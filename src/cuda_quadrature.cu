@@ -57,7 +57,7 @@ void cuda_quad_interp(int dev,
   if(nparts > 0)
     interpolate_nodes<<<numBlocks, dimBlocks>>>(_p0[dev], _p[dev],
       _u[dev], _v[dev], _w[dev], rho_f, nu, gradP,
-      _parts[dev], _dom[dev], node_t, node_p, nnodes, pp, ur, ut, up, dt0, dt, bc);
+      _parts[dev], _dom[dev], node_t, node_p, nnodes, pp, ur, ut, up, dt0, dt, bc, _parts_s[dev], s_alpha, s_init, g);
 }
 
 extern "C"
@@ -291,7 +291,7 @@ void cuda_Lamb(void)
         rho_f, mu, nu, coeff_stride,
         _pnm_re[dev], _pnm_im[dev],
         _phinm_re[dev], _phinm_im[dev],
-        _chinm_re[dev], _chinm_im[dev]);
+        _chinm_re[dev], _chinm_im[dev], _parts_s[dev], s_alpha, s_init, g);
     }
 
     // clean up temporary variables

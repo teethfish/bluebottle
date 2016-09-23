@@ -843,7 +843,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
   real *pnm_re00, real *pnm_im00, real *phinm_re00, real *phinm_im00,
   real *chinm_re00, real *chinm_im00,
   real *pnm_re, real *pnm_im, real *phinm_re, real *phinm_im,
-  real *chinm_re, real *chinm_im)
+  real *chinm_re, real *chinm_im, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gcc._js;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gcc._ks;
@@ -925,8 +925,10 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
       ocrossr2 += (ox*z - oz*x) * (ox*z - oz*x);
       ocrossr2 += (ox*y - oy*x) * (ox*y - oy*x);
       real rhoV = rho_f;
-      real accdotr = (-gradP.x/rhoV - udot)*x + (-gradP.y/rhoV - vdot)*y
-        + (-gradP.z/rhoV - wdot)*z;
+      real bousiq_x = -s_alpha*(parts_s[P].s - s_init)*g.x;
+      real bousiq_y = -s_alpha*(parts_s[P].s - s_init)*g.y;
+      real bousiq_z = -s_alpha*(parts_s[P].s - s_init)*g.z;
+      real accdotr = (-gradP.x/rhoV - udot + bousiq_x)*x + (-gradP.y/rhoV - vdot + bousiq_y)*y + (-gradP.z/rhoV - wdot + bousiq_z)*z;
       pp_tmp += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       //pp_tmp00 += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       // write BC if flagged, otherwise leave alone
@@ -942,7 +944,7 @@ __global__ void part_BC_p(real *p, real *p_rhs, int *phase, int *phase_shell,
 __global__ void part_BC_p_fill(real *p, int *phase,
   part_struct *parts, dom_struct *dom,
   real mu, real nu, real rho_f, gradP_struct gradP, int stride,
-  real *pnm_re, real *pnm_im)
+  real *pnm_re, real *pnm_im, part_struct_scalar *parts_s, real s_alpha, real s_init, g_struct g)
 {
   int tj = blockDim.x*blockIdx.x + threadIdx.x + dom->Gcc._js;
   int tk = blockDim.y*blockIdx.y + threadIdx.y + dom->Gcc._ks;
@@ -1006,8 +1008,10 @@ __global__ void part_BC_p_fill(real *p, int *phase,
       ocrossr2 += (ox*z - oz*x) * (ox*z - oz*x);
       ocrossr2 += (ox*y - oy*x) * (ox*y - oy*x);
       real rhoV = rho_f;
-      real accdotr = (-gradP.x/rhoV - udot)*x + (-gradP.y/rhoV - vdot)*y
-        + (-gradP.z/rhoV - wdot)*z;
+      real bousiq_x = -s_alpha*(parts_s[P].s - s_init)*g.x;
+      real bousiq_y = -s_alpha*(parts_s[P].s - s_init)*g.y;
+      real bousiq_z = -s_alpha*(parts_s[P].s - s_init)*g.z;
+      real accdotr = (-gradP.x/rhoV - udot + bousiq_x)*x + (-gradP.y/rhoV - vdot + bousiq_y)*y + (-gradP.z/rhoV - wdot + bousiq_z)*z;
       pp_tmp += 0.5 * rho_f * ocrossr2 + rho_f * accdotr;
       // write BC if inside particle, otherwise leave alone
       p[CC] = (real) (phase[CC] > -1) * pp_tmp

@@ -2011,7 +2011,7 @@ __global__ void plane_eps_z_T(real eps, real *w_star, dom_struct *dom);
  * USAGE
  */
 __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime);
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime, part_struct_scalar *parts_s, real s_alpha, real s_init);
 /*
  * FUNCTION
  *  Update the particle velocities and move the particles. Part A: does
@@ -2034,7 +2034,8 @@ __global__ void move_parts_a(dom_struct *dom, part_struct *parts, int nparts,
  * USAGE
  */
 __global__ void move_parts_b(dom_struct *dom, part_struct *parts, int nparts,
-  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime);
+  real dt, real dt0, g_struct g, gradP_struct gradP, real rho_f, real ttime, 
+  part_struct_scalar *parts_s, real s_alpha, real s_init);
 /*
  * FUNCTION
  *  Update the particle velocities and move the particles. Part B: does
