@@ -2,6 +2,7 @@
 
 BC_s bc_s;
 real s_D;
+real s_k;
 real s_perturbation;
 real s_init;
 real s_alpha;
@@ -72,12 +73,14 @@ void scalar_read_input(void)
       // read domain
 #ifdef DOUBLE
       fret = fscanf(infile, "diffusivity %lf\n", &s_D);
+      fret = fscanf(infile, "conductivity %lf\n", &s_k);
       fret = fscanf(infile, "perturbation solution %lf\n", &s_perturbation);
       fret = fscanf(infile, "lamb_cut %lf\n", &lamb_cut_scalar);
       fret = fscanf(infile, "initial_scalar %lf\n", &s_init);
       fret = fscanf(infile, "alpha %lf\n", &s_alpha);
 #else
       fret = fscanf(infile, "diffusivity %f\n", &s_D);
+      fret = fscanf(infile, "conductivity %f\n", &s_k);
       fret = fscanf(infile, "perturbation solution %f\n", &s_perturbation);
       fret = fscanf(infile, "lamb_cut %f\n", &lamb_cut_scalar);
       fret = fscanf(infile, "initial_scalar %f\n", &s_init);
@@ -364,12 +367,12 @@ void parts_read_input_scalar(void)
     for(i = 0; i < nparts; i++) {
 #ifdef DOUBLE
       fret = fscanf(infile, "s %lf\n", &parts_s[i].s0);
-      fret = fscanf(infile, "k %lf\n", &parts_s[i].k);
+      fret = fscanf(infile, "update %d\n", &parts_s[i].update);
       fret = fscanf(infile, "cp %lf\n", &parts_s[i].cp);
       fret = fscanf(infile, "rs %lf\n", &parts_s[i].rs);
 #else
       fret = fscanf(infile, "s %f\n", &parts_s[i].s0);
-      fret = fscanf(infile, "k %f\n", &parts_s[i].k);
+      fret = fscanf(infile, "update %d\n", &parts_s[i].update);
       fret = fscanf(infile, "cp %f\n", &parts_s[i].cp);
       fret = fscanf(infile, "rs %f\n", &parts_s[i].rs);
 #endif

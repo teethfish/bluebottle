@@ -27,6 +27,7 @@
 #include <cusp/monitor.h>
 #include <cusp/precond/diagonal.h>
 #include <cusp/krylov/bicgstab.h>
+#include <cusp/krylov/gmres.h>
 #include <cusp/krylov/cg.h>
 #include <cusp/print.h>
 #include <thrust/device_ptr.h>
@@ -1016,6 +1017,8 @@ printf("PPSUM_1 = %e\n", ppsum*norm*dt/rho_f);
     cusp::monitor<real> monitor(*_pp, pp_max_iter, pp_residual);
     cusp::precond::diagonal<real, cusp::device_memory> M(*_A_p);
     cusp::krylov::bicgstab(*_A_p, *_p_sol, *_pp, monitor, M);
+    //int restart = 50;
+    //cusp::krylov::gmres(*_A_p, *_p_sol, *_pp, restart, monitor, M);
     // write convergence data to file
     if(rank == 0) {
       char nam[FILE_NAME_SIZE] = "solver_expd.rec";

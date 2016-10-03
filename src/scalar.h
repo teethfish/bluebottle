@@ -44,7 +44,7 @@ extern BC_s bc_s;
 typedef struct part_struct_scalar {
   real s0;
   real s;
-  real k;
+  int update;
   real rs;
   real q;
   real cp;
@@ -81,7 +81,9 @@ extern real s_init; //initial temperature
 
 extern real s_alpha; //coefficient of thermal expansion
 
-extern real s_D;
+extern real s_D; // thermal diffusivity
+
+extern real s_k; //thermal conductivity of fluid
 
 extern real s_perturbation;
 

@@ -878,16 +878,14 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
   }
 }
 
-__global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, real time, real dt)
+__global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, real time, real dt, real s_k)
 {
   int part = blockIdx.x;
   real vol = 4./3. * PI * parts[part].r*parts[part].r*parts[part].r;
   real m = vol * parts[part].rho;
   parts_s[part].s0 = parts_s[part].s;
-  parts_s[part].s = parts_s[part].s0 + parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp;
+  parts_s[part].s = parts_s[part].s0 + parts_s[part].update * 1.0 * parts_s[part].q * s_k * dt / m /parts_s[part].cp;
   printf("previous, current temperature is %f %f\n", parts_s[part].s0, parts_s[part].s);
-  printf("updated temperature is %f\n", parts_s[part].q * parts_s[part].k * dt / m /parts_s[part].cp);
-
 /*  if(parts_s[part].s < 1000) {
     parts_s[part].s0 = 100.0*cos(1.*(time-dt));
     parts_s[part].s = 100.0*cos(1.*time);
