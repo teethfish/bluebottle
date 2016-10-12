@@ -885,7 +885,7 @@ __global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_s
   real m = vol * parts[part].rho;
   parts_s[part].s0 = parts_s[part].s;
   parts_s[part].s = parts_s[part].s0 + parts_s[part].update * 1.0 * parts_s[part].q * s_k * dt / m /parts_s[part].cp;
-  printf("previous, current temperature is %f %f\n", parts_s[part].s0, parts_s[part].s);
+  //printf("previous, current temperature is %f %f\n", parts_s[part].s0, parts_s[part].s);
 /*  if(parts_s[part].s < 1000) {
     parts_s[part].s0 = 100.0*cos(1.*(time-dt));
     parts_s[part].s = 100.0*cos(1.*time);

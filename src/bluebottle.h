@@ -2967,6 +2967,17 @@ void seeder_read_input(int Nx, int Ny, int Nz);//, double ddz, double bias,
   ******
   */
 
+void seeder_scalar(int nparts, real s, int update, real cp, real rs, int order_s);
+/*
+  * FUNCTION
+  * * nparts -- number of particles
+  * * s -- reference surface temperature, final results is s*(-0.5,0.5)
+  * * update -- if particle surface temprature will be updated or not
+  * * rs -- integral surface for scalar field
+  * * order -- order of trunction for scalar field
+*/
+
+
 /****f* bluebottle/seeder()
  * NAME
  *  seeder()

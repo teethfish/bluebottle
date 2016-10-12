@@ -215,6 +215,78 @@ void seeder_read_input(int Nx, int Ny, int Nz)//, double ddz, double bias,
   //  printf("The input parameters are not correct! Please check!\n");
   //  fflush(stdout);
   //}
+  scalar_on = 1;
+  if(scalar_on == 1){
+    int fret = 0;
+    fret = fret;    // prevent compiler warning
+    
+    real s;
+    int update;
+    real cp;
+    real rs;
+    int order_s;
+
+    // open configuration file for reading
+    char fname[FILE_NAME_SIZE] = "";
+    sprintf(fname, "%s/input/part_scalar.config", ROOT_DIR);
+    FILE *infile = fopen(fname, "r");
+    if(infile == NULL) {
+      fprintf(stderr, "Could not open file %s\n", fname);
+      exit(EXIT_FAILURE);
+    }
+#ifdef DOUBLE
+    fret = fscanf(infile, "s %lf\n", &s);
+#else
+    fret = fscanf(infile, "s %f\n", &s);
+#endif
+    fret = fscanf(infile, "update %d\n", &update);
+#ifdef DOUBLE
+    fret = fscanf(infile, "cp %lf\n", &cp);
+    fret = fscanf(infile, "rs %lf\n", &rs);
+#else
+    fret = fscanf(infile, "cp %f\n", &cp);
+    fret = fscanf(infile, "rs %f\n", &rs);
+#endif
+    fret = fscanf(infile, "order %d\n", &order_s);
+    seeder_scalar(N, s, update, cp, rs, order_s);
+  }
+}
+
+void seeder_scalar(int nparts, real s, int update, real cp, real rs, int order_s) {
+
+  printf("Running bluebottle seeder scalar for %d particles...\n\n", nparts);
+  fflush(stdout);
+  parts_s = (part_struct_scalar*) malloc(nparts * sizeof(part_struct_scalar));
+  for(int i = 0; i < nparts; i++) {
+    parts_s[i].s = s * (rand() / (real)RAND_MAX - 0.5);
+    parts_s[i].update = update;
+    parts_s[i].cp = cp;
+    parts_s[i].rs = rs;
+    parts_s[i].order = order_s;
+  }
+  printf("Writing part_scalar_seeder.config...");
+  fflush(stdout);
+  // write particle configuration to file
+  char fname[FILE_NAME_SIZE] = "";
+  // open file for writing
+  sprintf(fname, "%spart_scalar_seeder.config", INPUT_DIR);
+  FILE *ofile = fopen(fname, "w");
+  if(ofile == NULL) {
+    fprintf(stderr, "Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  }
+  for(int i = 0; i < nparts; i++) {
+    fprintf(ofile, "s %f\n", parts_s[i].s);
+    fprintf(ofile, "update %d\n", parts_s[i].update);
+    fprintf(ofile, "cp %f\n", parts_s[i].cp);
+    fprintf(ofile, "rs %f\n", parts_s[i].rs);
+    fprintf(ofile, "order %d\n", parts_s[i].order);
+    fprintf(ofile, "\n");
+  }
+  fclose(ofile);
+  printf("done.\n");
+  printf("\n...bluebottle seeder scalar done.\n\n");
+  fflush(stdout);
 }
 
 void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz, 
@@ -821,6 +893,7 @@ void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz,
   // clean up
   domain_clean();
   parts_clean();
+
 }
 
 void seeder_array(int Nx, int Ny, int Nz, real loa, real a, real aFx, real aFy, 
