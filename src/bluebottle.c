@@ -487,7 +487,11 @@ int main(int argc, char *argv[]) {
         printf("Reading restart file...");
         fflush(stdout);
         in_restart();
+        parts_read_input_restart(turb); //read part.config in some property to change
+        //parts_show_config();
         scalar_in_restart();
+        parts_read_input_scalar_restart(); //re-read part.config for re-modify the particle property
+        //parts_scalar_show_config();
         printf("done.\n");
         fflush(stdout);
         printf("Copying host domain data to devices...");

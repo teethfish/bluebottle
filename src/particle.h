@@ -996,6 +996,23 @@ void parts_read_input(int turb);
  ******
  */
 
+
+/****f* particle/parts_read_input_restart()
+ * NAME
+ *  parts_read_input_restart()
+ * USAGE
+ */
+void parts_read_input_restart(int turb);
+/*
+ * FUNCTION
+ *  Read particle specfications from part.input.
+ * ARGUMENTS
+ *  * turb -- boolean operator for removing particles from turbulence precursor
+ ******
+ */
+
+
+
 /****f* particle/parts_show_config()
  * NAME
  *  parts_show_config()

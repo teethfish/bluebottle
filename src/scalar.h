@@ -177,6 +177,22 @@ void parts_read_input_scalar(void);
  * read in particle initial scalar value, k, intergrate surface and lamb solution order
  */
 
+
+void parts_read_input_scalar_restart(void);
+/* 
+ * FUNCTION
+ * read in part_scalar.config for scalar field after restart
+ *
+ */
+
+void parts_scalar_show_config(void);
+/*
+ * FUNCTION
+ * show particle scalar information
+ *
+ */
+
+
 void parts_init_scalar(void);
 /*
  * function

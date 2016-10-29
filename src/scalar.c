@@ -181,13 +181,17 @@ void scalar_read_input(void)
   }
 }
 
-
 void show_scalar_config(void)
 {
   if(scalar_on == 1) {
     printf("Show scalar.config...\n");
     printf("scalar_on is %d\n", scalar_on);
     printf("diffusivity is %f\n", s_D);
+    printf("conductivity is %f\n", s_k);
+    printf("perturbation_solution is %f\n", s_perturbation);
+    printf("lamb_cut is %f\n", lamb_cut_scalar);
+    printf("initial_scalar is %f\n", s_init);
+    printf("alpha is %f\n", s_alpha);
     printf("Boundary condition is:\n");
     printf("  On W ");
     if(bc_s.sW == DIRICHLET) printf("DIRICHELT BOUNDARY CONDITION %f\n", bc_s.sWD);
@@ -224,6 +228,21 @@ void show_scalar_config(void)
     else if(bc_s.sT == NEUMANN) printf("NEUMANN BOUNDARY CONDITION %f\n", bc_s.sTN);
     else if(bc_s.sT == PERIODIC) printf("PERIODIC BOUNDARY CONDITION\n");
     else printf(" bc_s.sT is wrong with value %d\n", bc_s.sT); 
+  }
+}
+
+void parts_scalar_show_config(void)
+{
+  if(scalar_on == 1) {
+    printf("Show part_scalar.config...\n");
+    for(int i = 0; i < nparts; i++) {
+      printf("  Particle %d:\n", i);
+      printf("    s = %f\n", parts_s[i].s0);
+      printf("    update = %d\n", parts_s[i].update);
+      printf("    cp = %f\n", parts_s[i].cp);
+      printf("    rs = %f\n", parts_s[i].rs);
+      printf("    order = %d\n", parts_s[i].order);
+    }
   }
 }
 
@@ -388,6 +407,89 @@ void parts_read_input_scalar(void)
     printf("parts_s[%d].rs is %f\n", i, parts_s[i].rs);
   }*/
 } 
+
+void parts_read_input_scalar_restart(void)
+{
+  if(scalar_on == 1) {
+    int i;
+    int fret = 0;
+    fret = fret; // prevent compiler warning
+    
+    real tmp1 = 0.0; // temporal value
+    int tmp2 = 0; // temporal value
+    int update = 0; // if anything is changed update = 1 
+
+    // open configuration file for reading
+    char fname[FILE_NAME_SIZE] = "";
+    sprintf(fname, "%s/input/part_scalar.config", ROOT_DIR);
+    FILE *infile = fopen(fname, "r");
+    if(infile == NULL) {
+      printf("no part_scalar.config for scalar field\n");
+    }
+
+    printf("\n   Reading part_scalar.config for any updated input ...\n");
+    // read nparts particles
+    for(i = 0; i < nparts; i++) {
+#ifdef DOUBLE
+      fret = fscanf(infile, "s %lf\n", &tmp1);
+      /*if(tmp1 != parts_s[i].s0) {
+        printf("    particle[%d].s0 can't be changed!\n", i);
+      }*/
+      fret = fscanf(infile, "update %d\n", &tmp2);
+      if(tmp2 != parts_s[i].update) {
+        printf("    particle[%d].update has been updated!\n", i);
+        parts_s[i].update = tmp2;
+        update = 1;
+      }
+      fret = fscanf(infile, "cp %lf\n", &tmp1);
+      if(tmp1 != parts_s[i].cp){
+        printf("    particle[%d].cp  has been updated!\n", i);
+        parts_s[i].cp = tmp1;
+        update = 1; 
+      }
+      fret = fscanf(infile, "rs %lf\n", &tmp1);
+      if(tmp1 != parts_s[i].rs){
+        printf("    particle[%d].rs  has been updated!\n", i);
+        parts_s[i].cp = tmp1;
+        update = 1;
+      }
+#else
+      fret = fscanf(infile, "s %f\n", &tmp1);
+      if(tmp1 != parts_s[i].s0) {
+        printf("    particle[%d].s0 can't be changed!\n");
+      }
+      fret = fscanf(infile, "update %d\n", &parts_s[i].update);
+      if(tmp2 != parts_s[i].update) {
+        printf("    particle[%d].update has been updated!\n", i);
+        parts_s[i].update = tmp2;
+        update = 1;
+      }
+      fret = fscanf(infile, "cp %f\n", &parts_s[i].cp);
+      if(tmp1 != parts_s[i].cp){
+        printf("    particle[%d].cp  has been updated!\n", i);
+        parts_s[i].cp = tmp1;
+        update = 1;
+      }
+      fret = fscanf(infile, "rs %f\n", &parts_s[i].rs);
+      if(tmp1 != parts_s[i].rs){
+        printf("    particle[%d].rs  has been updated!\n", i);
+        parts_s[i].cp = tmp1;
+        update = 1;
+      }
+#endif
+      fret = fscanf(infile, "order %d\n", &tmp2);
+      if(tmp2 != parts_s[i].order) {
+        printf("    particle[%d].order cann't be changed!\n", i);
+      }
+      fret = fscanf(infile, "\n");
+    }
+    fclose(infile);
+
+    if(update == 1)parts_scalar_show_config();
+  }
+}
+
+
 
 void parts_init_scalar(void)
 {

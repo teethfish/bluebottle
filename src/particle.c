@@ -158,6 +158,238 @@ void parts_read_input(int turb)
   fclose(infile);
 }
 
+void parts_read_input_restart(int turb)
+{
+  int i;  // iterator
+
+  int fret = 0;
+  fret = fret; // prevent compiler warning
+  
+  real tmp1 = 0.0; // temporary value
+  real tmp2 = 0.0; // temporary value
+  real tmp3 = 0.0; // temporary value
+  int tmp = 0;  // temporary value
+  int update = 0; // if anything is changed, update = 1
+
+  // open configuration file for reading
+  char fname[FILE_NAME_SIZE] = "";
+  sprintf(fname, "%s/input/part.config", ROOT_DIR);
+  FILE *infile = fopen(fname, "r");
+  if(infile == NULL) {
+    fprintf(stderr, "Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  }
+  
+  // read particle list
+  fret = fscanf(infile, "n %d\n", &fret);//already know this information
+  if(turb) nparts = 0; // remove particles from turbulence precursor simulation
+  // allocate particle list
+  
+  // allocate bin domain
+  // read nbody parameters, this parameters can be changed in simulation
+  printf("\n   Reading part.config for any updated input ...\n");
+  #ifdef DOUBLE 
+    fret = fscanf(infile, "(l/a) %lf\n", &tmp1);
+    if(tmp1 != interactionLengthRatio) {
+      printf("    \n interactionLengthRatio has been updated!\n");
+      update = 1;
+      interactionLengthRatio = tmp1;
+    }
+  #else
+    fret = fscanf(infile, "(l/a) %f\n", &interactionLengthRatio);
+  #endif
+
+  // read nparts particles
+  for(i = 0; i < nparts; i++) {
+    fret = fscanf(infile, "\n");
+#ifdef DOUBLE
+    fret = fscanf(infile, "r %lf\n", &tmp1);
+    fret = fscanf(infile, "(x, y, z) %lf %lf %lf\n",
+      &tmp1, &tmp1, &tmp1);
+    fret = fscanf(infile, "(aFx, aFy, aFz) %lf %lf %lf\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].aFx || tmp2 != parts[i].aFy || tmp3 != parts[i].aFz) {
+      printf("    \n particle[%d].aFx,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].aFx = tmp1;
+      parts[i].aFy = tmp2;
+      parts[i].aFz = tmp3;
+    }
+    fret = fscanf(infile, "(aLx, aLy, aLz) %lf %lf %lf\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].aLx || tmp2 != parts[i].aLy || tmp3 != parts[i].aLz) {
+      printf("    particle[%d].aLx,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].aLx = tmp1;
+      parts[i].aLy = tmp2;
+      parts[i].aLz = tmp3;
+    } 
+    fret = fscanf(infile, "rho %lf\n", &tmp1);
+    if(tmp1 != parts[i].rho) {
+      printf("    particle[%d].rho has been updated!\n", i);
+      update = 1;
+      parts[i].rho = tmp1;
+    }
+    fret = fscanf(infile, "E %lf\n", &tmp1);
+    if(tmp1 != parts[i].E) {
+      printf("    particle[%d].E has been updated!\n", i);
+      update = 1;
+      parts[i].E = tmp1;
+    }
+    fret = fscanf(infile, "sigma %lf\n", &tmp1);
+    if(tmp1 != parts[i].sigma) {
+      printf("    particle[%d].sigma has been updated!\n", i);
+      update = 1;
+      parts[i].sigma = tmp1;
+    }
+    fret = fscanf(infile, "e_dry %lf\n", &tmp1);
+    if(tmp1 != parts[i].e_dry) {
+      printf("    particle[%d].e_dry has been updated!\n", i);
+      update = 1;
+      parts[i].e_dry = tmp1;
+    }
+    fret = fscanf(infile, "coeff_fric %lf\n", &tmp1);
+    if(tmp1 != parts[i].coeff_fric) {
+      printf("    particle[%d].coeff_fric has been updated!\n", i);
+      update = 1;
+      parts[i].coeff_fric = tmp1;
+    }
+#else // single precision
+    fret = fscanf(infile, "r %f\n", &tmp1);
+    fret = fscanf(infile, "(x, y, z) %f %f %f\n",
+      &parts[i].x, &parts[i].y, &parts[i].z);
+    fret = fscanf(infile, "(aFx, aFy, aFz) %f %f %f\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].aFx || tmp2 != parts[i].aFy || tmp3 != parts[i].aFz) {
+      printf("    particle[%d].aFx,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].aFx = tmp1;
+      parts[i].aFy = tmp2;
+      parts[i].aFz = tmp3;
+    }
+    fret = fscanf(infile, "(aLx, aLy, aLz) %f %f %f\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].aLx || tmp2 != parts[i].aLy || tmp3 != parts[i].aLz) {
+      printf("    particle[%d].aLx,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].aLx = tmp1;
+      parts[i].aLy = tmp2;
+      parts[i].aLz = tmp3;
+    }
+    fret = fscanf(infile, "rho %f\n", &tmp1);
+    if(tmp1 != parts[i].rho) {
+      printf("    particle[%d].rho has been updated!\n", i);
+      update = 1;
+      parts[i].rho = tmp1;
+    }
+    fret = fscanf(infile, "E %f\n", &tmp1);
+    if(tmp1 != parts[i].E) {
+      printf("    particle[%d].E has been updated!\n", i);
+      update = 1;
+      parts[i].E = tmp1;
+    }
+    fret = fscanf(infile, "sigma %f\n", &tmp1);
+    if(tmp1 != parts[i].sigma) {
+      printf("    particle[%d].sigma has been updated!\n", i);
+      update = 1;
+      parts[i].sigma = tmp1;
+    }
+    fret = fscanf(infile, "e_dry %f\n", &tmp1);
+    if(tmp1 != parts[i].e_dry) {
+      printf("    particle[%d].e_dry has been updated!\n", i);
+      update = 1;
+      parts[i].e_dry = tmp1;
+    }
+    fret = fscanf(infile, "coeff_fric %f\n", &tmp1);
+    if(tmp1 != parts[i].e_dry) {
+      printf("    particle[%d].e_dry has been updated!\n", i);
+      update = 1;
+      parts[i].e_dry = tmp1;
+    }
+#endif 
+    fret = fscanf(infile, "order %d\n", &tmp);
+    if(tmp != parts[i].order) {
+      printf("    particle[%d].order cannot be changed!\n", i);
+    } 
+#ifdef DOUBLE 
+    fret = fscanf(infile, "rs/r %lf\n", &tmp1);
+    if(tmp1*parts[i].r != parts[i].rs) {
+      printf("    particle[%d].rs has been updated!\n", i);
+      printf("    tmp1*parts[i].r is %f and parts[i].rs is %f\n", tmp1*parts[i].r, parts[i].rs);
+      update = 1;
+      parts[i].rs = tmp1;
+      for(i = 0; i < nparts; i++) {
+         parts[i].rs = parts[i].rs * parts[i].r;
+      }
+    } 
+    fret = fscanf(infile, "spring_k %lf\n", &tmp1);
+    if(tmp1 != parts[i].spring_k) {
+      printf("    particle[%d].spring_k has been updated!\n", i);
+      update = 1;
+      parts[i].spring_k = tmp1;
+    } 
+    fret = fscanf(infile, "spring (x, y, z) %lf %lf %lf\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].spring_x || tmp2 != parts[i].spring_x || tmp3 != parts[i].spring_x) {
+      printf("    particle[%d].spring_x,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].spring_x = tmp1;
+      parts[i].spring_y = tmp2;
+      parts[i].spring_z = tmp3;
+    }
+    fret = fscanf(infile, "spring_l %lf\n", &tmp1);
+    if(tmp1 != parts[i].spring_l) {
+      printf("    particle[%d].spring_l has been updated!\n", i);
+      update = 1;
+      parts[i].spring_l = tmp1;
+    }
+#else // single precision
+    fret = fscanf(infile, "rs/r %f\n", &tmp1);
+    if(tmp1 != parts[i].rs) {
+      printf("    particle[%d].rs has been updated!\n", i);
+      update = 1;
+      parts[i].rs = tmp1;
+    }
+    fret = fscanf(infile, "spring_k %f\n", &tmp1);
+    if(tmp1 != parts[i].spring_k) {
+      printf("    particle[%d].spring_k has been updated!\n", i);
+      update = 1;
+      parts[i].spring_k = tmp1;
+    }
+    fret = fscanf(infile, "spring (x, y, z) %f %f %f\n",
+      &tmp1, &tmp2, &tmp3);
+    if(tmp1 != parts[i].spring_x || tmp2 != parts[i].spring_x || tmp3 != parts[i].spring_x) {
+      printf("    particle[%d].spring_x,y,z has been updated!\n", i);
+      update = 1;
+      parts[i].spring_x = tmp1;
+      parts[i].spring_y = tmp2;
+      parts[i].spring_z = tmp3;
+    }
+    fret = fscanf(infile, "spring_l %f\n", &tmp1);
+    if(tmp1 != parts[i].spring_l) {
+      printf("    particle[%d].spring_l has been updated!\n", i);
+      update = 1;
+      parts[i].spring_l = tmp1;
+    }
+#endif
+    fret = fscanf(infile, "translating %d\n", &tmp);
+    if(tmp != parts[i].translating) {
+      printf("    particle[%d].translating has been updated!\n", i);
+      update = 1;
+      parts[i].translating = tmp;
+    }
+    fret = fscanf(infile, "rotating %d\n", &tmp);
+    if(tmp != parts[i].rotating) {
+      printf("    particle[%d].rotating has been updated!\n", i);
+      update = 1;
+      parts[i].rotating = tmp;
+    }
+  }
+
+  fclose(infile);
+  if(update == 1) parts_show_config();
+}
+
 void parts_show_config(void)
 {
   int i;  // iterator
@@ -215,7 +447,7 @@ void parts_show_config(void)
     printf("    e_dry = %e\n", parts[i].e_dry);
     printf("    coeff_fric = %e\n", parts[i].coeff_fric);
     printf("    order = %d\n", parts[i].order);
-    printf("    rs = %e\n", parts[i].rs);
+    printf("    rs = %f\n", parts[i].rs);
     printf("    spring_k = %f\n", parts[i].spring_k);
     printf("    spring (x, y, z) = (%e %e %e)\n", parts[i].spring_x,
       parts[i].spring_y, parts[i].spring_z);
