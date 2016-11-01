@@ -2952,8 +2952,8 @@ void cuda_collisions(void);
  *  seeder_read_input()
  * USAGE
  */
-void seeder_read_input(int Nx, int Ny, int Nz);//, double ddz, double bias, 
-  //int nperturb);
+void seeder_read_input(int Nx, int Ny, int Nz, double ddz, double bias, 
+  int nperturb);
 /*
   * FUNCTION
   *   Read parts.config for seeder initialization
@@ -3028,7 +3028,7 @@ void seeder(int nparts, real loa, real a, real aFx, real aFy, real aFz,
  */
 void seeder_array(int Nx, int Ny, int Nz, real loa, real a, real aFx, real aFy, 
   real aFz, real aLx, real aLy, real aLz, real rho, real E, real sigma, 
-  real e_dry, int o, real rs_r, real spring_k, real spring_x, 
+  real e_dry, real coeff_fric, int o, real rs_r, real spring_k, real spring_x, 
   real spring_y, real spring_z, real spring_l, int t, int r);
 /* FUNCTION
  *  Seed Nx*Ny*Nz particles in the domain as a regular array shape. To use this 
@@ -3071,7 +3071,7 @@ void seeder_array(int Nx, int Ny, int Nz, real loa, real a, real aFx, real aFy,
  */
 void seeder_hex(int Nx, int Ny, int Nz, double ddz, real loa, real a, real aFx, 
   real aFy, real aFz, real aLx, real aLy, real aLz, real rho, real E, 
-  real sigma, real e_dry, int o, real rs_r, real spring_k, 
+  real sigma, real e_dry, real coeff_fric, int o, real rs_r, real spring_k, 
   real spring_x, real spring_y, real spring_z, real spring_l, int t, int r);
 /* FUNCTION
  *  Seed Nx*Ny*Nz particles in the domain in a hex shape. To use this function, 
@@ -3115,7 +3115,7 @@ void seeder_hex(int Nx, int Ny, int Nz, double ddz, real loa, real a, real aFx,
  */
 void seeder_high_vol_random(int Nx, int Ny, int Nz, double bias, int nperturb, 
   real loa, real a, real aFx, real aFy, real aFz, real aLx, real aLy, real aLz, 
-  real rho, real E, real sigma, real e_dry, int o, real rs, 
+  real rho, real E, real sigma, real e_dry, real coeff_fric, int o, real rs, 
   real spring_k, real spring_x, real spring_y, real spring_z, real spring_l, 
   int t, int r);
 /* FUNCTION

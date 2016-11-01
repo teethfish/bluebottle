@@ -245,16 +245,15 @@ int main(int argc, char *argv[]) {
       tmp = tmp;
       if (c == 'Y' || c == 'y') {
         printf("Seed particles for which kind of");
-        printf(" array? (r)andom\n");// / (a)rray / (h)ex / (p)erturbed?\n");
+        printf(" (r)andom / (a)rray / (h)ex / (p)erturbed?\n");
         fflush(stdout);
         int type = getchar();
         tmp = getchar();
         int Nx = 0; int Ny = 0; int Nz = 0; 
-        //double ddz = 0.0; double bias = 0.0; int nperturb = 0;
+        double ddz = 0.0; double bias = 0.0; int nperturb = 0;
         if(type == 'r'){
-          seeder_read_input(Nx, Ny, Nz);//, ddz, bias, nperturb);
+          seeder_read_input(Nx, Ny, Nz, ddz, bias, nperturb);
         }
-        /*
         if(type == 'a'){
           printf("Please input the number of particles in the x direction\n");
           fflush(stdout);
@@ -305,8 +304,7 @@ int main(int argc, char *argv[]) {
           printf("Nx Ny Nz bias nperturb is: %d %d %d %lf %d\n",Nx, Ny, Nz, bias,
             nperturb);
           seeder_read_input(Nx, Ny, Nz, ddz, bias, nperturb);
-        }
-        */
+        } 
         return EXIT_SUCCESS;
       } else {
         printf("Please specify the desired parameters in parts.config\n\n");
