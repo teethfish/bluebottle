@@ -191,7 +191,7 @@ void seeder_read_input(int Nx, int Ny, int Nz, double ddz, double bias, int nper
   fflush(stdout);
 
   if(Nx == 0 && Ny == 0 && Nz == 0){ // random case
-    seeder(N, loa, a, aFx, aFy, aFz, aLx, aLy, aLz, rho, E, sigma, e_dry,
+     seeder_distribution(N, loa, a, aFx, aFy, aFz, aLx, aLy, aLz, rho, E, sigma, e_dry,
       coeff_fric, order, rs_r, spring_k, spring_x, spring_y, spring_z, spring_l,
       trans, rot);   
   } //else printf("This function is not availiable.\n");
@@ -257,7 +257,7 @@ void seeder_scalar(int nparts, real s, int update, real cp, real rs, int order_s
   fflush(stdout);
   parts_s = (part_struct_scalar*) malloc(nparts * sizeof(part_struct_scalar));
   for(int i = 0; i < nparts; i++) {
-    parts_s[i].s = 0.0; //s * (rand() / (real)RAND_MAX - 0.5);
+    parts_s[i].s = s * (rand() / (real)RAND_MAX - 0.5);
     parts_s[i].update = update;
     parts_s[i].cp = cp;
     parts_s[i].rs = rs;
@@ -1366,4 +1366,352 @@ void seeder_high_vol_random(int Nx, int Ny, int Nz, double bias, int nperturb,
   // clean up
   domain_clean();
   parts_clean(); 
-}  
+}
+
+void seeder_distribution(int nparts, real loa, real a, real aFx, real aFy,
+  real aFz, real aLx, real aLy, real aLz, real rho, real E, real sigma,
+  real e_dry,real coeff_fric, int o, real rs, real spring_k, real spring_x,
+  real spring_y,real spring_z, real spring_l, int t, int r) {
+
+  // genrate random variables and let them satisfy a certain distribution
+  printf("Running bluebottle seeder(distributed) for %d particles...\n\n", nparts);
+  fflush(stdout);
+  real xx, yy, zz;
+  int fits = 1;
+  int attempts = 1;
+  int fail = 0;
+  int redo = 1;
+
+  // seed the random number generator
+  srand(time(NULL));
+
+  // read domain input
+  domain_read_input();
+  domain_init(); 
+
+  // domain size accounting for screen
+  real xs = Dom.xs + bc.dsW;
+  real xe = Dom.xe - bc.dsE;
+  real xl = Dom.xl - bc.dsE - bc.dsW;
+  real ys = Dom.ys + bc.dsS;
+  real ye = Dom.ye - bc.dsN;
+  real yl = Dom.yl - bc.dsN - bc.dsS;
+  real zs = Dom.zs + bc.dsB;
+  real ze = Dom.ze - bc.dsT;
+  real zl = Dom.zl - bc.dsT - bc.dsB;
+
+  // PDF=Const.*cos(lambda*x); CDF = Cost.*sin(lambda*x)/lambda; generate random number u, then x = asin(u*Lx*sin(lambda*Lx))/lambda;lambda <= pi/2/Lx; the smaller the lambda, the smoother the gradient is.
+
+  // since we used asin function, to guarantee correction, all length scale will be normalized by xl and moved into region x belongs to (0,1);
+  ys = ys/xl;
+  ye = ye/xl;
+  yl = yl/xl;   // length in y
+  zs = zs/xl;
+  ze = ze/xl;
+  zl = zl/xl;   // length in z
+  a = a/xl;     // particle radius
+  xs = 0;
+  xe = 1;
+  xl = 1;       // length in x
+  //real lambda = PI/2/xl;
+  real lambda_x = 1; // the period = Lx/lambda_x;
+  
+  // allocate particle list
+  parts = (part_struct*) malloc(nparts * sizeof(part_struct));
+  cpumem += nparts * sizeof(part_struct);
+
+  real gap = 1.00;
+
+  // place the first particle
+  parts[0].r = a;
+  redo = 1;
+  while(redo == 1) {
+    redo = 0;
+    parts[0].x = newtonrapson(rand() / (real)RAND_MAX, xl, xl*yl*zl, lambda_x);
+    if((bc.uW != PERIODIC) && (parts[0].x < (xs + gap*parts[0].r)))
+      redo = 1;
+    if((bc.uE != PERIODIC) && (parts[0].x > (xe - gap*parts[0].r)))
+      redo = 1;
+  }
+  redo = 1;
+  while(redo == 1) {
+    redo = 0;
+    parts[0].y = rand() / (real)RAND_MAX;
+    parts[0].y *= yl;
+    parts[0].y += ys;
+    if((bc.vS != PERIODIC) && (parts[0].y < (ys + gap*parts[0].r)))
+      redo = 1;
+    if((bc.vN != PERIODIC) && (parts[0].y > (ye - gap*parts[0].r)))
+      redo = 1;
+  }
+  redo = 1;
+  while(redo == 1) {
+    redo = 0;
+    parts[0].z = rand() / (real)RAND_MAX;
+    parts[0].z *= zl;
+    parts[0].z += zs;
+    if((bc.wB != PERIODIC) && (parts[0].z < (zs + gap*parts[0].r)))
+      redo = 1;
+    if((bc.wT != PERIODIC) && (parts[0].z > (ze - gap*parts[0].r)))
+      redo = 1;
+  }
+
+  // place the rest of the particles 
+  int i = 0;
+  for(i = 1; i < nparts; i++) {
+    printf("calculating %d particle according to distribution....\n", i);
+    fits = !fits;
+    if(fail) break;
+    while(!fits) {
+      attempts++;
+
+      // place particle
+      parts[i].r = a;
+      redo = 1;
+      while(redo == 1) {
+        redo = 0;
+        parts[i].x = newtonrapson(rand() / (real)RAND_MAX, xl, xl*yl*zl, lambda_x);
+        if((bc.uW != PERIODIC) && (parts[i].x < (xs + gap*parts[i].r)))
+          redo = 1;
+        if((bc.uE != PERIODIC) && (parts[i].x > (xe - gap*parts[i].r)))
+          redo = 1;
+      }
+      redo = 1;
+      while(redo == 1) {
+        redo = 0;
+        parts[i].y = rand() / (real)RAND_MAX;
+        parts[i].y *= yl;
+        parts[i].y += ys;
+        if((bc.vS != PERIODIC) && (parts[i].y < (ys + gap*parts[i].r)))
+          redo = 1;
+        if((bc.vN != PERIODIC) && (parts[i].y > (ye - gap*parts[i].r)))
+          redo = 1;
+      }
+      redo = 1;
+      while(redo == 1) {
+        redo = 0;
+        parts[i].z = rand() / (real)RAND_MAX;
+        parts[i].z *= zl;
+        parts[i].z += zs;
+        if((bc.wB != PERIODIC) && (parts[i].z < (zs + gap*parts[i].r)))
+          redo = 1;
+        if((bc.wT != PERIODIC) && (parts[i].z > (ze - gap*parts[i].r)))
+          redo = 1;
+      } 
+      //printf("particle[%d].x,y,z is %f %f %f\n", i, parts[i].x, parts[i].y, parts[i].z);
+      // check that this particle does not intersect any other particle
+      fits = !fits;
+      for(int j = 0; j < i; j++) {
+        xx = parts[i].x - parts[j].x;
+        xx = xx * xx;
+        yy = parts[i].y - parts[j].y;
+        yy = yy * yy;
+        zz = parts[i].z - parts[j].z;
+        zz = zz * zz;
+        if(sqrt(xx + yy + zz) < (gap*parts[i].r + gap*parts[j].r)) {
+          fits = !fits;
+          //break;
+          goto jmp;
+        }      
+
+        // also use virtual particle to check if a particle is too close in a periodic direction, x will not be the periodic direction
+        
+        // y only: if vS == PERIODIC then vN == PERIODIC
+        if(bc.vS == PERIODIC) {
+          xx = parts[i].x - parts[j].x;
+          yy = parts[i].y - parts[j].y;
+          zz = parts[i].z - parts[j].z;
+          if(parts[i].y < (ys + parts[i].r))
+            yy = parts[i].y + yl - parts[j].y;
+          if(parts[i].y > (ye - parts[i].r))
+            yy = parts[i].y - yl - parts[j].y;
+          xx = xx * xx;
+          yy = yy * yy;
+          zz = zz * zz;
+          if(sqrt(xx + yy + zz) < (gap*parts[i].r + gap*parts[j].r)) {
+            fits = !fits;
+            //break;
+            goto jmp;
+          }
+        }
+
+        // z only
+        if(bc.wB == PERIODIC) {
+          xx = parts[i].x - parts[j].x;
+          yy = parts[i].y - parts[j].y;
+          zz = parts[i].z - parts[j].z;
+          if(parts[i].z < (zs + parts[i].r))
+            zz = parts[i].z + zl - parts[j].z;
+          if(parts[i].z > (ze - parts[i].r))
+            zz = parts[i].z - zl - parts[j].z;
+          xx = xx * xx;
+          yy = yy * yy;
+          zz = zz * zz;
+          if(sqrt(xx + yy + zz) < (gap*parts[i].r + gap*parts[j].r)) {
+            fits = !fits;
+            //break;
+            goto jmp;
+          }
+        }
+
+        // y and z
+        if(bc.vS == PERIODIC && bc.wB == PERIODIC) {
+          xx = parts[i].x - parts[j].x;
+          yy = parts[i].y - parts[j].y;
+          zz = parts[i].z - parts[j].z;
+          if(parts[i].y < (ys + parts[i].r))
+            yy = parts[i].y + yl - parts[j].y;
+          if(parts[i].y > (ye - parts[i].r))
+            yy = parts[i].y - yl - parts[j].y;
+          yy = yy * yy;
+          if(parts[i].z < (zs + parts[i].r))
+            zz = parts[i].z + zl - parts[j].z;
+          if(parts[i].z > (ze - parts[i].r))
+            zz = parts[i].z - zl - parts[j].z;
+          xx = xx * xx;
+          yy = yy * yy;
+          zz = zz * zz;
+          if(sqrt(xx + yy + zz) < (gap*parts[i].r + gap*parts[j].r)) {
+            fits = !fits;
+            //break;
+            goto jmp;
+          }
+        }
+      }
+      jmp:
+      if(attempts == 2e5*nparts) {
+        fail = !fail;
+        break;
+      } 
+    }
+  }
+
+  if(fail) {
+    printf("After %d attempts, the seeder has placed", attempts);
+    printf(" %d of %d particles (a = %f).\n\n", i-1, nparts, a);
+    printf("...bluebottle seeder done.\n\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(fail) {
+    printf("After %d attempts, the seeder has placed", attempts);
+    printf(" %d of %d particles (a = %f).\n\n", i-1, nparts, a);
+    printf("...bluebottle seeder done.\n\n");
+    exit(EXIT_FAILURE);
+  }
+
+  printf("It took %d attempts to place %d", attempts, nparts);
+  printf(" particles (a = %f) with no intersections.\n\n", a);
+  fflush(stdout);
+
+  real Lx = Dom.xl - bc.dsE - bc.dsW;
+  printf("Lx is %f\n", Lx);
+  for(i = 0; i < nparts; i++) {
+    //for distribution only of partial period, normalize domain into 0~1, otherwise don;t need this
+    parts[i].r = parts[i].r*Lx;
+    parts[i].x = (Dom.xs + bc.dsW) + parts[i].x*Lx;
+    parts[i].y *= Lx;
+    parts[i].z *= Lx;
+    parts[i].u = 0;
+    parts[i].v = 0;
+    parts[i].w = 0;
+    parts[i].aFx = aFx;
+    parts[i].aFy = aFy;
+    parts[i].aFz = aFz;
+    parts[i].aLx = aLx;
+    parts[i].aLy = aLy;
+    parts[i].aLz = aLz;
+    parts[i].rho = rho;
+    parts[i].E = E;
+    parts[i].sigma = sigma;
+    parts[i].e_dry = e_dry;
+    parts[i].coeff_fric = coeff_fric;
+    parts[i].order = o;
+    parts[i].rs = rs;
+    parts[i].spring_k = spring_k;
+    parts[i].spring_x = spring_x;
+    parts[i].spring_y = spring_y;
+    parts[i].spring_z = spring_z;
+    parts[i].spring_l = spring_l;
+    parts[i].ncoeff = 0;
+    parts[i].translating = t;
+    parts[i].rotating = r;
+  }
+  printf("Writing part_seeder.config...");
+  fflush(stdout);
+  // write particle configuration to file
+  char fname[FILE_NAME_SIZE] = "";
+  // open file for writing
+  sprintf(fname, "%spart_seeder.config", INPUT_DIR);
+  FILE *ofile = fopen(fname, "w");
+  if(ofile == NULL) {
+    fprintf(stderr, "Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  }
+
+  // write the number of particles and compact support length ratio
+  fprintf(ofile, "n %d\n", nparts);
+  fprintf(ofile, "(l/a) %f\n", loa);
+
+  // write each particle configuration
+  for(int i = 0; i < nparts; i++) {
+    fprintf(ofile, "\n");
+    fprintf(ofile, "r %f\n", parts[i].r);
+    fprintf(ofile, "(x, y, z) %f %f %f\n", parts[i].x, parts[i].y, parts[i].z);
+    fprintf(ofile, "(aFx, aFy, aFz) %f %f %f\n", parts[i].aFx, parts[i].aFy,
+      parts[i].aFz);
+    fprintf(ofile, "(aLx, aLy, aLz) %f %f %f\n", parts[i].aLx, parts[i].aLy,
+      parts[i].aLz);
+    fprintf(ofile, "rho %f\n", parts[i].rho);
+    fprintf(ofile, "E %f\n", parts[i].E);
+    fprintf(ofile, "sigma %f\n", parts[i].sigma);
+    fprintf(ofile, "e_dry %f\n", parts[i].e_dry);
+    fprintf(ofile, "coeff_fric %f\n", parts[i].coeff_fric);
+    fprintf(ofile, "order %d\n", parts[i].order);
+    fprintf(ofile, "rs/r %f\n", parts[i].rs);
+    fprintf(ofile, "spring_k %f\n", parts[i].spring_k);
+    fprintf(ofile, "spring (x, y, z) %f %f %f\n",
+      parts[i].spring_x, parts[i].spring_y, parts[i].spring_z);
+    fprintf(ofile, "spring_l %f\n", parts[i].spring_l);
+    fprintf(ofile, "translating %d\n", parts[i].translating);
+    fprintf(ofile, "rotating %d\n", parts[i].rotating);
+  }
+
+  // close the file
+  fclose(ofile);
+  printf("done.\n");
+  printf("\n...bluebottle seeder done.\n\n");
+  fflush(stdout);
+
+  // clean up
+  domain_clean();
+  parts_clean();
+}
+
+// solve equation x + Lx/(2*pi*lambda)*sin(2*pi*lambda*x/Lx) = u*Vol, where u is a random number ranges in [xs, xe]
+real newtonrapson(real u, real lx, real Vol, real lambda) {
+  real epsilon = 0.0001;
+  real x_old = 0, x_bot, x_top;
+  real x_new = rand() / (real)RAND_MAX;
+  int step = 0;
+  while (fabs(x_new - x_old) > epsilon) {
+    if (x_old == 0.5) return 100000.0; // x_old can't equal to 0.5
+    x_old = x_new;
+    x_bot = 1 + cos(2*PI*lambda*x_old/lx);
+    x_top = x_old + lx/2/PI/lambda*sin(2*PI*lambda*x_old/lx) - u*Vol;
+    x_new = x_old - x_top/x_bot;
+    step++;
+    if (x_new > 10000.0) {
+      break;
+    }
+    if (step > 1e6) {
+      printf("...Newton Rapson for solveing particle position fails. Check configuration\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+  printf("u, lx, Vol, lambda, x_new is %f %f %f %f %f\n", u, lx, Vol, lambda, x_new);
+  return x_new;
+}
+
+
+

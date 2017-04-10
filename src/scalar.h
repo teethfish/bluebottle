@@ -78,12 +78,13 @@ typedef struct part_struct_scalar {
  * MEMBERS
  * * s0 is the previous time step scalar value
  * * s is the current time step scalar value
+ * * update is 1 when the particle's temperature change with fluid, is 0 when particle surface temperature is fixed
+ * * rs the integrate surface
+ * * q is the intergral of hear flux across the particle surface
  * * k is the termal conductivity for each particle
+ * * cp is the particle specific heat
  * * order is the order to keep lamb solution, equals to index n in Ynm
  * * ncoeff is the corresponding m index in Ynm
- * * rs the integrate surface
- * * cp is the particle specific heat
- * * q is the intergral of hear flux across the particle surface
  * * dsdr is the scalar gradient at particle surface for Lebsque nodes
 */
 
@@ -96,23 +97,23 @@ extern int coeff_stride_scalar;
  * stores the maximum order for all particles for lamb solution, equal to max index n in Ynm
  */
 
-extern real lamb_cut_scalar;
+extern real lamb_cut_scalar; // lamb cut-off for scalar calculation
 
-extern real s_init; //initial temperature
+extern real s_init; //initial temperature for fluid
 
-extern real s_alpha; //coefficient of thermal expansion
+extern real s_alpha; //coefficient of thermal expansion, used in bousinesq assumption, alpha*gravity*(T-T_ref)
 
-extern real s_D; // thermal diffusivity
+extern real s_D; // thermal diffusivity, used in diffusivity term, D\nabla_T^2
 
-extern real s_k; //thermal conductivity of fluid
+extern real s_k; //thermal conductivity of fluid, s_k = s_D*\rho_f*c_pp
 
-extern real s_perturbation;
+extern real s_perturbation; // the perturbation solution for T by including the effect of rapidly changing particle surface temperature. See JCP paper.
 
-extern int scalar_on;
+extern int scalar_on; // scalar_on = 1: calculate the temperature field
 
 
-extern real *s0;
-extern real *s;
+extern real *s0; //previous step fluid temperature
+extern real *s; // current step fluid temperature
 extern real *conv0_s;
 extern real *conv_s;
 extern real *diff0_s;
@@ -126,7 +127,7 @@ extern real **_diff0_s;
 extern real **_diff_s;
 
 
-extern real *anm_re;
+extern real *anm_re; // lamb coefficients
 extern real *anm_im;
 extern real *anm_re0;
 extern real *anm_im0;

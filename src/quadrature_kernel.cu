@@ -372,6 +372,40 @@ __device__ real pnm(int n, int m, real theta)
         case 4: return 945.*x*y*y*y*y;
         case 5: return -945.*y*y*y*y*y;
       }
+    case 6:
+      switch(m) {
+        case -6: return 0.000021701388889*y*y*y*y*y*y;
+        case -5: return 0.000260416666667*x*y*y*y*y*y;
+        case -4: return 0.000260416666667*y*y*y*y*(11*x*x - 1);
+        case -3: return 0.002604166666667*x*y*y*y*(11*x*x - 3);
+        case -2: return 0.0078125*y*y*(33.*x*x*x*x - 18.*x*x + 1);
+        case -1: return 0.0625*x*y*(33.*x*x*x*x - 30.*x*x + 5);
+        case 0: return 0.0625*(231.*x*x*x*x*x*x - 315.*x*x*x*x + 105.*x*x - 5);
+        case 1: return -2.625*x*y*(33.*x*x*x*x - 30.*x*x + 5);
+        case 2: return 13.125*y*y*(33.*x*x*x*x - 18.*x*x + 1);
+        case 3: return -157.5*x*y*y*y*(11*x*x - 3);
+        case 4: return 472.5*y*y*y*y*(11*x*x - 1);
+        case 5: return -10395.*x*y*y*y*y*y;
+        case 6: return 10395.*y*y*y*y*y*y;
+      }
+    case 7:
+      switch(m) {
+        case -7: return 0.000001550099206*y*y*y*y*y*y*y;
+        case -6: return 0.000021701388889*x*y*y*y*y*y*y;
+        case -5: return 0.000021701388889*x*y*y*y*y*(13.*x*x - 1);
+        case -4: return 0.000260416666667*x*y*y*y*y*(13.*x*x - 3);
+        case -3: return 0.000260416666667*y*y*y*(143*x*x*x*x - 66.*x*x + 3);
+        case -2: return 0.002604166666667*x*y*y*(143.*x*x*x*x - 110.*x*x + 15);
+        case -1: return 0.0078125*y*(429.*x*x*x*x*x*x - 495.*x*x*x*x + 135.*x*x - 5);
+        case 0: return 0.0625*x*(429.*x*x*x*x*x*x - 693.*x*x*x*x + 315.*x*x - 35);
+        case 1: return -0.4375*y*(429.*x*x*x*x*x*x - 495.*x*x*x*x + 135.*x*x - 5);
+        case 2: return 7.875*x*y*y*(143.*x*x*x*x - 110.*x*x + 15);
+        case 3: return -39.375*y*y*y*(143*x*x*x*x - 66.*x*x + 3);
+        case 4: return 1732.5*x*y*y*y*y*(13.*x*x - 3);
+        case 5: return -5197.5*x*y*y*y*y*(13.*x*x - 1);
+        case 6: return 135135.*x*y*y*y*y*y*y;
+        case 7: return -135135.*y*y*y*y*y*y*y;
+      }
   }
   return 0; // this should never be reached
 }

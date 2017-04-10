@@ -3154,6 +3154,62 @@ void seeder_high_vol_random(int Nx, int Ny, int Nz, double bias, int nperturb,
  ******
 */
 
+/****f* bluebottle/seeder()
+ * NAME
+ *  seeder_distribution()
+ * USAGE
+ */
+void seeder_distribution(int nparts, real loa, real a, real aFx, real aFy, real aFz,
+  real aLx, real aLy, real aLz, real rho, real E, real sigma, real e_dry,
+  real coeff_fric, int o, real rs_r, real spring_k, real spring_x, real spring_y,
+  real spring_z, real spring_l, int t, int r);
+/*
+ * FUNCTION
+ *  Seed nparts particles in the domain satisfy a certain distribution. To use this function, run
+ *  'bluebottle -s', using the arguments as defined below. A new
+ *  file called part_seeder.config will be created and the main bluebottle
+ *  simulation code will not be run. To run a simulation using this input file,
+ *  change its name to part.config and run bluebottle normally.
+ * ARGUMENTS
+ *  * nparts -- the number of particles
+ *  * loa -- particle interaction compact support length ratio
+ *  * a -- the radius of the particles
+ *  * aFx -- particle x forcing
+ *  * aFy -- particle y forcing
+ *  * aFz -- particle z forcing
+ *  * aLx -- particle x angular forcing
+ *  * aLy -- particle y angular forcing
+ *  * aLz -- particle z angular forcing
+ *  * d -- the density of the particles (rho)
+ *  * E -- the particle Young's modulus
+ *  * s -- the particle Poisson ratio (-1 < s <= 0.5)
+ *  * e_dry -- dry coefficient of restitution
+ *  * coeff_fric -- coefficient of friction
+ *  * o -- the order of truncation of the Lamb's solution
+ *  * rs_r -- cage extent ratio
+ *  * spring_k -- particle spring constant
+ *  * spring_x -- particle spring x location
+ *  * spring_y -- particle spring y location
+ *  * spring_z -- particle spring z location
+ *  * spring_l -- particle spring length
+ *  * t -- one if translating, zero if not
+ *  * r -- one if rotating, zero if not
+ ******
+ */
+/*
+This function can be used in any direction
+Initial guess of Newton Rapson method may affect the final results
+*/
+real newtonrapson(real u, real lx, real Vol, real lambda);
+/*
+ * u is the random number generated between [xs, xe];
+ * lx is the domain length in x direction;
+ * Vol is the volume size = Lx*Ly*Lz;
+ * lambda is the frequency of wave, e.g, wave length = Lx/lambda;
+ */
+
+
+
 /****f* bluebottle/out_restart()
  * NAME
  *  out_restart()

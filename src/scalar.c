@@ -454,9 +454,9 @@ void parts_read_input_scalar_restart(void)
     for(i = 0; i < nparts; i++) {
 #ifdef DOUBLE
       fret = fscanf(infile, "s %lf\n", &tmp1);
-      /*if(tmp1 != parts_s[i].s0) {
+      if(tmp1 != parts_s[i].s0) {
         printf("    particle[%d].s0 can't be changed!\n", i);
-      }*/
+      }
       fret = fscanf(infile, "update %d\n", &tmp2);
       if(tmp2 != parts_s[i].update) {
         printf("    particle[%d].update has been updated!\n", i);

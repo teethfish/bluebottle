@@ -2,7 +2,7 @@
  ********************************* BLUEBOTTLE **********************************
  *******************************************************************************
  *
- *  Copyright 2015 - 2016 Yayun Wang, The Johns Hopkins University
+ *  Copyright 2015 - 2017 Yayun Wang, The Johns Hopkins University
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ __global__ void BC_s_E_N(real *s, dom_struct *dom, real bc_s)
   int s2b = dom->Gcc._s2b;
 
   if((tj < dom->Gcc._jnb) && (tk < dom->Gcc._knb)) {
-    s[dom->Gcc._ie + tj*s1b + tk*s2b] = s[(dom->Gcc._ie-1) + tj*s1b + tk*s2b] - dom->dx*bc_s;
+    s[dom->Gcc._ie + tj*s1b + tk*s2b] = s[(dom->Gcc._ie-1) + tj*s1b + tk*s2b] + dom->dx*bc_s;
   }
 }
 
@@ -143,7 +143,7 @@ __global__ void BC_s_N_N(real *s, dom_struct *dom, real bc_s)
   int s2b = dom->Gcc._s2b;
 
   if((ti < dom->Gcc._inb) && (tk < dom->Gcc._knb))
-    s[ti + (dom->Gcc._je)*s1b + tk*s2b] = s[ti + (dom->Gcc._je-1)*s1b + tk*s2b] - dom->dy*bc_s;
+    s[ti + (dom->Gcc._je)*s1b + tk*s2b] = s[ti + (dom->Gcc._je-1)*s1b + tk*s2b] + dom->dy*bc_s;
 }
 
 // S plane
@@ -264,7 +264,7 @@ __global__ void BC_s_T_N(real *s, dom_struct *dom, real bc_s)
   int s2b = dom->Gcc._s2b;
 
   if((ti < dom->Gcc._inb) && (tj < dom->Gcc._jnb))
-    s[ti + tj*s1b + (dom->Gcc._ke)*s2b] = s[ti + tj*s1b + (dom->Gcc._ke-1)*s2b] - bc_s*dom->dz;
+    s[ti + tj*s1b + (dom->Gcc._ke)*s2b] = s[ti + tj*s1b + (dom->Gcc._ke-1)*s2b] + bc_s*dom->dz;
 }
 
 __global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, real *conv0_s, real *diff0_s, real *u, real *v, real *w, real s_D, dom_struct *dom, real dt, real dt0)
@@ -320,14 +320,16 @@ __global__ void scalar_explicit(real *s0, real *s, real *conv_s, real *diff_s, r
         s[C] = s0[C] + dt * (diff_s[C] - conv_s[C]);
       }
 
-      /*if(s[C] > 150.0 || s[C] < -10.){
-        printf("s[%d] is %f, i,j,k is %d %d %d, conv,diff is %f %f; is %f %f %f %f %f %f\n", C, s[C], i, tj, tk, conv_s[C], diff_s[C],s0[Cx0],s0[Cx1],s0[Cy0],s0[Cy1], s0[Cz0], s0[Cz1]);
+      //if( C > 63755 && C < 63795){
+      /*if( C == 37930 || C == 37931 || C == 37932 || C == 37961 || C == 37962 || C == 37963) {
+        printf("s0[%d] %.2f s[C] %.2f i %d diff %.2f, s0[Cx0] %.2f s0[C] %.2f s0[Cx1] %.2f s0[Cy0] %.2f s0[C] %.2f s0[Cy1] %.2f s0[Cz0] %.2f s0[C] %.2f s0[Cz1] %.2f\n", C, s0[C], s[C], i, diff_s[C], s0[Cx0], s0[C], s0[Cx1], s0[Cy0],s0[C],s0[Cy1],s0[Cz0], s0[C], s0[Cz1]);
       }*/
 
     }
   }
 }
 
+// intend for debugging
 __global__ void show_variable(real *s0, real *s, dom_struct *dom)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x + DOM_BUF;
@@ -343,7 +345,7 @@ __global__ void show_variable(real *s0, real *s, dom_struct *dom)
   }
 }
 
-
+// intend for updating scalar, but it is not actually used
 __global__ void update_scalar(real *s, real *s0, real *conv_s, real *conv0_s, real *diff_s, real *diff0_s, dom_struct *dom)
 {
   int tj = blockIdx.x * blockDim.x + threadIdx.x + DOM_BUF;
@@ -469,7 +471,9 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
   // assumption that sclar is a constant on the particle surface
   ss[node+nnodes*part] = s_c + dsdx*(x-xx) + dsdy*(y-yy) + dsdz*(z-zz) - parts_s[part].s;
 
- // printf("ss[%d] is %f, s_c,dsdx, dsdy, dsdz is %f %f %f %f\n", node+nnodes*part, ss[node+nnodes*part], s_c, dsdx, dsdy, dsdz);
+  /*if(node+nnodes*part <= 6) {
+     printf("ss[%d] is %f, dsdx %f, C %d s_c %f s_w %f s_e %f\n", node+nnodes*part, ss[node+nnodes*part], dsdx, C, s_c, s_w, s_e);
+}*/
   // wall temperature if this node intersects wall
   real sswall = (parts[part].nodes[node] == -10)*bc_s.sWD
             + (parts[part].nodes[node] == -11)*bc_s.sED
@@ -479,7 +483,7 @@ __global__ void interpolate_nodes_scalar(real *s, part_struct *parts, part_struc
             + (parts[part].nodes[node] == -15)*bc_s.sTD;
   ss[node+nnodes*part] = (parts[part].nodes[node]==-1)*ss[node+part*nnodes]
                         + (parts[part].nodes[node] < -1)*sswall;
-  //printf("ss[%d] is %f\n", node+nnodes*part, ss[node+nnodes*part]);
+  //printf("intrpreted temperature:ss[%d] is %f\n", node+nnodes*part, ss[node+nnodes*part]);
 }
     
 __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *parts_s, int *nn, int *mm, real *node_t, real *node_p, real *ss, int stride_scalar, real *anm_re, real *anm_re0, real *anm_im, real *anm_im0, real *int_scalar_re, real *int_scalar_im, int nnodes, real A1, real A2, real A3, real B)
@@ -529,12 +533,12 @@ __global__ void cuda_get_coeffs_scalar(part_struct *parts, part_struct_scalar *p
       anm_re[stride_scalar*part+coeff] = int_scalar_re[j]/ A;
       anm_im[stride_scalar*part+coeff] = int_scalar_im[j]/ A;
 
-/*       
-      if(stride_scalar*part+coeff == 0){
-        printf("anm_re[%d] is %f\n", stride_scalar*part+coeff, anm_re[stride_scalar*part+coeff]);
+       
+      //if(stride_scalar*part+coeff == 0){
+        //printf("anm_re[%d] is %f\n", stride_scalar*part+coeff, anm_re[stride_scalar*part+coeff]);
        // printf("ss[%d] is %f\n", node+part*nnodes, ss[node+part*nnodes]);
-      }
-*/      
+      //}
+      
     }
   }
 } 
@@ -607,10 +611,10 @@ __global__ void compute_error_scalar(real lamb_cut, int stride, int nparts, real
   real div = 0;
 
   // create shared memory space
-  __shared__ real s_coeffs[2*25];  // ** have to hard-code this length **
-  __shared__ real s_coeffs0[2*25]; // ** have to hard-code this length **
+  __shared__ real s_coeffs[2*64];  // ** have to hard-code this length **
+  __shared__ real s_coeffs0[2*64]; // ** have to hard-code this length **
                             // using 2 coefficient sets, each holding
-                            // a maximum of 25 coefficients (4th-order
+                            // a maximum of 64 coefficients (7th-order
                             // truncation)
 
   // copy coeffs for this particle into shared memory
@@ -691,14 +695,14 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
         s_surface = parts_s[P].s;
       
         x = (i-0.5) * dom->dx + dom->xs - X;
-        if(x <= 2.*a-dom->xl) x += dom->xl;
-        if(x >= dom->xl-2.*a) x -= dom->xl;
+        //if(x <= 2.*a-dom->xl) x += dom->xl;
+        //if(x >= dom->xl-2.*a) x -= dom->xl;
         y = (tj-0.5) * dom->dy + dom->ys - Y;
-        if(y <= 2.*a-dom->yl) y += dom->yl;
-        if(y >= dom->yl-2.*a) y -= dom->yl;
+        //if(y <= 2.*a-dom->yl) y += dom->yl;
+        //if(y >= dom->yl-2.*a) y -= dom->yl;
         z = (tk-0.5) * dom->dz + dom->zs - Z;
-        if(z <= 2.*a-dom->zl) z += dom->zl;
-        if(z >= dom->zl-2.*a) z -= dom->zl;
+        //if(z <= 2.*a-dom->zl) z += dom->zl;
+        //if(z >= dom->zl-2.*a) z -= dom->zl;
         
         xyz2rtp(x, y, z, &r, &theta, &phi);
         // calculate analytic solution
@@ -736,7 +740,11 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
         // only apply value at nodes inside particle & phase_shell==0
         // phase_shell = 1 means normal nodes, phase_shell = 0 means pressure nodes
         s[CC] = ss_tmp * (phase[CC] > -1 && phase_shell[CC] < 1) + (phase_shell[CC] > 0)*s_surface; 
-        //if(phase_shell[CC] < 1)printf("s[CC] is %f\n", s[CC]);
+        //if(CC > 63755 && CC < 63795) 
+        //if(CC > 37921 && CC < 37971)
+        //printf("bc s[%d] %.2f i %d x %f.2f r %.2f  tmp %.2f\n",CC, s[CC], i, x, r, theta, phi, ss_tmp);
+        //s[CC] = s_surface * (phase[CC] > -1);
+        //if(phase[CC] > -1 && phase_shell[CC] < 1)printf("Imposed bc s[CC] is %f\n", s[CC]);
       }
     }
   }
@@ -846,6 +854,14 @@ __global__ void forcing_boussinesq_z(real alpha, real gz, real s_init, real *s, 
     }
   }
 }
+// a simplied version of part_heat_flux when there is no perturbation correction part
+__global__ void part_heat_flux_coeff(part_struct *parts, part_struct_scalar *parts_s, real *anm_re, int stride_scalar)
+{
+  int part = blockIdx.x;
+  parts_s[part].q = parts[part].r * 2.0 * sqrt(PI) * anm_re[stride_scalar*part];
+  printf("parts_s[%d].q is %f\n", part, parts_s[part].q);
+  //printf("parts_s[%d].q is %f, anm_re[%d] is \n", part, parts_s[part].q, stride_scalar*part, anm_re[stride_scalar*part]);
+}
 
 // this function helps to calculate the integral of heat flux on the particle surface instanteneously, it uses the lamb coefficients from scalar field and lebsque nodes
 __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, real *node_t, real *node_p, real *anm_re, real *anm_im, real *anm_re00, real *anm_im00, real *anm_re_perturb, real *anm_im_perturb, int nnodes, int stride, real A1, real A2, real A3, real perturbation, real dt, real s_D)
@@ -893,12 +909,12 @@ __global__ void part_heat_flux(part_struct *parts, part_struct_scalar *parts_s, 
         parts_s[part].q += A3 * parts_s[part].dsdr[node + i];
       }
       parts_s[part].q *= parts[part].r * parts[part].r;
-      //printf("parts_s[part].q is, gradient is %f %f\n", parts_s[part].q, parts_s[part].dsdr[node]/parts_s[part].s);
+      printf("parts_s[%d].q is, gradient is %f %f\n", part, parts_s[part].q, parts_s[part].dsdr[node]);
     }
   }
 }
 
-__global__ void update_part_scalar(int nparts, part_struct *parts, part_struct_scalar *parts_s, real time, real dt, real s_k)
+__global__ void update_part_scalar(part_struct *parts, part_struct_scalar *parts_s, real time, real dt, real s_k)
 {
   int part = blockIdx.x;
   real vol = 4./3. * PI * parts[part].r*parts[part].r*parts[part].r;

@@ -86,10 +86,10 @@ void cuda_part_scalar_malloc(void)
       gpumem += sizeof(real) * coeff_stride_scalar * nparts;
     }
     // allocate the coefficent tabel on device
-    (cudaMalloc((void**) &_nn_scalar, 25 * sizeof(int)));    
-    gpumem += 25 * sizeof(int);
-    (cudaMalloc((void**) &_mm_scalar, 25 * sizeof(int)));
-    gpumem += 25 * sizeof(int);
+    (cudaMalloc((void**) &_nn_scalar, 64 * sizeof(int)));    
+    gpumem += 64 * sizeof(int);
+    (cudaMalloc((void**) &_mm_scalar, 64 * sizeof(int)));
+    gpumem += 64 * sizeof(int);
   }
 }
 
@@ -127,19 +127,27 @@ void cuda_part_scalar_push(void)
     // copy coefficents to device
 
     // initialize coefficients table
-    int nn_scalar[25] = {0,
+    int nn_scalar[64] = {0,
                   1, 1, 1,
                   2, 2, 2, 2, 2,
                   3, 3, 3, 3, 3, 3, 3,
-                  4, 4, 4, 4, 4, 4, 4, 4, 4};
-    int mm_scalar[25] = {0,
+                  4, 4, 4, 4, 4, 4, 4, 4, 4,
+                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+                  6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+                  7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7};
+
+    int mm_scalar[64] = {0,
                   -1, 0, 1,
                   -2, -1, 0, 1, 2,
                   -3, -2, -1, 0, 1, 2, 3,
-                  -4, -3, -2, -1, 0, 1, 2, 3, 4};
-    (cudaMemcpy(_nn_scalar, nn_scalar, 25 * sizeof(int),
+                  -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                  -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5,
+                  -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6,
+                  -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
+
+    (cudaMemcpy(_nn_scalar, nn_scalar, 64 * sizeof(int),
       cudaMemcpyHostToDevice));
-    (cudaMemcpy(_mm_scalar, mm_scalar, 25 * sizeof(int),
+    (cudaMemcpy(_mm_scalar, mm_scalar, 64 * sizeof(int),
       cudaMemcpyHostToDevice));
   }
 }
@@ -1088,6 +1096,22 @@ void cuda_compute_boussinesq(void)
 extern "C"
 void cuda_part_heat_flux(void)
 {
+ if(scalar_on == 1){
+    if(nparts > 0) {
+      #pragma omp parallel num_threads(nsubdom)
+      {
+        int dev = omp_get_thread_num();
+        (cudaSetDevice(dev + dev_start));
+
+        dim3 dimBlocks(1);
+        dim3 numBlocks(nparts);
+
+        part_heat_flux_coeff<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], _anm_re[dev], coeff_stride_scalar);
+      }
+    }
+  }
+/*
+  // for situation of perturbation solution included, this part of code still needed, however for other cases, part_heat_flux_coeff is more easier in calculation
   if(scalar_on == 1) {
     if(nparts > 0) {
       // TODO: make node_t, node_p a global memory from the start
@@ -1157,7 +1181,7 @@ void cuda_part_heat_flux(void)
       (cudaFree(_node_t));
       (cudaFree(_node_p));
     }
-  }
+  }*/
 }
 
 void cuda_store_coeffs_scalar(void)
@@ -1185,7 +1209,7 @@ void cuda_update_part_scalar(void)
         dim3 dimBlocks(1);
         dim3 numBlocks(nparts);
 
-        update_part_scalar<<<numBlocks, dimBlocks>>>(nparts, _parts[dev], _parts_s[dev], ttime, dt, s_k);
+        update_part_scalar<<<numBlocks, dimBlocks>>>(_parts[dev], _parts_s[dev], ttime, dt, s_k);
       }
     }
   }
