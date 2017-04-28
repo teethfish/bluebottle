@@ -695,14 +695,14 @@ __global__ void part_BC_scalar(real *s, int *phase, int *phase_shell, part_struc
         s_surface = parts_s[P].s;
       
         x = (i-0.5) * dom->dx + dom->xs - X;
-        //if(x <= 2.*a-dom->xl) x += dom->xl;
-        //if(x >= dom->xl-2.*a) x -= dom->xl;
+        if(x <= 2.*a-dom->xl) x += dom->xl;
+        if(x >= dom->xl-2.*a) x -= dom->xl;
         y = (tj-0.5) * dom->dy + dom->ys - Y;
-        //if(y <= 2.*a-dom->yl) y += dom->yl;
-        //if(y >= dom->yl-2.*a) y -= dom->yl;
+        if(y <= 2.*a-dom->yl) y += dom->yl;
+        if(y >= dom->yl-2.*a) y -= dom->yl;
         z = (tk-0.5) * dom->dz + dom->zs - Z;
-        //if(z <= 2.*a-dom->zl) z += dom->zl;
-        //if(z >= dom->zl-2.*a) z -= dom->zl;
+        if(z <= 2.*a-dom->zl) z += dom->zl;
+        if(z >= dom->zl-2.*a) z -= dom->zl;
         
         xyz2rtp(x, y, z, &r, &theta, &phi);
         // calculate analytic solution
